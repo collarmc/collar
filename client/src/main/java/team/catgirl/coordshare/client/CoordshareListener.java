@@ -7,7 +7,6 @@ import team.catgirl.coordshare.models.CoordshareServerMessage.LeaveGroupResponse
 import team.catgirl.coordshare.models.CoordshareServerMessage.UpdateGroupStateResponse;
 
 public interface CoordshareListener {
-    default void onConnected(CoordshareClient client) {}
     default void onSessionCreated(CoordshareClient client) {}
     default void onDisconnect(CoordshareClient client) {}
     default void onGroupCreated(CoordshareClient client, CreateGroupResponse resp) {};

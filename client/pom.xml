@@ -31,4 +31,54 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <artifactSet>
+                    <excludes>
+                        <exclude>com.google.guava:guava</exclude>
+                    </excludes>
+                    </artifactSet>
+                    <relocations>
+                        <relocation>
+                            <pattern>kotlin</pattern>
+                            <shadedPattern>team.catgirl.coordshare.kotlin</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>okhttp3</pattern>
+                            <shadedPattern>team.catgirl.coordshare.okhttp3</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>okio</pattern>
+                            <shadedPattern>team.catgirl.coordshare.okio</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.jetbrains</pattern>
+                            <shadedPattern>team.catgirl.coordshare.org.jetbrains</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.intellij</pattern>
+                            <shadedPattern>team.catgirl.coordshare.org.intellij</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.fasterxml</pattern>
+                            <shadedPattern>team.catgirl.coordshare.org.fasterxml</shadedPattern>
+                        </relocation>
+                    </relocations>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>

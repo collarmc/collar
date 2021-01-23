@@ -1,0 +1,1 @@
+web: java $JAVA_OPTS -XX:+UseContainerSupport -XX:+UseG1GC -cp server/target/classes:target/dependency/* team.catgirl.coordshare.server.Main

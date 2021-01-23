@@ -1,5 +1,6 @@
 package team.catgirl.coordshare.client.examples;
 
+import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 import team.catgirl.coordshare.client.CoordshareClient;
 import team.catgirl.coordshare.client.CoordshareListener;
@@ -116,7 +117,7 @@ public class Example {
         public void onSessionCreated(CoordshareClient client) {
             super.onSessionCreated(client);
             try {
-                client.createGroup(List.of(player1), createPosition());
+                client.createGroup(ImmutableList.of(player1), createPosition());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -161,8 +162,6 @@ public class Example {
 
     public abstract static class AbstractCoordshareListener implements CoordshareListener {
         private final UUID currentPlayer;
-
-        private List<Group> groups = List.of();
 
         public AbstractCoordshareListener(UUID currentPlayer) {
             this.currentPlayer = currentPlayer;
@@ -228,14 +227,6 @@ public class Example {
             group.members.values().stream().map(value -> getPlayerPrefix() + value.player + " " + value.membershipState + " " + Position.toString(value.location)).forEach(writer::println);
             writer.flush();
             return s.toString();
-        }
-
-        public void setGroups(List<Group> groups) {
-            this.groups = groups;
-        }
-
-        public List<Group> getGroups() {
-            return groups;
         }
 
         private String getPlayerPrefix() {

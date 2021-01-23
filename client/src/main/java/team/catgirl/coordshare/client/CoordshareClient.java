@@ -70,6 +70,8 @@ public final class CoordshareClient {
         this.me = null;
         this.connected = false;
         listener.onDisconnect(this);
+        this.keepAliveScheduler.shutdown();
+        this.keepAliveScheduler = null;
     }
 
     public void reconnect() throws InterruptedException {

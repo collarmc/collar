@@ -1,6 +1,7 @@
 package team.catgirl.coordshare.server.managers;
 
 import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import org.eclipse.jetty.websocket.api.Session;
 import team.catgirl.coordshare.models.CoordshareServerMessage;
@@ -14,6 +15,7 @@ import team.catgirl.coordshare.models.CoordshareClientMessage.UpdatePositionRequ
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,7 +69,7 @@ public final class GroupManager {
         synchronized (group.id) {
             group = group.removeMember(req.me.player);
             refreshGroupState(group);
-            sendMessageToGroup(req.me.player, group, new UpdateGroupStateResponse(List.of(group)).serverMessage());
+            sendMessageToGroup(req.me.player, group, new UpdateGroupStateResponse(ImmutableList.of(group)).serverMessage());
         }
         LOGGER.log(Level.INFO, "Group count " + groupsById.size());
         return new LeaveGroupResponse(group.id);

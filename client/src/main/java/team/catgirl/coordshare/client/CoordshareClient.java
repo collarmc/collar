@@ -2,6 +2,7 @@ package team.catgirl.coordshare.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.AbstractScheduledService;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,6 +15,8 @@ import team.catgirl.coordshare.models.CoordshareServerMessage;
 import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,8 +30,9 @@ public final class CoordshareClient {
     private final OkHttpClient http;
     private Identity me;
     private WebSocket webSocket;
-    private CoordshareListener listener;
+    private DelegatingListener listener;
     private boolean connected;
+    private ScheduledExecutorService keepAliveScheduler;
 
     public CoordshareClient(String baseUrl) {
         this.baseUrl = baseUrl + "/api/1/";
@@ -39,12 +43,21 @@ public final class CoordshareClient {
         if (this.connected) {
             throw new IllegalStateException("Is already connected");
         }
-        this.listener = listener; // TODO: wrap in delegating listener that catches and logs exceptions
+        this.listener = new DelegatingListener(listener); // TODO: wrap in delegating listener that catches and logs exceptions
         this.me = identity;
-        Request request = new Request.Builder().url(baseUrl + "/coordshare/listen").build();
+        Request request = new Request.Builder().url(baseUrl + "coordshare/listen").build();
         webSocket = http.newWebSocket(request, new WebSocketListenerImpl(this));
         this.connected = true;
         listener.onConnected(this);
+        http.dispatcher().executorService().shutdown();
+        keepAliveScheduler = Executors.newScheduledThreadPool(1);
+        keepAliveScheduler.scheduleAtFixedRate((Runnable) () -> {
+            try {
+                send(new CoordshareClientMessage(null, null, null, null, null, new Ping()));
+            } catch (IOException e) {
+                LOGGER.log(Level.SEVERE, "Couldn't send ping");
+            }
+        }, 0, 10, TimeUnit.SECONDS);
     }
 
     public void disconnect() {
@@ -82,21 +95,26 @@ public final class CoordshareClient {
         }
     }
 
+    public Identity getMe() {
+        return me;
+    }
+
     public void createGroup(List<UUID> players, Position position) throws IOException {
         CreateGroupRequest req = new CreateGroupRequest(me, players, position);
-        send(new CoordshareClientMessage(null, req, null, null, null));
+        send(new CoordshareClientMessage(null, req, null, null, null, null));
     }
 
     public void acceptGroupRequest(String groupId, MembershipState state) throws IOException {
-        send(new CoordshareClientMessage(null, null, new AcceptGroupMembershipRequest(me, groupId, state), null, null));
+        send(new CoordshareClientMessage(null, null, new AcceptGroupMembershipRequest(me, groupId, state), null, null, null));
     }
 
-    public void leaveGroup(String groupId) throws IOException {
-        send(new CoordshareClientMessage(null, null, null, new LeaveGroupRequest(me, groupId), null));
+    public void leaveGroup(Group group) throws IOException {
+        send(new CoordshareClientMessage(null, null, null, new LeaveGroupRequest(me, group.id), null, null));
     }
 
     public void updatePosition(Position position) throws IOException {
-        send(new CoordshareClientMessage(null, null, null, null, new UpdatePositionRequest(me, position)));
+        // Don't send the position updates if the group count is 0
+        send(new CoordshareClientMessage(null, null, null, null, new UpdatePositionRequest(me, position), null));
     }
 
     private void send(CoordshareClientMessage o) throws IOException {
@@ -115,7 +133,7 @@ public final class CoordshareClient {
         @Override
         public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
             super.onOpen(webSocket, response);
-            CoordshareClientMessage message = new CoordshareClientMessage(new IdentifyRequest(me), null, null, null, null);
+            CoordshareClientMessage message = new CoordshareClientMessage(new IdentifyRequest(me), null, null, null, null, null);
             try {
                 send(message);
             } catch (IOException e) {
@@ -146,8 +164,14 @@ public final class CoordshareClient {
             if (message.leaveGroupResponse != null) {
                 listener.onGroupLeft(client, message.leaveGroupResponse);
             }
-            if (message.updatePositionResponse != null) {
-                listener.onPositionsUpdated(client, message.updatePositionResponse);
+            if (message.updateGroupStateResponse != null) {
+                listener.onGroupUpdated(client, message.updateGroupStateResponse);
+            }
+            if (message.acceptGroupMembershipResponse != null) {
+                listener.onGroupJoined(client, message.acceptGroupMembershipResponse);
+            }
+            if (message.pong != null) {
+                listener.onPongRecieved(message.pong);
             }
         }
 
@@ -159,12 +183,61 @@ public final class CoordshareClient {
 
         @Override
         public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
-            LOGGER.log(Level.SEVERE, "Communications failure. Reconnecting...", t);
-            try {
-                reconnect();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+            LOGGER.log(Level.SEVERE, "Communications failure", t);
+        }
+    }
+
+    public class DelegatingListener implements CoordshareListener {
+        private final CoordshareListener listener;
+
+        public DelegatingListener(CoordshareListener listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public void onConnected(CoordshareClient client) {
+            listener.onConnected(client);
+        }
+
+        @Override
+        public void onSessionCreated(CoordshareClient client) {
+            listener.onSessionCreated(client);
+        }
+
+        @Override
+        public void onDisconnect(CoordshareClient client) {
+            listener.onDisconnect(client);
+        }
+
+        @Override
+        public void onGroupCreated(CoordshareClient client, CoordshareServerMessage.CreateGroupResponse resp) {
+            listener.onGroupCreated(client, resp);
+        }
+
+        @Override
+        public void onGroupMembershipRequested(CoordshareClient client, CoordshareServerMessage.GroupMembershipRequest resp) {
+            listener.onGroupMembershipRequested(client, resp);
+        }
+
+        @Override
+        public void onGroupJoined(CoordshareClient client, CoordshareServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
+            listener.onGroupJoined(client, acceptGroupMembershipResponse);
+        }
+
+        @Override
+        public void onGroupLeft(CoordshareClient client, CoordshareServerMessage.LeaveGroupResponse resp) {
+            listener.onGroupLeft(client, resp);
+        }
+
+        @Override
+        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdateGroupStateResponse updateGroupStateResponse) {
+            listener.onGroupUpdated(client, updateGroupStateResponse);
+        }
+
+        @Override
+        public void onPongRecieved(CoordshareServerMessage.Pong pong) {
+            listener.onPongRecieved(pong);
+            LOGGER.log(Level.INFO, "Received ping");
         }
     }
 }

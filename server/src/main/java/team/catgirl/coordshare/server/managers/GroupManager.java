@@ -18,7 +18,10 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class GroupManager {
 
@@ -28,7 +31,7 @@ public final class GroupManager {
     private final SecureRandom random;
 
     private final ConcurrentMap<String, Group> groupsById = new ConcurrentHashMap<>();
-    private final ArrayListMultimap<UUID, Group> playerToGroups = ArrayListMultimap.create();
+//    private final ArrayListMultimap<UUID, Group> playerToGroups = ArrayListMultimap.create();
 
     public GroupManager(SessionManager sessionManager) throws NoSuchAlgorithmException {
         this.sessionManager = sessionManager;
@@ -38,20 +41,9 @@ public final class GroupManager {
     public CreateGroupResponse createGroup(CreateGroupRequest req) {
         Group group = Group.newGroup(uniqueId(), req.me, req.position, req.players);
         synchronized (group.id) {
-            playerToGroups.put(req.me.player, group);
             refreshGroupState(group);
-            req.players.forEach(player -> {
-                Session session = sessionManager.getSession(player);
-                if (session != null) {
-                    try {
-                        sessionManager.send(session, new GroupMembershipRequest(group.id, req.me.player, player, group.members.keySet().asList()).serverMessage());
-                    } catch (IOException e) {
-                        sessionManager.stopSession(session, "Could not communicate with player " + player, e);
-                    }
-                }
-            });
         }
-        return new CreateGroupResponse(group.id);
+        return new CreateGroupResponse(group);
     }
 
     public AcceptGroupMembershipResponse acceptMembership(AcceptGroupMembershipRequest req) {
@@ -64,7 +56,7 @@ public final class GroupManager {
             group = group.updateMemberState(req.me.player, state);
             refreshGroupState(group);
         }
-        return new AcceptGroupMembershipResponse(group.id);
+        return new AcceptGroupMembershipResponse(group);
     }
 
     public LeaveGroupResponse leaveGroup(LeaveGroupRequest req) {
@@ -74,54 +66,101 @@ public final class GroupManager {
         }
         synchronized (group.id) {
             group = group.removeMember(req.me.player);
-            playerToGroups.remove(req.me.player, group);
             refreshGroupState(group);
+            sendMessageToGroup(req.me.player, group, new UpdateGroupStateResponse(List.of(group)).serverMessage());
         }
-        sendMessageToGroup(req.me.player, group, new UpdatePositionResponse(List.of(group)).serverMessage());
+        LOGGER.log(Level.INFO, "Group count " + groupsById.size());
         return new LeaveGroupResponse(group.id);
     }
 
-    public UpdatePositionResponse updatePosition(UpdatePositionRequest req) {
-        List<Group> groups = playerToGroups.get(req.me.player);
-        if (groups == null) {
-            return new UpdatePositionResponse(null);
-        }
-        List.copyOf(groups).forEach(group -> {
+    public void removeUser(UUID player) {
+        List<Group> groups = findGroupsForPlayer(player);
+        groups.forEach(group -> {
             synchronized (group.id) {
-                group = group.updateMemberPosition(req.me.player, req.position);
+                group = group.updateMemberState(player, null);
                 refreshGroupState(group);
             }
-            sendMessageToGroup(req.me.player, group, new UpdatePositionResponse(groups).serverMessage());
         });
-        return new UpdatePositionResponse(playerToGroups.get(req.me.player));
+        LOGGER.log(Level.INFO, "Removed user " + player + " from all groups");
     }
 
-    private void sendMessageToGroup(UUID currentPlayer, Group group, CoordshareServerMessage message) {
-        group.members.entrySet().stream()
-            .filter(entry -> !entry.getKey().equals(currentPlayer))
-            .filter(entry -> entry.getValue().membershipState == Group.MembershipState.ACCEPTED)
-            .forEach(entry -> {
-                Session session = sessionManager.getSession(entry.getKey());
+    public void sendMembershipRequests(UUID requester, Group group) {
+        synchronized (group.id) {
+            group.members.values().stream().filter(member -> member.membershipState == Group.MembershipState.PENDING).map(member -> member.player).forEach(player -> {
+                Session session = sessionManager.getSession(player);
                 if (session != null) {
                     try {
-                        sessionManager.send(session, message);
+                        sessionManager.send(session, new GroupMembershipRequest(group.id, requester, group.members.keySet().asList()).serverMessage());
                     } catch (IOException e) {
-                        sessionManager.stopSession(session, "Could not communicate with player " + entry.getKey(), e);
+                        sessionManager.stopSession(session, "Could not communicate with player " + player, e);
                     }
                 }
             });
+        }
+    }
+
+    public UpdateGroupStateResponse updatePosition(UpdatePositionRequest req) {
+        List<Group> groups = findGroupsForPlayer(req.me.player);
+        groups.forEach(group -> {
+            synchronized (group.id) {
+                group = group.updateMemberPosition(req.me.player, req.position);
+                refreshGroupState(group);
+                sendMessageToGroup(req.me.player, group, new UpdateGroupStateResponse(groups).serverMessage());
+            }
+        });
+        return new UpdateGroupStateResponse(findGroupsForPlayer(req.me.player));
+    }
+
+    public void updateGroup(String groupId) {
+        Group group = groupsById.get(groupId);
+        if (group != null) {
+            synchronized (group.id) {
+                group.members.values().forEach(member -> {
+                    List<Group> groupsForPlayer = findGroupsForPlayer(member.player);
+                    if (!groupsForPlayer.isEmpty()) {
+                        sendMessageToGroup(null, group, new UpdateGroupStateResponse(groupsForPlayer).serverMessage());
+                    }
+                });
+            }
+        }
+    }
+
+    private List<Group> findGroupsForPlayer(UUID player) {
+        return groupsById.values().stream().filter(group -> group.members.containsKey(player)).collect(Collectors.toList());
+    }
+
+    private void sendMessageToGroup(UUID currentPlayer, Group group, CoordshareServerMessage message) {
+        synchronized (group.id) {
+            group.members.entrySet().stream()
+                    .filter(entry -> !entry.getKey().equals(currentPlayer))
+                    .filter(entry -> entry.getValue().membershipState == Group.MembershipState.ACCEPTED)
+                    .forEach(entry -> {
+                        Session session = sessionManager.getSession(entry.getKey());
+                        if (session != null) {
+                            try {
+                                sessionManager.send(session, message);
+                            } catch (IOException e) {
+                                sessionManager.stopSession(session, "Could not communicate with player " + entry.getKey(), e);
+                            }
+                        }
+                    });
+        }
     }
 
     private void refreshGroupState(Group group) {
-        groupsById.put(group.id, group);
-        group.members.keySet().forEach(uuid -> {
-            playerToGroups.put(uuid, group);
-        });
+        synchronized (group.id) {
+            if (group.members.isEmpty()) {
+                LOGGER.log(Level.INFO, "Removed group " + group.id + " as it has no members.");
+                groupsById.remove(group.id);
+            } else {
+                groupsById.put(group.id, group);
+            }
+        }
     }
 
     private String uniqueId() {
-        byte[] values = new byte[1024];
-        random.nextLong();
-        return BaseEncoding.base64().encode(values);
+        byte[] bytes = new byte[64];
+        random.nextBytes(bytes);
+        return BaseEncoding.base64().encode(bytes);
     }
 }

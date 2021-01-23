@@ -5,10 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
 import team.catgirl.coordshare.models.CoordshareServerMessage;
 import team.catgirl.coordshare.models.Identity;
-import team.catgirl.coordshare.models.CoordshareServerMessage.GroupMembershipRequest;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -30,10 +28,6 @@ public final class SessionManager {
 
     public SessionManager(ObjectMapper mapper) {
         this.mapper = mapper;
-    }
-
-    public void startSession(Session session) {
-        sessionToIdentity.put(session, null);
     }
 
     public void identify(Session session, Identity identity) {
@@ -59,5 +53,10 @@ public final class SessionManager {
     public Session getSession(UUID player) {
         Identity playerIdentity = playerToIdentity.get(player);
         return playerIdentity == null ? null : identityToSession.get(playerIdentity);
+    }
+
+    public UUID getPlayer(Session session) {
+        Identity identity = sessionToIdentity.get(session);
+        return identity == null ? null : identity.player;
     }
 }

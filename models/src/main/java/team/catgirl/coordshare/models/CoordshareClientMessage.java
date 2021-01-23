@@ -2,8 +2,6 @@ package team.catgirl.coordshare.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import team.catgirl.coordshare.models.Group.MembershipState;
-import team.catgirl.coordshare.models.Identity;
-import team.catgirl.coordshare.models.Position;
 
 import java.util.List;
 import java.util.UUID;
@@ -20,19 +18,25 @@ public final class CoordshareClientMessage {
     public final LeaveGroupRequest leaveGroupRequest;
     @JsonProperty("updatePositionRequest")
     public final UpdatePositionRequest updatePositionRequest;
+    @JsonProperty("ping")
+    public final Ping ping;
 
     public CoordshareClientMessage(
             @JsonProperty("identify") IdentifyRequest identifyRequest,
             @JsonProperty("createGroupRequest") CreateGroupRequest createGroupRequest,
             @JsonProperty("groupMembershipRequest") AcceptGroupMembershipRequest acceptGroupMembershipRequest,
             @JsonProperty("leaveGroupRequest") LeaveGroupRequest leaveGroupRequest,
-            @JsonProperty("updatePositionRequest") UpdatePositionRequest updatePositionRequest) {
+            @JsonProperty("updatePositionRequest") UpdatePositionRequest updatePositionRequest,
+            @JsonProperty("ping") Ping ping) {
         this.identifyRequest = identifyRequest;
         this.createGroupRequest = createGroupRequest;
         this.acceptGroupMembershipRequest = acceptGroupMembershipRequest;
         this.leaveGroupRequest = leaveGroupRequest;
         this.updatePositionRequest = updatePositionRequest;
+        this.ping = ping;
     }
+
+    public static final class Ping {}
 
     public static final class IdentifyRequest {
         public final Identity identity;

@@ -23,7 +23,7 @@ public final class Group {
     public static Group newGroup(String id, Identity owner, Position ownerPosition, List<UUID> members) {
         ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder()
                 .put(owner.player, new Member(owner.player, MembershipState.ACCEPTED, ownerPosition));
-        members.forEach(uuid -> state.put(uuid, new Member(owner.player, MembershipState.PENDING, null)));
+        members.forEach(uuid -> state.put(uuid, new Member(uuid, MembershipState.PENDING, null)));
         return new Group(id, state.build());
     }
 
@@ -32,9 +32,11 @@ public final class Group {
         if (member == null) {
             return this;
         }
-        ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder()
-                .putAll(members)
-                .put(uuid, member.updateMembershipState(newMembershipState));
+        List<Map.Entry<UUID, Member>> members = this.members.entrySet().stream().filter(entry -> !entry.getKey().equals(uuid)).collect(Collectors.toList());
+        ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder().putAll(members);
+        if (newMembershipState != null) {
+            state = state.put(uuid, member.updateMembershipState(newMembershipState));
+        }
         return new Group(id, state.build());
     }
 
@@ -50,7 +52,7 @@ public final class Group {
             return this;
         }
         member = member.updatePosition(position);
-        ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder().putAll(members);
+        ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder().putAll(members.entrySet().stream().filter(entry -> !entry.getKey().equals(player)).collect(Collectors.toList()));
         state.put(member.player, member);
         return new Group(id, state.build());
     }

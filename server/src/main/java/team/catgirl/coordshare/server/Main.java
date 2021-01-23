@@ -2,27 +2,27 @@ package team.catgirl.coordshare.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import team.catgirl.coordshare.models.Utils;
 import team.catgirl.coordshare.models.CoordshareClientMessage;
 import team.catgirl.coordshare.models.CoordshareServerMessage;
 import team.catgirl.coordshare.models.CoordshareServerMessage.CreateGroupResponse;
 import team.catgirl.coordshare.models.CoordshareServerMessage.IdentificationSuccessful;
 import team.catgirl.coordshare.models.CoordshareServerMessage.LeaveGroupResponse;
-import team.catgirl.coordshare.models.CoordshareServerMessage.UpdatePositionResponse;
+import team.catgirl.coordshare.models.CoordshareServerMessage.UpdateGroupStateResponse;
 import team.catgirl.coordshare.server.http.HttpException;
 import team.catgirl.coordshare.server.managers.GroupManager;
 import team.catgirl.coordshare.server.managers.SessionManager;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static spark.Spark.*;
+import static team.catgirl.coordshare.models.CoordshareServerMessage.*;
 
 public class Main {
 
@@ -37,7 +37,7 @@ public class Main {
         if (portValue != null) {
             port(Integer.parseInt(portValue));
         } else {
-            port(8080);
+            port(3000);
         }
 
         // Services
@@ -47,20 +47,19 @@ public class Main {
 
         // Always serialize objects returned as JSON
         defaultResponseTransformer(mapper::writeValueAsString);
+        exception(HttpException.class, (e, request, response) -> {
+            response.status(e.code);
+            response.body(e.getMessage());
+        });
 
+        // Setup WebSockets
+        webSocketIdleTimeoutMillis((int) TimeUnit.SECONDS.toMillis(20));
         webSocket("/api/1/coordshare/listen", new WebSocketHandler(mapper, sessions, groups));
-
-
 
         // Start routes
         get("/api/1/status/", (request, response) -> "OK");
         get("/", (request, response) -> {
-            return "Coordshare";
-        });
-
-        exception(HttpException.class, (e, request, response) -> {
-            response.status(e.code);
-            response.body(e.getMessage());
+            return "OwO";
         });
     }
 
@@ -81,12 +80,22 @@ public class Main {
 
         @OnWebSocketConnect
         public void connected(Session session) {
-            manager.startSession(session);
+            LOGGER.log(Level.INFO, "New session started");
         }
 
         @OnWebSocketClose
         public void closed(Session session, int statusCode, String reason) {
+            LOGGER.log(Level.INFO, "Session closed " + statusCode + " " + reason);
+            UUID player = manager.getPlayer(session);
+            if (player != null) {
+                groups.removeUser(player);
+            }
             manager.stopSession(session, "Session closed", null);
+        }
+
+        @OnWebSocketError
+        public void onError(Throwable e) {
+            LOGGER.log(Level.SEVERE, "There was an error", e);
         }
 
         @OnWebSocketMessage
@@ -104,18 +113,24 @@ public class Main {
             if (message.createGroupRequest != null) {
                 CreateGroupResponse resp = groups.createGroup(message.createGroupRequest);
                 send(session, resp.serverMessage());
+                groups.sendMembershipRequests(message.createGroupRequest.me.player, resp.group);
             }
             if (message.acceptGroupMembershipRequest != null) {
-                CoordshareServerMessage.AcceptGroupMembershipResponse resp = groups.acceptMembership(message.acceptGroupMembershipRequest);
+                AcceptGroupMembershipResponse resp = groups.acceptMembership(message.acceptGroupMembershipRequest);
                 send(session, resp.serverMessage());
             }
             if (message.leaveGroupRequest != null) {
                 LeaveGroupResponse resp = groups.leaveGroup(message.leaveGroupRequest);
                 send(session, resp.serverMessage());
+                groups.updateGroup(message.leaveGroupRequest.groupId);
             }
             if (message.updatePositionRequest != null) {
-                UpdatePositionResponse resp = groups.updatePosition(message.updatePositionRequest);
+                UpdateGroupStateResponse resp = groups.updatePosition(message.updatePositionRequest);
                 send(session, resp.serverMessage());
+            }
+            if (message.ping != null) {
+                LOGGER.log(Level.FINE, "Ping received");
+                send(session, new Pong().serverMessage());
             }
         }
 

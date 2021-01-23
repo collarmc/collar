@@ -53,7 +53,7 @@ public class Main {
         });
 
         // Setup WebSockets
-        webSocketIdleTimeoutMillis((int) TimeUnit.SECONDS.toMillis(20));
+        webSocketIdleTimeoutMillis((int) TimeUnit.SECONDS.toMillis(60));
         webSocket("/api/1/coordshare/listen", new WebSocketHandler(mapper, sessions, groups));
 
         // Start routes

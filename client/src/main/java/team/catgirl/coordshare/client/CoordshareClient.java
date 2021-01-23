@@ -239,7 +239,7 @@ public final class CoordshareClient {
         @Override
         public void onPongRecieved(CoordshareServerMessage.Pong pong) {
             listener.onPongRecieved(pong);
-            LOGGER.log(Level.INFO, "Received ping");
+            LOGGER.log(Level.FINE, "Received ping");
         }
     }
 }

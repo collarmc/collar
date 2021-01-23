@@ -47,8 +47,6 @@ public final class CoordshareClient {
         this.me = identity;
         Request request = new Request.Builder().url(baseUrl + "coordshare/listen").build();
         webSocket = http.newWebSocket(request, new WebSocketListenerImpl(this));
-        this.connected = true;
-        listener.onConnected(this);
         http.dispatcher().executorService().shutdown();
         keepAliveScheduler = Executors.newScheduledThreadPool(1);
         keepAliveScheduler.scheduleAtFixedRate((Runnable) () -> {
@@ -134,6 +132,7 @@ public final class CoordshareClient {
 
         @Override
         public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
+            LOGGER.info("onOpen is called");
             super.onOpen(webSocket, response);
             CoordshareClientMessage message = new CoordshareClientMessage(new IdentifyRequest(me), null, null, null, null, null);
             try {
@@ -197,13 +196,9 @@ public final class CoordshareClient {
         }
 
         @Override
-        public void onConnected(CoordshareClient client) {
-            listener.onConnected(client);
-        }
-
-        @Override
         public void onSessionCreated(CoordshareClient client) {
             listener.onSessionCreated(client);
+            connected = true;
         }
 
         @Override

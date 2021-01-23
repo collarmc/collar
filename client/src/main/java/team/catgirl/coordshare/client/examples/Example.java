@@ -168,12 +168,6 @@ public class Example {
         }
 
         @Override
-        public void onConnected(CoordshareClient client) {
-            System.out.println(getPlayerPrefix() + "onConnected");
-            waitABit();
-        }
-
-        @Override
         public void onSessionCreated(CoordshareClient client) {
             System.out.println(getPlayerPrefix() + "onSessionCreated");
             waitABit();

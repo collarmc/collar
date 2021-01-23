@@ -94,6 +94,7 @@ public final class GroupManager {
                     try {
                         sessionManager.send(session, new GroupMembershipRequest(group.id, requester, group.members.keySet().asList()).serverMessage());
                     } catch (IOException e) {
+                        LOGGER.log(Level.INFO, "Problem sending membership requests", e);
                         sessionManager.stopSession(session, "Could not communicate with player " + player, e);
                     }
                 }

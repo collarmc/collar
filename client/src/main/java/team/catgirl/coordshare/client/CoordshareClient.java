@@ -186,6 +186,12 @@ public final class CoordshareClient {
         public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
             LOGGER.log(Level.SEVERE, "Communications failure", t);
         }
+
+        @Override
+        public void onClosed(@NotNull WebSocket webSocket, int code, @NotNull String reason) {
+            super.onClosed(webSocket, code, reason);
+            LOGGER.log(Level.SEVERE, "closed: " + reason);
+        }
     }
 
     public class DelegatingListener implements CoordshareListener {

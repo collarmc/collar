@@ -13,7 +13,6 @@ import team.catgirl.coordshare.models.Position;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -76,15 +75,15 @@ public class Example {
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdateGroupStateResponse updateGroupStateResponse) {
-            super.onGroupUpdated(client, updateGroupStateResponse);
+        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+            super.onGroupUpdated(client, updatePlayerStateResponse);
             try {
                 client.updatePosition(createPosition());
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            updateGroupStateResponse.groups.forEach(group -> {
+            updatePlayerStateResponse.groups.forEach(group -> {
                 if (group.members.size() == 1) {
                     try {
                         client.leaveGroup(group);
@@ -134,8 +133,8 @@ public class Example {
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdateGroupStateResponse updateGroupStateResponse) {
-            super.onGroupUpdated(client, updateGroupStateResponse);
+        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+            super.onGroupUpdated(client, updatePlayerStateResponse);
             try {
                 client.updatePosition(createPosition());
             } catch (IOException e) {
@@ -143,7 +142,7 @@ public class Example {
             }
             count++;
             if (count >= 10) {
-                updateGroupStateResponse.groups.forEach(group -> {
+                updatePlayerStateResponse.groups.forEach(group -> {
                     try {
                         client.leaveGroup(group);
                     } catch (IOException e) {
@@ -204,9 +203,9 @@ public class Example {
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdateGroupStateResponse updateGroupStateResponse) {
+        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             StringBuilder sb = new StringBuilder();
-            for (Group group : updateGroupStateResponse.groups) {
+            for (Group group : updatePlayerStateResponse.groups) {
                 sb.append(printGroup(group));
             }
             System.out.println(getPlayerPrefix() + "onGroupUpdated" + sb);

@@ -3,7 +3,6 @@ package team.catgirl.coordshare.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Strings;
-import com.google.common.util.concurrent.AbstractScheduledService;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +58,7 @@ public final class CoordshareClient {
         keepAliveScheduler = Executors.newScheduledThreadPool(1);
         keepAliveScheduler.scheduleAtFixedRate((Runnable) () -> {
             try {
-                send(new CoordshareClientMessage(null, null, null, null, null, new Ping()));
+                send(new CoordshareClientMessage(null, null, null, null, null, new Ping(), null));
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Couldn't send ping");
             }
@@ -109,20 +108,23 @@ public final class CoordshareClient {
 
     public void createGroup(List<UUID> players, Position position) throws IOException {
         CreateGroupRequest req = new CreateGroupRequest(me, players, position);
-        send(new CoordshareClientMessage(null, req, null, null, null, null));
+        send(new CoordshareClientMessage(null, req, null, null, null, null, null));
     }
 
     public void acceptGroupRequest(String groupId, MembershipState state) throws IOException {
-        send(new CoordshareClientMessage(null, null, new AcceptGroupMembershipRequest(me, groupId, state), null, null, null));
+        send(new CoordshareClientMessage(null, null, new AcceptGroupMembershipRequest(me, groupId, state), null, null, null, null));
     }
 
     public void leaveGroup(Group group) throws IOException {
-        send(new CoordshareClientMessage(null, null, null, new LeaveGroupRequest(me, group.id), null, null));
+        send(new CoordshareClientMessage(null, null, null, new LeaveGroupRequest(me, group.id), null, null, null));
     }
 
     public void updatePosition(Position position) throws IOException {
-        // Don't send the position updates if the group count is 0
-        send(new CoordshareClientMessage(null, null, null, null, new UpdatePositionRequest(me, position), null));
+        send(new CoordshareClientMessage(null, null, null, null, new UpdatePlayerStateRequest(me, position), null, null));
+    }
+
+    public void invite(Group group, List<UUID> players) throws IOException {
+        send(new CoordshareClientMessage(null, null, null, null, null, null, new GroupInviteRequest(me, group.id, players)));
     }
 
     private void send(CoordshareClientMessage o) throws IOException {
@@ -142,7 +144,7 @@ public final class CoordshareClient {
         public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
             LOGGER.info("onOpen is called");
             super.onOpen(webSocket, response);
-            CoordshareClientMessage message = new CoordshareClientMessage(new IdentifyRequest(me), null, null, null, null, null);
+            CoordshareClientMessage message = new CoordshareClientMessage(new IdentifyRequest(me), null, null, null, null, null, null);
             try {
                 send(message);
             } catch (IOException e) {
@@ -173,14 +175,17 @@ public final class CoordshareClient {
             if (message.leaveGroupResponse != null) {
                 listener.onGroupLeft(client, message.leaveGroupResponse);
             }
-            if (message.updateGroupStateResponse != null) {
-                listener.onGroupUpdated(client, message.updateGroupStateResponse);
+            if (message.updatePlayerStateResponse != null) {
+                listener.onGroupUpdated(client, message.updatePlayerStateResponse);
+            }
+            if (message.groupInviteResponse != null) {
+                listener.onGroupInvitesSent(client, message.groupInviteResponse);
             }
             if (message.acceptGroupMembershipResponse != null) {
                 listener.onGroupJoined(client, message.acceptGroupMembershipResponse);
             }
             if (message.pong != null) {
-                listener.onPongRecieved(message.pong);
+                listener.onPongReceived(message.pong);
             }
         }
 
@@ -241,14 +246,19 @@ public final class CoordshareClient {
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdateGroupStateResponse updateGroupStateResponse) {
-            listener.onGroupUpdated(client, updateGroupStateResponse);
+        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+            listener.onGroupUpdated(client, updatePlayerStateResponse);
         }
 
         @Override
-        public void onPongRecieved(CoordshareServerMessage.Pong pong) {
-            listener.onPongRecieved(pong);
+        public void onPongReceived(CoordshareServerMessage.Pong pong) {
+            listener.onPongReceived(pong);
             LOGGER.log(Level.FINE, "Received ping");
+        }
+
+        @Override
+        public void onGroupInvitesSent(CoordshareClient client, CoordshareServerMessage.GroupInviteResponse resp) {
+            listener.onGroupInvitesSent(client, resp);
         }
     }
 }

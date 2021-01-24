@@ -18,10 +18,12 @@ public class CoordshareServerMessage {
     public final AcceptGroupMembershipResponse acceptGroupMembershipResponse;
     @JsonProperty("leaveGroupResponse")
     public final LeaveGroupResponse leaveGroupResponse;
-    @JsonProperty("updatePositionResponse")
-    public final UpdateGroupStateResponse updateGroupStateResponse;
+    @JsonProperty("updatePlayerStateResponse")
+    public final UpdatePlayerStateResponse updatePlayerStateResponse;
     @JsonProperty("pong")
     public final Pong pong;
+    @JsonProperty("groupInviteResponse")
+    public final GroupInviteResponse groupInviteResponse;
 
     public CoordshareServerMessage(
             @JsonProperty("identificationSuccessful") IdentificationSuccessful identificationSuccessful,
@@ -29,28 +31,30 @@ public class CoordshareServerMessage {
             @JsonProperty("groupMembershipRequest") GroupMembershipRequest groupMembershipRequest,
             @JsonProperty("acceptGroupMembershipResponse") AcceptGroupMembershipResponse acceptGroupMembershipResponse,
             @JsonProperty("leaveGroupResponse") LeaveGroupResponse leaveGroupResponse,
-            @JsonProperty("updatePositionResponse") UpdateGroupStateResponse updateGroupStateResponse,
-            @JsonProperty("pong") Pong pong) {
+            @JsonProperty("updatePlayerStateResponse") UpdatePlayerStateResponse updatePlayerStateResponse,
+            @JsonProperty("pong") Pong pong,
+            @JsonProperty("groupInviteResponse") GroupInviteResponse groupInviteResponse) {
         this.identificationSuccessful = identificationSuccessful;
         this.createGroupResponse = createGroupResponse;
         this.groupMembershipRequest = groupMembershipRequest;
         this.acceptGroupMembershipResponse = acceptGroupMembershipResponse;
         this.leaveGroupResponse = leaveGroupResponse;
-        this.updateGroupStateResponse = updateGroupStateResponse;
+        this.updatePlayerStateResponse = updatePlayerStateResponse;
         this.pong = pong;
+        this.groupInviteResponse = groupInviteResponse;
     }
 
     public static final class Pong {
         @JsonIgnore
         public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, null, null, null, this);
+            return new CoordshareServerMessage(null, null, null, null, null, null, this, null);
         }
     }
 
     public static final class IdentificationSuccessful {
         @JsonIgnore
         public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(this, null, null, null, null, null, null);
+            return new CoordshareServerMessage(this, null, null, null, null, null, null, null);
         }
     }
 
@@ -70,7 +74,7 @@ public class CoordshareServerMessage {
 
         @JsonIgnore
         public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, this, null, null, null, null);
+            return new CoordshareServerMessage(null, null, this, null, null, null, null, null);
         }
     }
 
@@ -84,7 +88,7 @@ public class CoordshareServerMessage {
 
         @JsonIgnore
         public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, this, null, null, null, null, null);
+            return new CoordshareServerMessage(null, this, null, null, null, null, null, null);
         }
     }
 
@@ -98,7 +102,7 @@ public class CoordshareServerMessage {
 
         @JsonIgnore
         public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, this, null, null, null);
+            return new CoordshareServerMessage(null, null, null, this, null, null, null, null);
         }
     }
 
@@ -112,21 +116,38 @@ public class CoordshareServerMessage {
 
         @JsonIgnore
         public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, null, this, null, null);
+            return new CoordshareServerMessage(null, null, null, null, this, null, null, null);
         }
     }
 
-    public static final class UpdateGroupStateResponse {
+    public static final class UpdatePlayerStateResponse {
         @JsonProperty("groups")
         public final List<Group> groups;
 
-        public UpdateGroupStateResponse(@JsonProperty("groups") List<Group> groups) {
+        public UpdatePlayerStateResponse(@JsonProperty("groups") List<Group> groups) {
             this.groups = groups;
         }
 
         @JsonIgnore
         public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, null, null, this, null);
+            return new CoordshareServerMessage(null, null, null, null, null, this, null, null);
+        }
+    }
+
+    public static final class GroupInviteResponse {
+        @JsonProperty("groupId")
+        public final String groupId;
+        @JsonProperty("players")
+        public final List<UUID> players;
+
+        public GroupInviteResponse(@JsonProperty("groupId") String groupId, List<UUID> players) {
+            this.groupId = groupId;
+            this.players = players;
+        }
+
+        @JsonIgnore
+        public CoordshareServerMessage serverMessage() {
+            return new CoordshareServerMessage(null, null, null, null, null, null, null, this);
         }
     }
 }

@@ -1,16 +1,13 @@
 package team.catgirl.coordshare.server.managers;
 
-import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import org.eclipse.jetty.websocket.api.Session;
+import team.catgirl.coordshare.models.CoordshareClientMessage.*;
 import team.catgirl.coordshare.models.CoordshareServerMessage;
 import team.catgirl.coordshare.models.CoordshareServerMessage.*;
 import team.catgirl.coordshare.models.Group;
-import team.catgirl.coordshare.models.CoordshareClientMessage.AcceptGroupMembershipRequest;
-import team.catgirl.coordshare.models.CoordshareClientMessage.CreateGroupRequest;
-import team.catgirl.coordshare.models.CoordshareClientMessage.LeaveGroupRequest;
-import team.catgirl.coordshare.models.CoordshareClientMessage.UpdatePositionRequest;
+import team.catgirl.coordshare.models.Group.Member;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -23,7 +20,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public final class GroupManager {
 
@@ -33,13 +29,17 @@ public final class GroupManager {
     private final SecureRandom random;
 
     private final ConcurrentMap<String, Group> groupsById = new ConcurrentHashMap<>();
-//    private final ArrayListMultimap<UUID, Group> playerToGroups = ArrayListMultimap.create();
 
     public GroupManager(SessionManager sessionManager) throws NoSuchAlgorithmException {
         this.sessionManager = sessionManager;
         this.random = SecureRandom.getInstance("SHA1PRNG");
     }
 
+    /**
+     * Create a new group
+     * @param req of the new group request
+     * @return response to send to client
+     */
     public CreateGroupResponse createGroup(CreateGroupRequest req) {
         Group group = Group.newGroup(uniqueId(), req.me, req.position, req.players);
         synchronized (group.id) {
@@ -48,6 +48,11 @@ public final class GroupManager {
         return new CreateGroupResponse(group);
     }
 
+    /**
+     * Accept a membership request
+     * @param req of the new group request
+     * @return response to send the client
+     */
     public AcceptGroupMembershipResponse acceptMembership(AcceptGroupMembershipRequest req) {
         Group group = groupsById.get(req.groupId);
         if (group == null) {
@@ -61,21 +66,31 @@ public final class GroupManager {
         return new AcceptGroupMembershipResponse(group);
     }
 
+    /**
+     * Leave the group
+     * @param req to leave the group
+     * @return response to client
+     */
     public LeaveGroupResponse leaveGroup(LeaveGroupRequest req) {
         Group group = groupsById.get(req.groupId);
         if (group == null) {
+            LOGGER.log(Level.INFO, req.me.player + " was not a member of the group " + req.groupId);
             return new LeaveGroupResponse(null);
         }
         synchronized (group.id) {
             group = group.removeMember(req.me.player);
             refreshGroupState(group);
-            sendMessageToGroup(req.me.player, group, new UpdateGroupStateResponse(ImmutableList.of(group)).serverMessage());
+            sendMessageToGroup(req.me.player, group, new UpdatePlayerStateResponse(ImmutableList.of(group)).serverMessage());
         }
         LOGGER.log(Level.INFO, "Group count " + groupsById.size());
         return new LeaveGroupResponse(group.id);
     }
 
-    public void removeUser(UUID player) {
+    /**
+     * Removes player from all groups
+     * @param player to remove
+     */
+    public void removeUserFromAllGroups(UUID player) {
         List<Group> groups = findGroupsForPlayer(player);
         groups.forEach(group -> {
             synchronized (group.id) {
@@ -86,9 +101,16 @@ public final class GroupManager {
         LOGGER.log(Level.INFO, "Removed user " + player + " from all groups");
     }
 
-    public void sendMembershipRequests(UUID requester, Group group) {
+    /**
+     * Sends membership requests to the group members
+     * @param requester whos sending the request
+     * @param group the group to invite to
+     * @param members members to send requests to. If null, defaults to the full member list.
+     */
+    public void sendMembershipRequests(UUID requester, Group group, List<Member> members) {
         synchronized (group.id) {
-            group.members.values().stream().filter(member -> member.membershipState == Group.MembershipState.PENDING).map(member -> member.player).forEach(player -> {
+            List<Member> memberList = members == null ? group.members.values().asList() : members;
+            memberList.stream().filter(member -> member.membershipState == Group.MembershipState.PENDING).map(member -> member.player).forEach(player -> {
                 Session session = sessionManager.getSession(player);
                 if (session != null) {
                     try {
@@ -102,16 +124,50 @@ public final class GroupManager {
         }
     }
 
-    public UpdateGroupStateResponse updatePosition(UpdatePositionRequest req) {
+    /**
+     * Invite user to a group
+     * @param groupInviteRequest
+     */
+    public GroupInviteResponse invite(GroupInviteRequest groupInviteRequest) {
+        Group group = groupsById.get(groupInviteRequest.groupId);
+        if (group == null) {
+            return new GroupInviteResponse(null, null);
+        }
+        List<Member> newMembers = new ArrayList<>();
+        synchronized (group.id) {
+            Member requester = group.members.get(groupInviteRequest.me.player);
+            if (requester == null) {
+                LOGGER.log(Level.INFO, groupInviteRequest.me.player + " is not a member of the group "  + group.id);
+                return new GroupInviteResponse(group.id, null);
+            }
+            if (requester.membershipRole != Group.MembershipRole.OWNER) {
+                LOGGER.log(Level.INFO, groupInviteRequest.me.player + " is not OWNER member of the group "  + group.id);
+                return new GroupInviteResponse(group.id, null);
+            }
+            group = group.addMembers(groupInviteRequest.players, Group.MembershipRole.MEMBER, Group.MembershipState.PENDING, (newGroup, members) -> {
+                sendMembershipRequests(groupInviteRequest.me.player, newGroup, members);
+                newMembers.addAll(members);
+            });
+            refreshGroupState(group);
+        }
+        return new GroupInviteResponse(group.id, newMembers.stream().map(member -> member.player).collect(Collectors.toList()));
+    }
+
+    /**
+     * Update the player state
+     * @param req to update player position
+     * @return response to send to client
+     */
+    public UpdatePlayerStateResponse updatePosition(UpdatePlayerStateRequest req) {
         List<Group> groups = findGroupsForPlayer(req.me.player);
         groups.forEach(group -> {
             synchronized (group.id) {
                 group = group.updateMemberPosition(req.me.player, req.position);
                 refreshGroupState(group);
-                sendMessageToGroup(req.me.player, group, new UpdateGroupStateResponse(groups).serverMessage());
+                sendMessageToGroup(req.me.player, group, new UpdatePlayerStateResponse(groups).serverMessage());
             }
         });
-        return new UpdateGroupStateResponse(findGroupsForPlayer(req.me.player));
+        return new UpdatePlayerStateResponse(findGroupsForPlayer(req.me.player));
     }
 
     public void updateGroup(String groupId) {
@@ -121,7 +177,7 @@ public final class GroupManager {
                 group.members.values().forEach(member -> {
                     List<Group> groupsForPlayer = findGroupsForPlayer(member.player);
                     if (!groupsForPlayer.isEmpty()) {
-                        sendMessageToGroup(null, group, new UpdateGroupStateResponse(groupsForPlayer).serverMessage());
+                        sendMessageToGroup(null, group, new UpdatePlayerStateResponse(groupsForPlayer).serverMessage());
                     }
                 });
             }

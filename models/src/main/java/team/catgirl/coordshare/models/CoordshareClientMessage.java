@@ -16,24 +16,28 @@ public final class CoordshareClientMessage {
     public final AcceptGroupMembershipRequest acceptGroupMembershipRequest;
     @JsonProperty("leaveGroupRequest")
     public final LeaveGroupRequest leaveGroupRequest;
-    @JsonProperty("updatePositionRequest")
-    public final UpdatePositionRequest updatePositionRequest;
+    @JsonProperty("updatePlayerStateRequest")
+    public final UpdatePlayerStateRequest updatePlayerStateRequest;
     @JsonProperty("ping")
     public final Ping ping;
+    @JsonProperty("groupInviteRequest")
+    public final GroupInviteRequest groupInviteRequest;
 
     public CoordshareClientMessage(
             @JsonProperty("identify") IdentifyRequest identifyRequest,
             @JsonProperty("createGroupRequest") CreateGroupRequest createGroupRequest,
             @JsonProperty("groupMembershipRequest") AcceptGroupMembershipRequest acceptGroupMembershipRequest,
             @JsonProperty("leaveGroupRequest") LeaveGroupRequest leaveGroupRequest,
-            @JsonProperty("updatePositionRequest") UpdatePositionRequest updatePositionRequest,
-            @JsonProperty("ping") Ping ping) {
+            @JsonProperty("updatePlayerStateRequest") UpdatePlayerStateRequest updatePlayerStateRequest,
+            @JsonProperty("ping") Ping ping,
+            @JsonProperty("groupInviteRequest") GroupInviteRequest groupInviteRequest) {
         this.identifyRequest = identifyRequest;
         this.createGroupRequest = createGroupRequest;
         this.acceptGroupMembershipRequest = acceptGroupMembershipRequest;
         this.leaveGroupRequest = leaveGroupRequest;
-        this.updatePositionRequest = updatePositionRequest;
+        this.updatePlayerStateRequest = updatePlayerStateRequest;
         this.ping = ping;
+        this.groupInviteRequest = groupInviteRequest;
     }
 
     public static final class Ping {}
@@ -95,15 +99,30 @@ public final class CoordshareClientMessage {
         }
     }
 
-    public static final class UpdatePositionRequest {
+    public static final class UpdatePlayerStateRequest {
         @JsonProperty("me")
         public final Identity me;
         @JsonProperty("position")
         public final Position position;
 
-        public UpdatePositionRequest(@JsonProperty("me") Identity me, @JsonProperty("position") Position position) {
+        public UpdatePlayerStateRequest(@JsonProperty("me") Identity me, @JsonProperty("position") Position position) {
             this.me = me;
             this.position = position;
+        }
+    }
+
+    public static final class GroupInviteRequest {
+        @JsonProperty("me")
+        public final Identity me;
+        @JsonProperty("groupId")
+        public final String groupId;
+        @JsonProperty("players")
+        public final List<UUID> players;
+
+        public GroupInviteRequest(@JsonProperty("me") Identity me, @JsonProperty("groupId") String groupId, @JsonProperty("players") List<UUID> players) {
+            this.me = me;
+            this.groupId = groupId;
+            this.players = players;
         }
     }
 }

@@ -4,8 +4,8 @@ import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
 import team.catgirl.coordshare.client.CoordshareClient;
 import team.catgirl.coordshare.client.CoordshareListener;
-import team.catgirl.coordshare.models.CoordshareServerMessage;
-import team.catgirl.coordshare.models.CoordshareServerMessage.GroupMembershipRequest;
+import team.catgirl.coordshare.messages.ServerMessage;
+import team.catgirl.coordshare.messages.ServerMessage.GroupMembershipRequest;
 import team.catgirl.coordshare.models.Group;
 import team.catgirl.coordshare.models.Identity;
 import team.catgirl.coordshare.models.Position;
@@ -54,7 +54,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupJoined(CoordshareClient client, CoordshareServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
+        public void onGroupJoined(CoordshareClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
             super.onGroupJoined(client, acceptGroupMembershipResponse);
 
             try {
@@ -65,7 +65,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupCreated(CoordshareClient client, CoordshareServerMessage.CreateGroupResponse resp) {
+        public void onGroupCreated(CoordshareClient client, ServerMessage.CreateGroupResponse resp) {
             super.onGroupCreated(client, resp);
             try {
                 client.updatePosition(createPosition());
@@ -75,7 +75,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+        public void onGroupUpdated(CoordshareClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             super.onGroupUpdated(client, updatePlayerStateResponse);
             try {
                 client.updatePosition(createPosition());
@@ -123,7 +123,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupCreated(CoordshareClient client, CoordshareServerMessage.CreateGroupResponse resp) {
+        public void onGroupCreated(CoordshareClient client, ServerMessage.CreateGroupResponse resp) {
             super.onGroupCreated(client, resp);
             try {
                 client.updatePosition(createPosition());
@@ -133,7 +133,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+        public void onGroupUpdated(CoordshareClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             super.onGroupUpdated(client, updatePlayerStateResponse);
             try {
                 client.updatePosition(createPosition());
@@ -153,7 +153,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupLeft(CoordshareClient client, CoordshareServerMessage.LeaveGroupResponse resp) {
+        public void onGroupLeft(CoordshareClient client, ServerMessage.LeaveGroupResponse resp) {
             super.onGroupLeft(client, resp);
             client.disconnect();
         }
@@ -179,7 +179,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupCreated(CoordshareClient client, CoordshareServerMessage.CreateGroupResponse resp) {
+        public void onGroupCreated(CoordshareClient client, ServerMessage.CreateGroupResponse resp) {
             System.out.println(getPlayerPrefix() + "onGroupCreated " + printGroup(resp.group));
             waitABit();
         }
@@ -191,19 +191,19 @@ public class Example {
         }
 
         @Override
-        public void onGroupJoined(CoordshareClient client, CoordshareServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
+        public void onGroupJoined(CoordshareClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
             System.out.println(getPlayerPrefix() + "onGroupJoined " + printGroup(acceptGroupMembershipResponse.group));
             waitABit();
         }
 
         @Override
-        public void onGroupLeft(CoordshareClient client, CoordshareServerMessage.LeaveGroupResponse resp) {
+        public void onGroupLeft(CoordshareClient client, ServerMessage.LeaveGroupResponse resp) {
             System.out.println(getPlayerPrefix() + "onGroupLeft");
             waitABit();
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+        public void onGroupUpdated(CoordshareClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             StringBuilder sb = new StringBuilder();
             for (Group group : updatePlayerStateResponse.groups) {
                 sb.append(printGroup(group));

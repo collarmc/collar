@@ -1,12 +1,14 @@
-package team.catgirl.coordshare.models;
+package team.catgirl.coordshare.messages;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import team.catgirl.coordshare.models.Group.MembershipState;
+import team.catgirl.coordshare.models.Identity;
+import team.catgirl.coordshare.models.Position;
 
 import java.util.List;
 import java.util.UUID;
 
-public final class CoordshareClientMessage {
+public final class ClientMessage {
 
     @JsonProperty("identify")
     public final IdentifyRequest identifyRequest;
@@ -23,7 +25,7 @@ public final class CoordshareClientMessage {
     @JsonProperty("groupInviteRequest")
     public final GroupInviteRequest groupInviteRequest;
 
-    public CoordshareClientMessage(
+    public ClientMessage(
             @JsonProperty("identify") IdentifyRequest identifyRequest,
             @JsonProperty("createGroupRequest") CreateGroupRequest createGroupRequest,
             @JsonProperty("groupMembershipRequest") AcceptGroupMembershipRequest acceptGroupMembershipRequest,

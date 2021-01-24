@@ -3,9 +3,9 @@ package team.catgirl.coordshare.server.managers;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import org.eclipse.jetty.websocket.api.Session;
-import team.catgirl.coordshare.models.CoordshareClientMessage.*;
-import team.catgirl.coordshare.models.CoordshareServerMessage;
-import team.catgirl.coordshare.models.CoordshareServerMessage.*;
+import team.catgirl.coordshare.messages.ClientMessage.*;
+import team.catgirl.coordshare.messages.ServerMessage;
+import team.catgirl.coordshare.messages.ServerMessage.*;
 import team.catgirl.coordshare.models.Group;
 import team.catgirl.coordshare.models.Group.Member;
 
@@ -189,7 +189,7 @@ public final class GroupManager {
         return groupsById.values().stream().filter(group -> group.members.containsKey(player)).collect(Collectors.toList());
     }
 
-    private void sendMessageToGroup(UUID currentPlayer, Group group, CoordshareServerMessage message) {
+    private void sendMessageToGroup(UUID currentPlayer, Group group, ServerMessage message) {
         synchronized (group.id) {
             group.members.entrySet().stream()
                     .filter(entry -> !entry.getKey().equals(currentPlayer))

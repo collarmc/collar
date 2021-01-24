@@ -3,13 +3,13 @@ package team.catgirl.coordshare.server;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
-import team.catgirl.coordshare.models.Utils;
-import team.catgirl.coordshare.models.CoordshareClientMessage;
-import team.catgirl.coordshare.models.CoordshareServerMessage;
-import team.catgirl.coordshare.models.CoordshareServerMessage.CreateGroupResponse;
-import team.catgirl.coordshare.models.CoordshareServerMessage.IdentificationSuccessful;
-import team.catgirl.coordshare.models.CoordshareServerMessage.LeaveGroupResponse;
-import team.catgirl.coordshare.models.CoordshareServerMessage.UpdatePlayerStateResponse;
+import team.catgirl.coordshare.messages.ServerMessage;
+import team.catgirl.coordshare.utils.Utils;
+import team.catgirl.coordshare.messages.ClientMessage;
+import team.catgirl.coordshare.messages.ServerMessage.CreateGroupResponse;
+import team.catgirl.coordshare.messages.ServerMessage.IdentificationSuccessful;
+import team.catgirl.coordshare.messages.ServerMessage.LeaveGroupResponse;
+import team.catgirl.coordshare.messages.ServerMessage.UpdatePlayerStateResponse;
 import team.catgirl.coordshare.server.http.HttpException;
 import team.catgirl.coordshare.server.managers.GroupManager;
 import team.catgirl.coordshare.server.managers.SessionManager;
@@ -22,7 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static spark.Spark.*;
-import static team.catgirl.coordshare.models.CoordshareServerMessage.*;
+import static team.catgirl.coordshare.messages.ServerMessage.*;
 
 public class Main {
 
@@ -100,7 +100,7 @@ public class Main {
 
         @OnWebSocketMessage
         public void message(Session session, String value) throws IOException {
-            CoordshareClientMessage message = mapper.readValue(value, CoordshareClientMessage.class);
+            ClientMessage message = mapper.readValue(value, ClientMessage.class);
             if (message.identifyRequest != null) {
                 if (message.identifyRequest.identity == null || message.identifyRequest.identity.id == null || message.identifyRequest.identity.player == null) {
                     manager.stopSession(session, "No valid identity", null);
@@ -138,7 +138,7 @@ public class Main {
             }
         }
 
-        public void send(Session session, CoordshareServerMessage o) {
+        public void send(Session session, ServerMessage o) {
             try {
                 String message = mapper.writeValueAsString(o);
                 session.getRemote().sendString(message);

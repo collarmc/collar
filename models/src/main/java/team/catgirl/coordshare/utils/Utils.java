@@ -1,4 +1,4 @@
-package team.catgirl.coordshare.models;
+package team.catgirl.coordshare.utils;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;

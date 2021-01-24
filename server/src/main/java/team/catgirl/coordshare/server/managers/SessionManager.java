@@ -3,7 +3,7 @@ package team.catgirl.coordshare.server.managers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
-import team.catgirl.coordshare.models.CoordshareServerMessage;
+import team.catgirl.coordshare.messages.ServerMessage;
 import team.catgirl.coordshare.models.Identity;
 
 import java.io.IOException;
@@ -46,7 +46,7 @@ public final class SessionManager {
         LOGGER.log(e == null ? Level.INFO : Level.SEVERE, reason, e);
     }
 
-    public void send(Session session, CoordshareServerMessage o) throws IOException {
+    public void send(Session session, ServerMessage o) throws IOException {
         session.getRemote().sendString(mapper.writeValueAsString(o));
     }
 

@@ -8,9 +8,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import team.catgirl.coordshare.models.*;
 import team.catgirl.coordshare.models.Group.MembershipState;
-import team.catgirl.coordshare.models.CoordshareClientMessage;
-import team.catgirl.coordshare.models.CoordshareClientMessage.*;
-import team.catgirl.coordshare.models.CoordshareServerMessage;
+import team.catgirl.coordshare.messages.ClientMessage;
+import team.catgirl.coordshare.messages.ClientMessage.*;
+import team.catgirl.coordshare.messages.ServerMessage;
+import team.catgirl.coordshare.utils.Utils;
 
 import java.io.IOException;
 import java.util.List;
@@ -58,7 +59,7 @@ public final class CoordshareClient {
         keepAliveScheduler = Executors.newScheduledThreadPool(1);
         keepAliveScheduler.scheduleAtFixedRate((Runnable) () -> {
             try {
-                send(new CoordshareClientMessage(null, null, null, null, null, new Ping(), null));
+                send(new ClientMessage(null, null, null, null, null, new Ping(), null));
             } catch (IOException e) {
                 LOGGER.log(Level.SEVERE, "Couldn't send ping");
             }
@@ -108,26 +109,26 @@ public final class CoordshareClient {
 
     public void createGroup(List<UUID> players, Position position) throws IOException {
         CreateGroupRequest req = new CreateGroupRequest(me, players, position);
-        send(new CoordshareClientMessage(null, req, null, null, null, null, null));
+        send(new ClientMessage(null, req, null, null, null, null, null));
     }
 
     public void acceptGroupRequest(String groupId, MembershipState state) throws IOException {
-        send(new CoordshareClientMessage(null, null, new AcceptGroupMembershipRequest(me, groupId, state), null, null, null, null));
+        send(new ClientMessage(null, null, new AcceptGroupMembershipRequest(me, groupId, state), null, null, null, null));
     }
 
     public void leaveGroup(Group group) throws IOException {
-        send(new CoordshareClientMessage(null, null, null, new LeaveGroupRequest(me, group.id), null, null, null));
+        send(new ClientMessage(null, null, null, new LeaveGroupRequest(me, group.id), null, null, null));
     }
 
     public void updatePosition(Position position) throws IOException {
-        send(new CoordshareClientMessage(null, null, null, null, new UpdatePlayerStateRequest(me, position), null, null));
+        send(new ClientMessage(null, null, null, null, new UpdatePlayerStateRequest(me, position), null, null));
     }
 
     public void invite(Group group, List<UUID> players) throws IOException {
-        send(new CoordshareClientMessage(null, null, null, null, null, null, new GroupInviteRequest(me, group.id, players)));
+        send(new ClientMessage(null, null, null, null, null, null, new GroupInviteRequest(me, group.id, players)));
     }
 
-    private void send(CoordshareClientMessage o) throws IOException {
+    private void send(ClientMessage o) throws IOException {
         String message = mapper.writeValueAsString(o);
         webSocket.send(message);
     }
@@ -144,7 +145,7 @@ public final class CoordshareClient {
         public void onOpen(@NotNull WebSocket webSocket, @NotNull Response response) {
             LOGGER.info("onOpen is called");
             super.onOpen(webSocket, response);
-            CoordshareClientMessage message = new CoordshareClientMessage(new IdentifyRequest(me), null, null, null, null, null, null);
+            ClientMessage message = new ClientMessage(new IdentifyRequest(me), null, null, null, null, null, null);
             try {
                 send(message);
             } catch (IOException e) {
@@ -155,9 +156,9 @@ public final class CoordshareClient {
 
         @Override
         public void onMessage(@NotNull WebSocket webSocket, @NotNull String text) {
-            CoordshareServerMessage message;
+            ServerMessage message;
             try {
-                message = mapper.readValue(text, CoordshareServerMessage.class);
+                message = mapper.readValue(text, ServerMessage.class);
             } catch (JsonProcessingException e) {
                 LOGGER.log(Level.SEVERE, "Couldn't parse server message", e);
                 disconnect();
@@ -226,38 +227,38 @@ public final class CoordshareClient {
         }
 
         @Override
-        public void onGroupCreated(CoordshareClient client, CoordshareServerMessage.CreateGroupResponse resp) {
+        public void onGroupCreated(CoordshareClient client, ServerMessage.CreateGroupResponse resp) {
             listener.onGroupCreated(client, resp);
         }
 
         @Override
-        public void onGroupMembershipRequested(CoordshareClient client, CoordshareServerMessage.GroupMembershipRequest resp) {
+        public void onGroupMembershipRequested(CoordshareClient client, ServerMessage.GroupMembershipRequest resp) {
             listener.onGroupMembershipRequested(client, resp);
         }
 
         @Override
-        public void onGroupJoined(CoordshareClient client, CoordshareServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
+        public void onGroupJoined(CoordshareClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
             listener.onGroupJoined(client, acceptGroupMembershipResponse);
         }
 
         @Override
-        public void onGroupLeft(CoordshareClient client, CoordshareServerMessage.LeaveGroupResponse resp) {
+        public void onGroupLeft(CoordshareClient client, ServerMessage.LeaveGroupResponse resp) {
             listener.onGroupLeft(client, resp);
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, CoordshareServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+        public void onGroupUpdated(CoordshareClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             listener.onGroupUpdated(client, updatePlayerStateResponse);
         }
 
         @Override
-        public void onPongReceived(CoordshareServerMessage.Pong pong) {
+        public void onPongReceived(ServerMessage.Pong pong) {
             listener.onPongReceived(pong);
             LOGGER.log(Level.FINE, "Received ping");
         }
 
         @Override
-        public void onGroupInvitesSent(CoordshareClient client, CoordshareServerMessage.GroupInviteResponse resp) {
+        public void onGroupInvitesSent(CoordshareClient client, ServerMessage.GroupInviteResponse resp) {
             listener.onGroupInvitesSent(client, resp);
         }
     }

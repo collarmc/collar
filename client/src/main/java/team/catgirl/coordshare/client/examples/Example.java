@@ -98,7 +98,7 @@ public class Example {
     @NotNull
     private static Position createPosition() {
         Random rd = new Random();
-        return new Position(rd.nextDouble(), rd.nextDouble(), rd.nextDouble());
+        return new Position(rd.nextDouble(), rd.nextDouble(), rd.nextDouble(), Position.Dimension.OVERWORLD);
     }
 
 

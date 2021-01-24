@@ -1,12 +1,13 @@
-package team.catgirl.coordshare.models;
+package team.catgirl.coordshare.messages;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import team.catgirl.coordshare.models.Group;
 
 import java.util.List;
 import java.util.UUID;
 
-public class CoordshareServerMessage {
+public class ServerMessage {
 
     @JsonProperty("identificationSuccessful")
     public final IdentificationSuccessful identificationSuccessful;
@@ -25,7 +26,7 @@ public class CoordshareServerMessage {
     @JsonProperty("groupInviteResponse")
     public final GroupInviteResponse groupInviteResponse;
 
-    public CoordshareServerMessage(
+    public ServerMessage(
             @JsonProperty("identificationSuccessful") IdentificationSuccessful identificationSuccessful,
             @JsonProperty("createGroupResponse") CreateGroupResponse createGroupResponse,
             @JsonProperty("groupMembershipRequest") GroupMembershipRequest groupMembershipRequest,
@@ -46,15 +47,15 @@ public class CoordshareServerMessage {
 
     public static final class Pong {
         @JsonIgnore
-        public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, null, null, null, this, null);
+        public ServerMessage serverMessage() {
+            return new ServerMessage(null, null, null, null, null, null, this, null);
         }
     }
 
     public static final class IdentificationSuccessful {
         @JsonIgnore
-        public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(this, null, null, null, null, null, null, null);
+        public ServerMessage serverMessage() {
+            return new ServerMessage(this, null, null, null, null, null, null, null);
         }
     }
 
@@ -73,8 +74,8 @@ public class CoordshareServerMessage {
         }
 
         @JsonIgnore
-        public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, this, null, null, null, null, null);
+        public ServerMessage serverMessage() {
+            return new ServerMessage(null, null, this, null, null, null, null, null);
         }
     }
 
@@ -87,8 +88,8 @@ public class CoordshareServerMessage {
         }
 
         @JsonIgnore
-        public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, this, null, null, null, null, null, null);
+        public ServerMessage serverMessage() {
+            return new ServerMessage(null, this, null, null, null, null, null, null);
         }
     }
 
@@ -101,8 +102,8 @@ public class CoordshareServerMessage {
         }
 
         @JsonIgnore
-        public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, this, null, null, null, null);
+        public ServerMessage serverMessage() {
+            return new ServerMessage(null, null, null, this, null, null, null, null);
         }
     }
 
@@ -115,8 +116,8 @@ public class CoordshareServerMessage {
         }
 
         @JsonIgnore
-        public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, null, this, null, null, null);
+        public ServerMessage serverMessage() {
+            return new ServerMessage(null, null, null, null, this, null, null, null);
         }
     }
 
@@ -129,8 +130,8 @@ public class CoordshareServerMessage {
         }
 
         @JsonIgnore
-        public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, null, null, this, null, null);
+        public ServerMessage serverMessage() {
+            return new ServerMessage(null, null, null, null, null, this, null, null);
         }
     }
 
@@ -146,8 +147,8 @@ public class CoordshareServerMessage {
         }
 
         @JsonIgnore
-        public CoordshareServerMessage serverMessage() {
-            return new CoordshareServerMessage(null, null, null, null, null, null, null, this);
+        public ServerMessage serverMessage() {
+            return new ServerMessage(null, null, null, null, null, null, null, this);
         }
     }
 }

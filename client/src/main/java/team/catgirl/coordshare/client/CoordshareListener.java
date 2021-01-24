@@ -1,7 +1,7 @@
 package team.catgirl.coordshare.client;
 
-import team.catgirl.coordshare.models.CoordshareServerMessage;
-import team.catgirl.coordshare.models.CoordshareServerMessage.*;
+import team.catgirl.coordshare.messages.ServerMessage;
+import team.catgirl.coordshare.messages.ServerMessage.*;
 
 public interface CoordshareListener {
     default void onSessionCreated(CoordshareClient client) {}
@@ -12,5 +12,5 @@ public interface CoordshareListener {
     default void onGroupLeft(CoordshareClient client, LeaveGroupResponse resp) {};
     default void onGroupUpdated(CoordshareClient client, UpdatePlayerStateResponse resp) {};
     default void onGroupInvitesSent(CoordshareClient client, GroupInviteResponse resp) {};
-    default void onPongReceived(CoordshareServerMessage.Pong pong) {};
+    default void onPongReceived(ServerMessage.Pong pong) {};
 }

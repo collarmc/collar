@@ -22,8 +22,8 @@ public final class Group {
 
     public static Group newGroup(String id, Identity owner, Position ownerPosition, List<UUID> members) {
         ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder()
-                .put(owner.player, new Member(owner.player, MembershipState.ACCEPTED, ownerPosition));
-        members.forEach(uuid -> state.put(uuid, new Member(uuid, MembershipState.PENDING, null)));
+                .put(owner.player, new Member(owner.player, MembershipRole.OWNER, MembershipState.ACCEPTED, ownerPosition));
+        members.forEach(uuid -> state.put(uuid, new Member(uuid, MembershipRole.MEMBER, MembershipState.PENDING, null)));
         return new Group(id, state.build());
     }
 
@@ -34,7 +34,7 @@ public final class Group {
         }
         List<Map.Entry<UUID, Member>> members = this.members.entrySet().stream().filter(entry -> !entry.getKey().equals(uuid)).collect(Collectors.toList());
         ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder().putAll(members);
-        if (newMembershipState != null) {
+        if (newMembershipState != MembershipState.DECLINED) {
             state = state.put(uuid, member.updateMembershipState(newMembershipState));
         }
         return new Group(id, state.build());
@@ -57,31 +57,40 @@ public final class Group {
         return new Group(id, state.build());
     }
 
+    public enum MembershipRole {
+        OWNER,
+        MEMBER
+    }
+
     public enum MembershipState {
         PENDING,
-        ACCEPTED
+        ACCEPTED,
+        DECLINED
     }
 
     public static class Member {
         @JsonProperty("player")
         public final UUID player;
+        @JsonProperty("role")
+        public final MembershipRole membershipRole;
         @JsonProperty("state")
         public final MembershipState membershipState;
         @JsonProperty("location")
         public final Position location;
 
-        public Member(@JsonProperty("player") UUID player, @JsonProperty("state") MembershipState membershipState, @JsonProperty("location") Position location) {
+        public Member(@JsonProperty("player") UUID player, @JsonProperty("role") MembershipRole membershipRole, @JsonProperty("state") MembershipState membershipState, @JsonProperty("location") Position location) {
             this.player = player;
+            this.membershipRole = membershipRole;
             this.membershipState = membershipState;
             this.location = location;
         }
 
         public Member updateMembershipState(MembershipState membershipState) {
-            return new Member(player, membershipState, location);
+            return new Member(player, membershipRole, membershipState, location);
         }
 
         public Member updatePosition(Position position) {
-            return new Member(player, membershipState, position);
+            return new Member(player, membershipRole, membershipState, position);
         }
     }
 }

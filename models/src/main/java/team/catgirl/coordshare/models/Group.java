@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class Group {
@@ -16,9 +15,9 @@ public final class Group {
     @JsonProperty("id")
     public final String id;
     @JsonProperty("members")
-    public final ImmutableMap<UUID, Member> members;
+    public final Map<UUID, Member> members;
 
-    public Group(@JsonProperty("id") String id, @JsonProperty("members") ImmutableMap<UUID, Member> members) {
+    public Group(@JsonProperty("id") String id, @JsonProperty("members") Map<UUID, Member> members) {
         this.id = id;
         this.members = members;
     }

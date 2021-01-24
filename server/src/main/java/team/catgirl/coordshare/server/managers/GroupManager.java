@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,12 +110,12 @@ public final class GroupManager {
      */
     public void sendMembershipRequests(UUID requester, Group group, List<Member> members) {
         synchronized (group.id) {
-            List<Member> memberList = members == null ? group.members.values().asList() : members;
+            Collection<Member> memberList = members == null ? group.members.values() : members;
             memberList.stream().filter(member -> member.membershipState == Group.MembershipState.PENDING).map(member -> member.player).forEach(player -> {
                 Session session = sessionManager.getSession(player);
                 if (session != null) {
                     try {
-                        sessionManager.send(session, new GroupMembershipRequest(group.id, requester, group.members.keySet().asList()).serverMessage());
+                        sessionManager.send(session, new GroupMembershipRequest(group.id, requester, ImmutableList.copyOf(group.members.keySet())).serverMessage());
                     } catch (IOException e) {
                         LOGGER.log(Level.INFO, "Problem sending membership requests", e);
                         sessionManager.stopSession(session, "Could not communicate with player " + player, e);

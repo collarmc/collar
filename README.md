@@ -1,5 +1,11 @@
 # coordshare
 
+Get tracers of player positions to invite only groups of players anywhere in the minecraft world
+
+## Todo
+[ ] Handle when user is in overworld vs nether vs end dimensions
+[ ] End to end encryption
+
 ## Building
 To build run you will need to have Maven 3 installed. 
 

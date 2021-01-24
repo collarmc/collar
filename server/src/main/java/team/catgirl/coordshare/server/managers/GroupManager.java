@@ -79,7 +79,7 @@ public final class GroupManager {
         List<Group> groups = findGroupsForPlayer(player);
         groups.forEach(group -> {
             synchronized (group.id) {
-                group = group.updateMemberState(player, null);
+                group = group.updateMemberState(player, Group.MembershipState.DECLINED);
                 refreshGroupState(group);
             }
         });

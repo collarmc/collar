@@ -157,6 +157,7 @@ public final class GroupManager {
                 groupsById.remove(group.id);
             } else {
                 groupsById.put(group.id, group);
+                updateGroup(group.id);
             }
         }
     }

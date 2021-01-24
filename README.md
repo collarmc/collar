@@ -47,9 +47,9 @@ reobf {
 }
 ```
 
-## Forge example
+## ForgeHax example
 
-You can easily skid this as a forge module like so:
+You can easily skid this as a ForgeHax module like so:
 
 ```
 package com.matt.forgehax.mods;
@@ -74,7 +74,6 @@ import net.minecraft.client.network.NetworkPlayerInfo;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -101,6 +100,15 @@ import java.util.stream.Stream;
 import static com.matt.forgehax.Helper.getModManager;
 import static com.matt.forgehax.Helper.printInform;
 
+/**
+ *  orsond:
+ *  .Coordshare group create [user1] [user2]
+ *  pepsi
+ *  *Orsond wants to share coords with you in group [id]*
+ *  .Coordshare group accept [id]
+ *  .Coordshare group leave [id]
+ *  .Coordshare group add [user]
+ */
 @RegisterMod
 public class CoordShareMod extends ToggleMod {
 
@@ -343,7 +351,10 @@ public class CoordShareMod extends ToggleMod {
   @SubscribeEvent
   public void playerUpdate(LocalPlayerUpdateMovementEvent event) {
     if ((client.isConnected() && groups.size() > 0) && (positionUpdateTimer.isStopped() || positionUpdateTimer.hasTimeElapsed(TimeUnit.SECONDS.toMillis(3)))) {
-      Position pos = positionFromBlockPos(event.getLocalPlayer().getPosition());
+      if (!MC.player.getGameProfile().getId().equals(MC.player.getGameProfile().getId())) {
+        return;
+      }
+      Position pos = playerPosition(event.getLocalPlayer());
       try {
         LOGGER.info("Sending player position " + pos.toString());
         client.updatePosition(pos);
@@ -404,8 +415,7 @@ public class CoordShareMod extends ToggleMod {
       return;
     }
     try {
-      BlockPos position = MC.player.getPosition();
-      Position from = positionFromBlockPos(position);
+      Position from = playerPosition(MC.player);
       client.createGroup(collect, from);
     } catch (IOException e) {
       LOGGER.error("Could not create group", e);
@@ -485,8 +495,8 @@ public class CoordShareMod extends ToggleMod {
     return playerInfo.getGameProfile();
   }
 
-  private static Position positionFromBlockPos(BlockPos pos) {
-    return new Position((double)pos.getX(), (double)pos.getY(), (double)pos.getZ());
+  private static Position playerPosition(EntityPlayer player) {
+    return new Position(player.posX, player.posY, player.posZ, player.dimension);
   }
 
   ///
@@ -509,7 +519,7 @@ public class CoordShareMod extends ToggleMod {
     groups.stream()
         .flatMap(group -> group.members.values().stream())
         .filter(member -> member.location != null)
-        .filter(member -> !MC.player.getGameProfile().getId().equals(member.player))
+        .filter(member -> !MC.player.getGameProfile().getId().equals(member.player) && member.location.dimension == MC.player.dimension)
         .collect(Collectors.toMap(member -> member.player, member -> member, (member, member2) -> member))
         .forEach((s, member) -> drawLine(s, member.location, event));
 
@@ -718,5 +728,4 @@ public class CoordShareMod extends ToggleMod {
     }
   }
 }
-
 ```

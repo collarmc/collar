@@ -3,9 +3,12 @@ package team.catgirl.coordshare.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableMap;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public final class Group {
@@ -55,6 +58,22 @@ public final class Group {
         ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder().putAll(members.entrySet().stream().filter(entry -> !entry.getKey().equals(player)).collect(Collectors.toList()));
         state.put(member.player, member);
         return new Group(id, state.build());
+    }
+
+    public Group addMembers(List<UUID> players, MembershipRole role, MembershipState membershipState, BiConsumer<Group, List<Member>> newMemberConsumer) {
+        ImmutableMap.Builder<UUID, Member> state = ImmutableMap.<UUID, Member>builder()
+                .putAll(this.members);
+        List<Member> newMembers = new ArrayList<>();
+        players.forEach(player -> {
+            if (!this.members.containsKey(player)) {
+                Member newMember = new Member(player, role, membershipState, null);
+                state.put(player, newMember);
+                newMembers.add(newMember);
+            }
+        });
+        Group group = new Group(id, state.build());
+        newMemberConsumer.accept(group, newMembers);
+        return group;
     }
 
     public enum MembershipRole {

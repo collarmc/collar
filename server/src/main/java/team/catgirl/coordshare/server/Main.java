@@ -9,7 +9,7 @@ import team.catgirl.coordshare.models.CoordshareServerMessage;
 import team.catgirl.coordshare.models.CoordshareServerMessage.CreateGroupResponse;
 import team.catgirl.coordshare.models.CoordshareServerMessage.IdentificationSuccessful;
 import team.catgirl.coordshare.models.CoordshareServerMessage.LeaveGroupResponse;
-import team.catgirl.coordshare.models.CoordshareServerMessage.UpdateGroupStateResponse;
+import team.catgirl.coordshare.models.CoordshareServerMessage.UpdatePlayerStateResponse;
 import team.catgirl.coordshare.server.http.HttpException;
 import team.catgirl.coordshare.server.managers.GroupManager;
 import team.catgirl.coordshare.server.managers.SessionManager;
@@ -88,7 +88,7 @@ public class Main {
             LOGGER.log(Level.INFO, "Session closed " + statusCode + " " + reason);
             UUID player = manager.getPlayer(session);
             if (player != null) {
-                groups.removeUser(player);
+                groups.removeUserFromAllGroups(player);
             }
             manager.stopSession(session, "Session closed", null);
         }
@@ -113,7 +113,7 @@ public class Main {
             if (message.createGroupRequest != null) {
                 CreateGroupResponse resp = groups.createGroup(message.createGroupRequest);
                 send(session, resp.serverMessage());
-                groups.sendMembershipRequests(message.createGroupRequest.me.player, resp.group);
+                groups.sendMembershipRequests(message.createGroupRequest.me.player, resp.group, null);
             }
             if (message.acceptGroupMembershipRequest != null) {
                 AcceptGroupMembershipResponse resp = groups.acceptMembership(message.acceptGroupMembershipRequest);
@@ -124,8 +124,12 @@ public class Main {
                 send(session, resp.serverMessage());
                 groups.updateGroup(message.leaveGroupRequest.groupId);
             }
-            if (message.updatePositionRequest != null) {
-                UpdateGroupStateResponse resp = groups.updatePosition(message.updatePositionRequest);
+            if (message.updatePlayerStateRequest != null) {
+                UpdatePlayerStateResponse resp = groups.updatePosition(message.updatePlayerStateRequest);
+                send(session, resp.serverMessage());
+            }
+            if (message.groupInviteRequest != null) {
+                GroupInviteResponse resp = groups.invite(message.groupInviteRequest);
                 send(session, resp.serverMessage());
             }
             if (message.ping != null) {

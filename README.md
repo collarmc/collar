@@ -1,12 +1,19 @@
-# coordshare
+# collar
 
-Get tracers of player positions to invite only groups of players anywhere in the minecraft world
+Online services for minecraft mods.
+
+Including:
+* Coordinate sharing
+* Waypoints
+* Friend lists
 
 ## To-do's
 
 ### Short term
 * End to end encryption (or at least session check?) to verify that sender is who they say they are
 * Tests for `GroupManager` as it is somewhat complicated
+* Group waypoints
+* Friend lists
 
 ### Long term
 * End-to-end functional tests (before switching to redis for state)
@@ -49,6 +56,7 @@ reobf {
 
 ## ForgeHax example
 
+### Coordinate sharing
 You can easily skid this as a ForgeHax module like so:
 
 ```

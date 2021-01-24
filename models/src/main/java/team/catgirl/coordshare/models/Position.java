@@ -10,9 +10,9 @@ public final class Position {
     @JsonProperty("z")
     public final Double z;
     @JsonProperty("dimension")
-    public final Dimension dimension;
+    public final Integer dimension;
 
-    public Position(@JsonProperty("x") Double x, @JsonProperty("y") Double y, @JsonProperty("z") Double z, @JsonProperty("dimension") Dimension dimension) {
+    public Position(@JsonProperty("x") Double x, @JsonProperty("y") Double y, @JsonProperty("z") Double z, @JsonProperty("dimension") Integer dimension) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -26,12 +26,6 @@ public final class Position {
     @Override
     public String toString() {
         return "[" + x + "," + y + "," + z + "]";
-    }
-
-    public enum Dimension {
-        OVERWORLD,
-        NETHER,
-        END
     }
 }
 

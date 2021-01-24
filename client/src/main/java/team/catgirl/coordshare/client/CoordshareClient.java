@@ -2,6 +2,7 @@ package team.catgirl.coordshare.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import com.google.common.util.concurrent.AbstractScheduledService;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,13 @@ public final class CoordshareClient {
     private ScheduledExecutorService keepAliveScheduler;
 
     public CoordshareClient(String baseUrl) {
+        if (Strings.isNullOrEmpty(baseUrl)) {
+            throw new IllegalArgumentException("baseUrl was not set");
+        }
+        // Make sure we don't append the / twice otherwise jetty won't connect to server
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/'));
+        }
         this.baseUrl = baseUrl + "/api/1/";
         this.http = new OkHttpClient();
     }

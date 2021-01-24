@@ -1,10 +1,10 @@
-package team.catgirl.coordshare.server.managers;
+package team.catgirl.collar.server.managers;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
-import team.catgirl.coordshare.messages.ServerMessage;
-import team.catgirl.coordshare.models.Identity;
+import team.catgirl.collar.messages.ServerMessage;
+import team.catgirl.collar.models.Identity;
 
 import java.io.IOException;
 import java.util.UUID;

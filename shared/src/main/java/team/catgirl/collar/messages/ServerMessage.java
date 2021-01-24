@@ -1,8 +1,8 @@
-package team.catgirl.coordshare.messages;
+package team.catgirl.collar.messages;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import team.catgirl.coordshare.models.Group;
+import team.catgirl.collar.models.Group;
 
 import java.util.List;
 import java.util.UUID;

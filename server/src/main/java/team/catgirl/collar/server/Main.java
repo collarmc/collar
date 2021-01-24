@@ -1,18 +1,18 @@
-package team.catgirl.coordshare.server;
+package team.catgirl.collar.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
-import team.catgirl.coordshare.messages.ServerMessage;
-import team.catgirl.coordshare.utils.Utils;
-import team.catgirl.coordshare.messages.ClientMessage;
-import team.catgirl.coordshare.messages.ServerMessage.CreateGroupResponse;
-import team.catgirl.coordshare.messages.ServerMessage.IdentificationSuccessful;
-import team.catgirl.coordshare.messages.ServerMessage.LeaveGroupResponse;
-import team.catgirl.coordshare.messages.ServerMessage.UpdatePlayerStateResponse;
-import team.catgirl.coordshare.server.http.HttpException;
-import team.catgirl.coordshare.server.managers.GroupManager;
-import team.catgirl.coordshare.server.managers.SessionManager;
+import team.catgirl.collar.messages.ServerMessage;
+import team.catgirl.collar.utils.Utils;
+import team.catgirl.collar.messages.ClientMessage;
+import team.catgirl.collar.messages.ServerMessage.CreateGroupResponse;
+import team.catgirl.collar.messages.ServerMessage.IdentificationSuccessful;
+import team.catgirl.collar.messages.ServerMessage.LeaveGroupResponse;
+import team.catgirl.collar.messages.ServerMessage.UpdatePlayerStateResponse;
+import team.catgirl.collar.server.http.HttpException;
+import team.catgirl.collar.server.managers.GroupManager;
+import team.catgirl.collar.server.managers.SessionManager;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -22,7 +22,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static spark.Spark.*;
-import static team.catgirl.coordshare.messages.ServerMessage.*;
+import static team.catgirl.collar.messages.ServerMessage.*;
 
 public class Main {
 

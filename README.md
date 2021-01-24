@@ -27,7 +27,7 @@ Execute:
 
 ## Using in Forge
 
-We need to shadow the client dependency in your Jar and relocate the `team.catgirl.coordshare` package
+We need to shadow the client dependency in your Jar and relocate the `team.catgirl.collar.coordshare` package
 in order to avoid conflicts with other mods.
 
 ```
@@ -35,17 +35,17 @@ repositories {
   mavenLocal()
 }
 dependencies {
-  compile group: 'team.catgirl.coordshare', name: 'client', version: '1.0-SNAPSHOT'
+  compile group: 'team.catgirl.collar.coordshare', name: 'client', version: '1.0-SNAPSHOT'
 }
 apply plugin: 'com.github.johnrengelman.shadow'
 shadowJar {
   // Only shadow fluent-hc
   dependencies {
-    include(dependency('team.catgirl.coordshare:client:.*'))
+    include(dependency('team.catgirl.collar.coordshare:client:.*'))
   }
 
   // Replace com.yourpackage with your mods package
-  relocate 'team.catgirl.coordshare', 'com.yourpackage.team.catgirl.coordshare'
+  relocate 'team.catgirl.collar.coordshare', 'com.yourpackage.team.catgirl.collar.coordshare'
 
   classifier '' // Replace the default JAR
 }
@@ -88,16 +88,16 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import org.apache.logging.log4j.Level;
 import org.lwjgl.opengl.GL11;
-import team.catgirl.coordshare.client.CoordshareClient;
-import team.catgirl.coordshare.client.CoordshareListener;
-import team.catgirl.coordshare.messages.ServerMessage;
-import team.catgirl.coordshare.messages.ServerMessage.CreateGroupResponse;
-import team.catgirl.coordshare.messages.ServerMessage.GroupMembershipRequest;
-import team.catgirl.coordshare.messages.ServerMessage.LeaveGroupResponse;
-import team.catgirl.coordshare.messages.ServerMessage.UpdatePlayerStateResponse;
-import team.catgirl.coordshare.models.Group;
-import team.catgirl.coordshare.models.Identity;
-import team.catgirl.coordshare.models.Position;
+import CoordshareClient;
+import CoordshareListener;
+import team.catgirl.collar.messages.ServerMessage;
+import team.catgirl.collar.messages.ServerMessage.CreateGroupResponse;
+import team.catgirl.collar.messages.ServerMessage.GroupMembershipRequest;
+import team.catgirl.collar.messages.ServerMessage.LeaveGroupResponse;
+import team.catgirl.collar.messages.ServerMessage.UpdatePlayerStateResponse;
+import team.catgirl.collar.models.Group;
+import team.catgirl.collar.models.Identity;
+import team.catgirl.collar.models.Position;
 
 import java.io.IOException;
 import java.util.*;

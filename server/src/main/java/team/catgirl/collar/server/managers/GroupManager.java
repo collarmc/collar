@@ -1,13 +1,13 @@
-package team.catgirl.coordshare.server.managers;
+package team.catgirl.collar.server.managers;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import org.eclipse.jetty.websocket.api.Session;
-import team.catgirl.coordshare.messages.ClientMessage.*;
-import team.catgirl.coordshare.messages.ServerMessage;
-import team.catgirl.coordshare.messages.ServerMessage.*;
-import team.catgirl.coordshare.models.Group;
-import team.catgirl.coordshare.models.Group.Member;
+import team.catgirl.collar.messages.ClientMessage.*;
+import team.catgirl.collar.messages.ServerMessage;
+import team.catgirl.collar.messages.ServerMessage.*;
+import team.catgirl.collar.models.Group;
+import team.catgirl.collar.models.Group.Member;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;

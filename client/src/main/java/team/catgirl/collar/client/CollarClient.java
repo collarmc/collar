@@ -1,4 +1,4 @@
-package team.catgirl.coordshare.client;
+package team.catgirl.collar.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -6,12 +6,12 @@ import com.google.common.base.Strings;
 import okhttp3.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import team.catgirl.coordshare.models.*;
-import team.catgirl.coordshare.models.Group.MembershipState;
-import team.catgirl.coordshare.messages.ClientMessage;
-import team.catgirl.coordshare.messages.ClientMessage.*;
-import team.catgirl.coordshare.messages.ServerMessage;
-import team.catgirl.coordshare.utils.Utils;
+import team.catgirl.collar.models.*;
+import team.catgirl.collar.models.Group.MembershipState;
+import team.catgirl.collar.messages.ClientMessage;
+import team.catgirl.collar.messages.ClientMessage.*;
+import team.catgirl.collar.messages.ServerMessage;
+import team.catgirl.collar.utils.Utils;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,9 +22,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class CoordshareClient {
+public final class CollarClient {
 
-    private static final Logger LOGGER = Logger.getLogger(CoordshareClient.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CollarClient.class.getName());
 
     private final ObjectMapper mapper = Utils.createObjectMapper();
     private final String baseUrl;
@@ -35,7 +35,7 @@ public final class CoordshareClient {
     private boolean connected;
     private ScheduledExecutorService keepAliveScheduler;
 
-    public CoordshareClient(String baseUrl) {
+    public CollarClient(String baseUrl) {
         if (Strings.isNullOrEmpty(baseUrl)) {
             throw new IllegalArgumentException("baseUrl was not set");
         }
@@ -47,7 +47,7 @@ public final class CoordshareClient {
         this.http = new OkHttpClient();
     }
 
-    public void connect(Identity identity, CoordshareListener listener) {
+    public void connect(Identity identity, CollarListener listener) {
         if (this.connected) {
             throw new IllegalStateException("Is already connected");
         }
@@ -71,7 +71,7 @@ public final class CoordshareClient {
             throw new IllegalStateException("Is already disconnected");
         }
         webSocket.close(1000, "Disconnected");
-        CoordshareListener listener = this.listener;
+        CollarListener listener = this.listener;
         this.listener = null;
         this.me = null;
         this.connected = false;
@@ -83,7 +83,7 @@ public final class CoordshareClient {
     public void reconnect() throws InterruptedException {
         Thread.sleep(TimeUnit.SECONDS.toMillis(30));
         Identity oldIdentity = me;
-        CoordshareListener oldListener = listener;
+        CollarListener oldListener = listener;
         disconnect();
         connect(oldIdentity, oldListener);
     }
@@ -135,9 +135,9 @@ public final class CoordshareClient {
 
     class WebSocketListenerImpl extends WebSocketListener {
 
-        private final CoordshareClient client;
+        private final CollarClient client;
 
-        public WebSocketListenerImpl(CoordshareClient client) {
+        public WebSocketListenerImpl(CollarClient client) {
             this.client = client;
         }
 
@@ -208,46 +208,46 @@ public final class CoordshareClient {
         }
     }
 
-    public class DelegatingListener implements CoordshareListener {
-        private final CoordshareListener listener;
+    public class DelegatingListener implements CollarListener {
+        private final CollarListener listener;
 
-        public DelegatingListener(CoordshareListener listener) {
+        public DelegatingListener(CollarListener listener) {
             this.listener = listener;
         }
 
         @Override
-        public void onSessionCreated(CoordshareClient client) {
+        public void onSessionCreated(CollarClient client) {
             listener.onSessionCreated(client);
             connected = true;
         }
 
         @Override
-        public void onDisconnect(CoordshareClient client) {
+        public void onDisconnect(CollarClient client) {
             listener.onDisconnect(client);
         }
 
         @Override
-        public void onGroupCreated(CoordshareClient client, ServerMessage.CreateGroupResponse resp) {
+        public void onGroupCreated(CollarClient client, ServerMessage.CreateGroupResponse resp) {
             listener.onGroupCreated(client, resp);
         }
 
         @Override
-        public void onGroupMembershipRequested(CoordshareClient client, ServerMessage.GroupMembershipRequest resp) {
+        public void onGroupMembershipRequested(CollarClient client, ServerMessage.GroupMembershipRequest resp) {
             listener.onGroupMembershipRequested(client, resp);
         }
 
         @Override
-        public void onGroupJoined(CoordshareClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
+        public void onGroupJoined(CollarClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
             listener.onGroupJoined(client, acceptGroupMembershipResponse);
         }
 
         @Override
-        public void onGroupLeft(CoordshareClient client, ServerMessage.LeaveGroupResponse resp) {
+        public void onGroupLeft(CollarClient client, ServerMessage.LeaveGroupResponse resp) {
             listener.onGroupLeft(client, resp);
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+        public void onGroupUpdated(CollarClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             listener.onGroupUpdated(client, updatePlayerStateResponse);
         }
 
@@ -258,7 +258,7 @@ public final class CoordshareClient {
         }
 
         @Override
-        public void onGroupInvitesSent(CoordshareClient client, ServerMessage.GroupInviteResponse resp) {
+        public void onGroupInvitesSent(CollarClient client, ServerMessage.GroupInviteResponse resp) {
             listener.onGroupInvitesSent(client, resp);
         }
     }

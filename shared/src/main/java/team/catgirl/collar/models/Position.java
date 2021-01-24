@@ -1,4 +1,4 @@
-package team.catgirl.coordshare.models;
+package team.catgirl.collar.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>parent</artifactId>
-        <groupId>team.catgirl.coordshare</groupId>
+        <groupId>team.catgirl.collar</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -12,15 +12,15 @@
     <artifactId>client</artifactId>
     <dependencies>
         <dependency>
-            <groupId>team.catgirl.coordshare</groupId>
-            <artifactId>models</artifactId>
+            <groupId>team.catgirl.collar</groupId>
+            <artifactId>shared</artifactId>
         </dependency>
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
         </dependency>
         <dependency>
-            <groupId>team.catgirl.coordshare</groupId>
+            <groupId>team.catgirl.collar</groupId>
             <artifactId>server</artifactId>
             <scope>test</scope>
         </dependency>
@@ -54,27 +54,27 @@
                     <relocations>
                         <relocation>
                             <pattern>kotlin</pattern>
-                            <shadedPattern>team.catgirl.coordshare.kotlin</shadedPattern>
+                            <shadedPattern>team.catgirl.collar.coordshare.kotlin</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>okhttp3</pattern>
-                            <shadedPattern>team.catgirl.coordshare.okhttp3</shadedPattern>
+                            <shadedPattern>team.catgirl.collar.coordshare.okhttp3</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>okio</pattern>
-                            <shadedPattern>team.catgirl.coordshare.okio</shadedPattern>
+                            <shadedPattern>team.catgirl.collar.coordshare.okio</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.jetbrains</pattern>
-                            <shadedPattern>team.catgirl.coordshare.org.jetbrains</shadedPattern>
+                            <shadedPattern>team.catgirl.collar.coordshare.org.jetbrains</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.intellij</pattern>
-                            <shadedPattern>team.catgirl.coordshare.org.intellij</shadedPattern>
+                            <shadedPattern>team.catgirl.collar.coordshare.org.intellij</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.fasterxml</pattern>
-                            <shadedPattern>team.catgirl.coordshare.org.fasterxml</shadedPattern>
+                            <shadedPattern>team.catgirl.collar.coordshare.org.fasterxml</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

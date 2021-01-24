@@ -1,14 +1,14 @@
-package team.catgirl.coordshare.client.examples;
+package team.catgirl.collar.client.examples;
 
 import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
-import team.catgirl.coordshare.client.CoordshareClient;
-import team.catgirl.coordshare.client.CoordshareListener;
-import team.catgirl.coordshare.messages.ServerMessage;
-import team.catgirl.coordshare.messages.ServerMessage.GroupMembershipRequest;
-import team.catgirl.coordshare.models.Group;
-import team.catgirl.coordshare.models.Identity;
-import team.catgirl.coordshare.models.Position;
+import team.catgirl.collar.client.CollarClient;
+import team.catgirl.collar.client.CollarListener;
+import team.catgirl.collar.messages.ServerMessage;
+import team.catgirl.collar.messages.ServerMessage.GroupMembershipRequest;
+import team.catgirl.collar.models.Group;
+import team.catgirl.collar.models.Identity;
+import team.catgirl.collar.models.Position;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -21,12 +21,12 @@ public class Example {
     public static void main(String[] args) throws Exception {
         String baseUrl = "http://localhost:3000";
 
-        CoordshareClient client1 = new CoordshareClient(baseUrl);
+        CollarClient client1 = new CollarClient(baseUrl);
         UUID player1 = UUID.randomUUID();
         System.out.println("Player1 " + player1);
         client1.connect(Identity.from("client1", player1), new Listener1(player1));
 
-        CoordshareClient client2 = new CoordshareClient(baseUrl);
+        CollarClient client2 = new CollarClient(baseUrl);
         UUID player2 = UUID.randomUUID();
         System.out.println("Player2 " + player2);
         client2.connect(Identity.from("client2", player2), new Listener2(player2, player1));
@@ -37,14 +37,14 @@ public class Example {
         }
     }
 
-    public static class Listener1 extends AbstractCoordshareListener {
+    public static class Listener1 extends AbstractCollarListener {
 
         public Listener1(UUID currentPlayer) {
             super(currentPlayer);
         }
 
         @Override
-        public void onGroupMembershipRequested(CoordshareClient client, GroupMembershipRequest resp) {
+        public void onGroupMembershipRequested(CollarClient client, GroupMembershipRequest resp) {
             super.onGroupMembershipRequested(client, resp);
             try {
                 client.acceptGroupRequest(resp.groupId, Group.MembershipState.ACCEPTED);
@@ -54,7 +54,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupJoined(CoordshareClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
+        public void onGroupJoined(CollarClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
             super.onGroupJoined(client, acceptGroupMembershipResponse);
 
             try {
@@ -65,7 +65,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupCreated(CoordshareClient client, ServerMessage.CreateGroupResponse resp) {
+        public void onGroupCreated(CollarClient client, ServerMessage.CreateGroupResponse resp) {
             super.onGroupCreated(client, resp);
             try {
                 client.updatePosition(createPosition());
@@ -75,7 +75,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+        public void onGroupUpdated(CollarClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             super.onGroupUpdated(client, updatePlayerStateResponse);
             try {
                 client.updatePosition(createPosition());
@@ -102,7 +102,7 @@ public class Example {
     }
 
 
-    public static class Listener2 extends AbstractCoordshareListener {
+    public static class Listener2 extends AbstractCollarListener {
 
         private final UUID player1;
         private int count = 0;
@@ -113,7 +113,7 @@ public class Example {
         }
 
         @Override
-        public void onSessionCreated(CoordshareClient client) {
+        public void onSessionCreated(CollarClient client) {
             super.onSessionCreated(client);
             try {
                 client.createGroup(ImmutableList.of(player1), createPosition());
@@ -123,7 +123,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupCreated(CoordshareClient client, ServerMessage.CreateGroupResponse resp) {
+        public void onGroupCreated(CollarClient client, ServerMessage.CreateGroupResponse resp) {
             super.onGroupCreated(client, resp);
             try {
                 client.updatePosition(createPosition());
@@ -133,7 +133,7 @@ public class Example {
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+        public void onGroupUpdated(CollarClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             super.onGroupUpdated(client, updatePlayerStateResponse);
             try {
                 client.updatePosition(createPosition());
@@ -153,57 +153,57 @@ public class Example {
         }
 
         @Override
-        public void onGroupLeft(CoordshareClient client, ServerMessage.LeaveGroupResponse resp) {
+        public void onGroupLeft(CollarClient client, ServerMessage.LeaveGroupResponse resp) {
             super.onGroupLeft(client, resp);
             client.disconnect();
         }
     }
 
-    public abstract static class AbstractCoordshareListener implements CoordshareListener {
+    public abstract static class AbstractCollarListener implements CollarListener {
         private final UUID currentPlayer;
 
-        public AbstractCoordshareListener(UUID currentPlayer) {
+        public AbstractCollarListener(UUID currentPlayer) {
             this.currentPlayer = currentPlayer;
         }
 
         @Override
-        public void onSessionCreated(CoordshareClient client) {
+        public void onSessionCreated(CollarClient client) {
             System.out.println(getPlayerPrefix() + "onSessionCreated");
             waitABit();
         }
 
         @Override
-        public void onDisconnect(CoordshareClient client) {
+        public void onDisconnect(CollarClient client) {
             System.out.println(getPlayerPrefix() + "onDisconnect");
             waitABit();
         }
 
         @Override
-        public void onGroupCreated(CoordshareClient client, ServerMessage.CreateGroupResponse resp) {
+        public void onGroupCreated(CollarClient client, ServerMessage.CreateGroupResponse resp) {
             System.out.println(getPlayerPrefix() + "onGroupCreated " + printGroup(resp.group));
             waitABit();
         }
 
         @Override
-        public void onGroupMembershipRequested(CoordshareClient client, GroupMembershipRequest resp) {
+        public void onGroupMembershipRequested(CollarClient client, GroupMembershipRequest resp) {
             System.out.println(getPlayerPrefix() + "onGroupMembershipRequested " + resp.groupId);
             waitABit();
         }
 
         @Override
-        public void onGroupJoined(CoordshareClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
+        public void onGroupJoined(CollarClient client, ServerMessage.AcceptGroupMembershipResponse acceptGroupMembershipResponse) {
             System.out.println(getPlayerPrefix() + "onGroupJoined " + printGroup(acceptGroupMembershipResponse.group));
             waitABit();
         }
 
         @Override
-        public void onGroupLeft(CoordshareClient client, ServerMessage.LeaveGroupResponse resp) {
+        public void onGroupLeft(CollarClient client, ServerMessage.LeaveGroupResponse resp) {
             System.out.println(getPlayerPrefix() + "onGroupLeft");
             waitABit();
         }
 
         @Override
-        public void onGroupUpdated(CoordshareClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
+        public void onGroupUpdated(CollarClient client, ServerMessage.UpdatePlayerStateResponse updatePlayerStateResponse) {
             StringBuilder sb = new StringBuilder();
             for (Group group : updatePlayerStateResponse.groups) {
                 sb.append(printGroup(group));

@@ -1,4 +1,4 @@
-package team.catgirl.coordshare.server.http;
+package team.catgirl.collar.server.http;
 
 public abstract class HttpException extends RuntimeException {
     public final int code;

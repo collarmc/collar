@@ -204,23 +204,26 @@ public final class Collar {
                 sendRequest(webSocket, IdentifyRequest.unknown());
             }
             // Start the keep alive
-            this.keepAlive = new KeepAlive(webSocket);
+            this.keepAlive = new KeepAlive(this, webSocket);
             this.keepAlive.start(null);
         }
 
         private ResettableClientIdentityStore getOrCreateIdentityKeyStore(WebSocket webSocket, UUID owner) {
-            return new ResettableClientIdentityStore(() -> SignalClientIdentityStore.from(owner, home, signalProtocolStore -> {
+            if (IdentityState.exists(home)) {
+                owner = IdentityState.read(home).owner;
+            }
+            UUID finalOwner = owner;
+            return new ResettableClientIdentityStore(() -> SignalClientIdentityStore.from(finalOwner, home, signalProtocolStore -> {
                 LOGGER.log(Level.INFO, "New installation. Registering device with server...");
                 IdentityKey publicKey = signalProtocolStore.getIdentityKeyPair().getPublicKey();
-                new IdentityState(owner).write(home);
-                ClientIdentity clientIdentity = new ClientIdentity(owner, new PublicKey(publicKey.getFingerprint(), publicKey.serialize()));
+                new IdentityState(finalOwner).write(home);
+                ClientIdentity clientIdentity = new ClientIdentity(finalOwner, new PublicKey(publicKey.getFingerprint(), publicKey.serialize()));
                 IdentifyRequest request = new IdentifyRequest(clientIdentity);
                 sendRequest(webSocket, request);
             }, (store) -> {
                 LOGGER.log(Level.INFO, "Existing installation. Loading the store and identifying with server");
                 IdentityKey publicKey = store.getIdentityKeyPair().getPublicKey();
-                IdentityState identityState = IdentityState.read(home);
-                ClientIdentity clientIdentity = new ClientIdentity(identityState.owner, new PublicKey(publicKey.getFingerprint(), publicKey.serialize()));
+                ClientIdentity clientIdentity = new ClientIdentity(finalOwner, new PublicKey(publicKey.getFingerprint(), publicKey.serialize()));
                 IdentifyRequest request = new IdentifyRequest(clientIdentity);
                 sendRequest(webSocket, request);
             }));
@@ -249,11 +252,13 @@ public final class Collar {
                 IdentifyResponse response = (IdentifyResponse) resp;
                 if (identityStore == null) {
                     identityStore = getOrCreateIdentityKeyStore(webSocket, response.profile.id);
-                    identity = identityStore.currentIdentity();
                     StartSessionRequest request = new StartSessionRequest(identity, minecraftSession);
                     sendRequest(webSocket, request);
                     keepAlive.stop();
                     keepAlive.start(identity);
+                } else {
+                    StartSessionRequest request = new StartSessionRequest(identity, minecraftSession);
+                    sendRequest(webSocket, request);
                 }
             } else if (resp instanceof KeepAliveResponse) {
                 LOGGER.log(Level.INFO, "KeepAliveResponse received");
@@ -319,7 +324,7 @@ public final class Collar {
             return resp;
         }
 
-        void sendRequest(WebSocket webSocket, ProtocolRequest req) {
+        public void sendRequest(WebSocket webSocket, ProtocolRequest req) {
             if (state == State.CONNECTED) {
                 Cypher cypher = identityStore.createCypher();
                 byte[] bytes;

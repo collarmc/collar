@@ -1,7 +1,7 @@
 package team.catgirl.collar.security.signal;
 
 import org.whispersystems.libsignal.*;
-import org.whispersystems.libsignal.protocol.PreKeySignalMessage;
+import org.whispersystems.libsignal.protocol.SignalMessage;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import team.catgirl.collar.security.Cypher;
 import team.catgirl.collar.security.Identity;
@@ -24,8 +24,8 @@ public class SignalCypher implements Cypher {
     public byte[] decrypt(Identity identity, byte[] bytes) {
         SessionCipher sessionCipher = new SessionCipher(store, signalProtocolAddressFrom(identity));
         try {
-            return sessionCipher.decrypt(new PreKeySignalMessage(bytes));
-        } catch (DuplicateMessageException | LegacyMessageException | InvalidMessageException | InvalidKeyIdException | InvalidKeyException | UntrustedIdentityException | InvalidVersionException e) {
+            return sessionCipher.decrypt(new SignalMessage(bytes));
+        } catch (DuplicateMessageException | LegacyMessageException | InvalidMessageException | NoSessionException e) {
             throw new IllegalStateException(e);
         }
     }

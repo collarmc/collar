@@ -1,6 +1,5 @@
 package team.catgirl.collar.server.services.authentication;
 
-import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.api.http.HttpException.BadRequestException;
@@ -74,8 +73,7 @@ public class AuthenticationService {
             // Do not leak existence of account by letting NotFoundException propagate
             throw new UnauthorisedException("login failed");
         }
-        BCrypt.Result result = passwordHashing.verifyer().verify(req.password.toCharArray(), Objects.requireNonNull(profile.hashedPassword).toCharArray());
-        if (result.verified) {
+        if (passwordHashing.verify(req.password.toCharArray(), Objects.requireNonNull(profile.hashedPassword).toCharArray())) {
             return new LoginResponse(profile, tokenFrom(profile));
         } else {
             throw new UnauthorisedException("login failed");

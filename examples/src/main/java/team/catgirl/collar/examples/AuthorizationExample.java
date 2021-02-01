@@ -4,7 +4,6 @@ import com.google.common.io.Files;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.CollarListener;
 import team.catgirl.collar.client.security.ClientIdentityStore;
-import team.catgirl.collar.protocol.devices.RegisterDeviceResponse;
 import team.catgirl.collar.security.mojang.MinecraftSession;
 
 import java.io.File;
@@ -18,8 +17,8 @@ public class AuthorizationExample {
         MinecraftSession minecraftSession = MinecraftSession.from(username, password, "smp.catgirl.team");
         Collar collar = Collar.create(minecraftSession, "http://localhost:3000/", file, new CollarListener() {
             @Override
-            public void onConfirmDeviceRegistration(Collar collar, RegisterDeviceResponse resp) {
-                System.out.println("Please follow the following link to confirm: " + resp.approvalUrl);
+            public void onConfirmDeviceRegistration(Collar collar, String approvalUrl) {
+                System.out.println("Please follow the following link to confirm: " + approvalUrl);
             }
 
             @Override

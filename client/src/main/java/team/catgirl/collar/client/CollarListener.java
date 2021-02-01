@@ -1,15 +1,14 @@
 package team.catgirl.collar.client;
 
 import team.catgirl.collar.client.security.ClientIdentityStore;
-import team.catgirl.collar.protocol.devices.RegisterDeviceResponse;
 
 public interface CollarListener {
     /**
      * Fired on new installation, to confirm that the device is trusted with an authorized collar user
      * @param collar client
-     * @param resp response
+     * @param approvalUrl for the user to follow and approve installation on the collar server website
      */
-    default void onConfirmDeviceRegistration(Collar collar, RegisterDeviceResponse resp) {}
+    default void onConfirmDeviceRegistration(Collar collar, String approvalUrl) {}
 
     /**
      * Fired when the state of the client changes

@@ -125,7 +125,7 @@ public class Main {
                     get("/:id", (request, response) -> {
                         String id = request.params("id");
                         UUID uuid = UUID.fromString(id);
-                        return profiles.getProfile(RequestContext.from(request), GetProfileRequest.byId(uuid)).profile.toPublic();
+                        return profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(uuid)).profile.toPublic();
                     });
                     get("/devices", (request, response) -> {
                         return devices.findDevices(RequestContext.from(request), mapper.readValue(request.bodyAsBytes(), FindDevicesRequest.class));

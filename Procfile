@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -jar server/target/server-1.0-SNAPSHOT.jar team.catgirl.collar.server.Main environment
+web: java $JAVA_OPTS -jar server/target/server-1.0-SNAPSHOT.jar environment

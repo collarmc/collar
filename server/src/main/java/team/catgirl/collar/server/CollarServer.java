@@ -83,7 +83,7 @@ public class CollarServer {
     @OnWebSocketMessage
     public void message(Session session, String value) throws IOException {
         LOGGER.log(Level.INFO, "Received message " + value);
-        ProtocolRequest req = mapper.readValue(value, ProtocolRequest.class);
+        ProtocolRequest req = read(session, value);
         ServerIdentity serverIdentity = identityStore.getIdentity();
         if (req instanceof KeepAliveRequest) {
             LOGGER.log(Level.INFO, "KeepAliveRequest received. Sending KeepAliveRequest.");
@@ -135,6 +135,24 @@ public class CollarServer {
                     .map(protocolHandler -> protocolHandler.handleRequest(this, req, response -> send(session, response)))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("message received was not understood"));
+        }
+    }
+
+    public ProtocolRequest read(Session session, String message) {
+        if (BaseEncoding.base64().canDecode(message)) {
+            ClientIdentity identity = sessions.getIdentity(session);
+            byte[] decrypt = identityStore.createCypher().decrypt(identity, message.getBytes());
+            try {
+                return mapper.readValue(decrypt, ProtocolRequest.class);
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not read message", e);
+            }
+        } else {
+            try {
+                return mapper.readValue(message, ProtocolRequest.class);
+            } catch (JsonProcessingException e) {
+                throw new IllegalStateException("Could not read message", e);
+            }
         }
     }
 

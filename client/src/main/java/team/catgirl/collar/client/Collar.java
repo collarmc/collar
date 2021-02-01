@@ -58,6 +58,7 @@ public final class Collar {
     private final HomeDirectory home;
     private final CollarListener listener;
     private final OkHttpClient http;
+    private final GroupsFeature groupsFeature;
     private WebSocket webSocket;
     private State state;
     private final Map<Class<?>, AbstractFeature<? extends ApiListener>> features;
@@ -74,7 +75,8 @@ public final class Collar {
         changeState(State.DISCONNECTED);
         this.features = new HashMap<>();
         this.identityStoreSupplier = () -> identityStore;
-        this.features.put(GroupsFeature.class, new GroupsFeature(this, identityStoreSupplier, request -> sender.accept(request)));
+        this.groupsFeature = new GroupsFeature(this, identityStoreSupplier, request -> sender.accept(request));
+        this.features.put(GroupsFeature.class, groupsFeature);
     }
 
     /**
@@ -121,7 +123,7 @@ public final class Collar {
      * @return groups api
      */
     public GroupsFeature groups() {
-        return (GroupsFeature)features.get(GroupsFeature.class);
+        return groupsFeature;
     }
 
     public State getState() {

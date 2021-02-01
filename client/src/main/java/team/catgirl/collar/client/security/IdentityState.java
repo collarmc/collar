@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 /**
- * Holds state about the identities Collar profile
+ * Holds state about the authorized identity's Collar profile
  */
 public final class IdentityState {
     @JsonProperty("owner")

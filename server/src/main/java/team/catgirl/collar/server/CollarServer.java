@@ -87,7 +87,7 @@ public class CollarServer {
         ServerIdentity serverIdentity = identityStore.getIdentity();
         if (req instanceof KeepAliveRequest) {
             LOGGER.log(Level.INFO, "KeepAliveRequest received. Sending KeepAliveRequest.");
-            sendPlain(session, new KeepAliveResponse(serverIdentity));
+            send(session, new KeepAliveResponse(serverIdentity));
         } else if (req instanceof IdentifyRequest) {
             IdentifyRequest request = (IdentifyRequest)req;
             if (request.identity == null) {
@@ -141,6 +141,9 @@ public class CollarServer {
     public ProtocolRequest read(Session session, String message) {
         if (BaseEncoding.base64().canDecode(message)) {
             ClientIdentity identity = sessions.getIdentity(session);
+            if (identity == null) {
+                throw new IllegalStateException("session not started");
+            }
             byte[] decrypt = identityStore.createCypher().decrypt(identity, message.getBytes());
             try {
                 return mapper.readValue(decrypt, ProtocolRequest.class);
@@ -167,7 +170,7 @@ public class CollarServer {
             String message;
             if (sessions.isIdentified(session)) {
                 ClientIdentity clientIdentity = sessions.getIdentity(session);
-                byte[] bytes = new byte[0];
+                byte[] bytes;
                 try {
                     bytes = identityStore.createCypher().crypt(clientIdentity, mapper.writeValueAsBytes(resp));
                 } catch (JsonProcessingException e) {

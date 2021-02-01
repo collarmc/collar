@@ -1,6 +1,5 @@
 package team.catgirl.collar.examples;
 
-import com.google.common.io.Files;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.CollarListener;
@@ -18,7 +17,7 @@ public class GroupsExample {
     public static void main(String[] args) throws Exception {
         String username = args[0];
         String password = args[1];
-        File file = Files.createTempDir();
+        File file = new File("~/");
         MinecraftSession minecraftSession = MinecraftSession.from(username, password, "smp.catgirl.team");
 
         GroupListener listener = new GroupListener() {

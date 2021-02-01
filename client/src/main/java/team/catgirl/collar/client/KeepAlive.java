@@ -1,11 +1,11 @@
 package team.catgirl.collar.client;
 
 import okhttp3.WebSocket;
+import team.catgirl.collar.client.Collar.CollarWebSocket;
+import team.catgirl.collar.client.CollarException.ConnectionException;
 import team.catgirl.collar.protocol.keepalive.KeepAliveRequest;
 import team.catgirl.collar.security.ClientIdentity;
-import team.catgirl.collar.utils.Utils;
 
-import java.io.IOException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -19,8 +19,10 @@ final class KeepAlive {
     private static final Logger LOGGER = Logger.getLogger(KeepAlive.class.getName());
     private final WebSocket webSocket;
     private ScheduledExecutorService scheduler;
+    private final CollarWebSocket collarWebSocket;
 
-    public KeepAlive(WebSocket webSocket) {
+    public KeepAlive(CollarWebSocket collarWebSocket, WebSocket webSocket) {
+        this.collarWebSocket = collarWebSocket;
         this.webSocket = webSocket;
     }
 
@@ -28,8 +30,9 @@ final class KeepAlive {
         scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                webSocket.send(Utils.createObjectMapper().writeValueAsString(new KeepAliveRequest(identity)));
-            } catch (IOException e) {
+                KeepAliveRequest keepAliveRequest = new KeepAliveRequest(identity);
+                collarWebSocket.sendRequest(webSocket, keepAliveRequest);
+            } catch (ConnectionException e) {
                 LOGGER.log(Level.SEVERE, "Couldn't send KeepAliveRequest", e);
                 webSocket.close(1000, "Keep alive failed");
             }

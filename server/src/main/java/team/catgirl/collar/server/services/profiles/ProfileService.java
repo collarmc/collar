@@ -1,6 +1,5 @@
 package team.catgirl.collar.server.services.profiles;
 
-import at.favre.lib.crypto.bcrypt.BCrypt;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -10,8 +9,8 @@ import org.bson.Document;
 import team.catgirl.collar.api.http.HttpException.BadRequestException;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
 import team.catgirl.collar.api.http.HttpException.ServerErrorException;
-import team.catgirl.collar.security.KeyPair.PublicKey;
 import team.catgirl.collar.server.http.RequestContext;
+import team.catgirl.collar.server.security.hashing.PasswordHashing;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,18 +28,20 @@ public class ProfileService {
     private static final String FIELD_HASHED_PASSWORD = "hashedPassword";
 
     private final MongoCollection<Document> docs;
+    private final PasswordHashing passwordHashing;
 
-    public ProfileService(MongoDatabase db) {
+    public ProfileService(MongoDatabase db, PasswordHashing passwordHashing) {
         this.docs = db.getCollection("profiles");
         Map<String, Object> index = new HashMap<>();
         index.put(FIELD_PROFILE_ID, 1);
         index.put(FIELD_EMAIL, 1);
         docs.createIndex(new Document(index));
+        this.passwordHashing = passwordHashing;
     }
 
     public CreateProfileResponse createProfile(RequestContext context, CreateProfileRequest req) {
-        // TODO: use a salt
-        String hashedPassword = BCrypt.withDefaults().hashToString(12, req.password.toCharArray());
+        context.assertAnonymous();
+        String hashedPassword = passwordHashing.hash(req.password);
         Map<String, Object> state = new HashMap<>();
         state.put(FIELD_PROFILE_ID, UUID.randomUUID());
         state.put(FIELD_NAME, req.name);
@@ -100,24 +101,18 @@ public class ProfileService {
     public static class GetProfileRequest {
         public final UUID byId;
         public final String byEmail;
-        private final PublicKey byPublicKey;
 
-        public GetProfileRequest(UUID byId, String byEmail, PublicKey byPublicKey) {
+        public GetProfileRequest(UUID byId, String byEmail) {
             this.byId = byId;
             this.byEmail = byEmail;
-            this.byPublicKey = byPublicKey;
         }
 
         public static GetProfileRequest byId(UUID uuid) {
-            return new GetProfileRequest(uuid, null, null);
+            return new GetProfileRequest(uuid, null);
         }
 
         public static GetProfileRequest byEmail(String email) {
-            return new GetProfileRequest(null, email, null);
-        }
-
-        public static GetProfileRequest byPublicKey(PublicKey publicKey) {
-            return new GetProfileRequest(null, null, publicKey);
+            return new GetProfileRequest(null, email);
         }
     }
 

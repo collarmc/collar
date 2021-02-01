@@ -11,6 +11,7 @@ import team.catgirl.collar.api.http.HttpException.UnauthorisedException;
 import team.catgirl.collar.api.http.ServerStatusResponse;
 import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.server.common.ServerVersion;
+import team.catgirl.collar.server.configuration.Configuration;
 import team.catgirl.collar.server.http.*;
 import team.catgirl.collar.server.mongo.Mongo;
 import team.catgirl.collar.server.protocol.GroupsProtocolHandler;
@@ -18,7 +19,6 @@ import team.catgirl.collar.server.protocol.ProtocolHandler;
 import team.catgirl.collar.server.security.ServerIdentityStore;
 import team.catgirl.collar.server.security.hashing.PasswordHashing;
 import team.catgirl.collar.server.security.mojang.MinecraftSessionVerifier;
-import team.catgirl.collar.server.security.mojang.MojangMinecraftSessionVerifier;
 import team.catgirl.collar.server.security.signal.SignalServerIdentityStore;
 import team.catgirl.collar.server.services.authentication.AuthenticationService;
 import team.catgirl.collar.server.services.authentication.AuthenticationService.CreateAccountRequest;
@@ -62,19 +62,18 @@ public class Main {
         // Services
         MongoDatabase db = Mongo.database();
 
+        Configuration configuration = args.length > 0 && "environment".equals(args[0]) ? Configuration.fromEnvironment() : Configuration.defaultConfiguration();
+
         ObjectMapper mapper = Utils.createObjectMapper();
-        // TODO: make configurable
-        AppUrlProvider urlProvider = new DefaultAppUrlProvider("http://localhost:3000");
+        AppUrlProvider urlProvider = configuration.appUrlProvider;
         SessionManager sessions = new SessionManager(mapper);
         ServerIdentityStore serverIdentityStore = new SignalServerIdentityStore(db);
-        ProfileService profiles = new ProfileService(db);
+        PasswordHashing passwordHashing = configuration.passwordHashing;
+        ProfileService profiles = new ProfileService(db, passwordHashing);
         DeviceService devices = new DeviceService(db);
-        // TODO: pass this in as configuration
-        TokenCrypter tokenCrypter = new TokenCrypter("mycoolpassword");
-        PasswordHashing passwordHashing = new PasswordHashing();
+        TokenCrypter tokenCrypter = configuration.tokenCrypter;
         AuthenticationService auth = new AuthenticationService(profiles, passwordHashing, tokenCrypter);
-        // TODO: make configurable
-        MinecraftSessionVerifier minecraftSessionVerifier = new MojangMinecraftSessionVerifier();
+        MinecraftSessionVerifier minecraftSessionVerifier = configuration.minecraftSessionVerifier;
 
         // Collar feature services
         GroupService groups = new GroupService(serverIdentityStore.getIdentity(), sessions);

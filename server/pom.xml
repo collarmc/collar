@@ -22,6 +22,11 @@
             <version>2.9.3</version>
         </dependency>
         <dependency>
+            <groupId>com.sparkjava</groupId>
+            <artifactId>spark-template-handlebars</artifactId>
+            <version>2.7.1</version>
+        </dependency>
+        <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
         </dependency>
@@ -32,10 +37,6 @@
         <dependency>
             <groupId>org.mongodb</groupId>
             <artifactId>mongodb-driver-sync</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.whispersystems</groupId>
-            <artifactId>signal-service-java</artifactId>
         </dependency>
         <dependency>
             <groupId>at.favre.lib</groupId>

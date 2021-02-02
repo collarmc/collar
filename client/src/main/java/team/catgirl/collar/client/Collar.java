@@ -43,6 +43,7 @@ import team.catgirl.collar.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -54,10 +55,7 @@ public final class Collar {
 
     private static final CollarVersion VERSION = new CollarVersion(0, 1);
 
-    private final MinecraftSession minecraftSession;
-    private final UrlBuilder baseUrl;
-    private final HomeDirectory home;
-    private final CollarListener listener;
+    private final CollarConfiguration configuration;
     private final OkHttpClient http;
     private final GroupsFeature groupsFeature;
     private WebSocket webSocket;
@@ -65,14 +63,11 @@ public final class Collar {
     private final Map<Class<?>, AbstractFeature<? extends ApiListener>> features;
     private Consumer<ProtocolRequest> sender;
     private ResettableClientIdentityStore identityStore;
-    private Supplier<ClientIdentityStore> identityStoreSupplier;
+    private final Supplier<ClientIdentityStore> identityStoreSupplier;
 
-    private Collar(OkHttpClient http, MinecraftSession minecraftSession, UrlBuilder baseUrl, HomeDirectory home, CollarListener listener) {
+    private Collar(OkHttpClient http, CollarConfiguration configuration) {
         this.http = http;
-        this.minecraftSession = minecraftSession;
-        this.baseUrl = baseUrl;
-        this.home = home;
-        this.listener = listener;
+        this.configuration = configuration;
         changeState(State.DISCONNECTED);
         this.features = new HashMap<>();
         this.identityStoreSupplier = () -> identityStore;
@@ -82,25 +77,19 @@ public final class Collar {
 
     /**
      * Create a new Collar client
-     * @param session of the minecraft player
-     * @param server address of the collar server
-     * @param minecraftHome the minecraft data directory
-     * @param listener client listener
-     * @return collar client
-     * @throws IOException setting up
+     * @param configuration of the client
      */
-    public static Collar create(MinecraftSession session, String server, File minecraftHome, CollarListener listener) throws IOException {
+    public static Collar create(CollarConfiguration configuration) {
         OkHttpClient http = new OkHttpClient();
-        UrlBuilder baseUrl = UrlBuilder.fromString(server);
-        return new Collar(http, session, baseUrl, HomeDirectory.from(minecraftHome, baseUrl.hostName), listener);
+        return new Collar(http, configuration);
     }
 
     /**
      * Connect to server
      */
     public void connect() {
-        checkVersionCompatibility(http, baseUrl);
-        String url = baseUrl.withPath("/api/1/listen").toString();
+        checkVersionCompatibility(http, configuration.collarServerURL);
+        String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
         LOGGER.log(Level.INFO, "Connecting to server " + url);
         webSocket = http.newWebSocket(new Request.Builder().url(url).build(), new CollarWebSocket(this));
         webSocket.request();
@@ -147,7 +136,9 @@ public final class Collar {
             } else {
                 LOGGER.log(Level.INFO, "State changed from " + previousState + " to " + state);
             }
-            this.listener.onStateChanged(this, state);
+            if (previousState != null) {
+                this.configuration.listener.onStateChanged(this, state);
+            }
         }
     }
 
@@ -155,8 +146,8 @@ public final class Collar {
      * Test that the client version is supported by the server
      * @param http client
      */
-    private static void checkVersionCompatibility(OkHttpClient http, UrlBuilder baseUrl) {
-        DiscoverResponse response = httpGet(http, baseUrl.withPath("/api/discover").toString(), DiscoverResponse.class);
+    private static void checkVersionCompatibility(OkHttpClient http, URL baseUrl) {
+        DiscoverResponse response = httpGet(http, UrlBuilder.fromUrl(baseUrl).withPath("/api/discover").toString(), DiscoverResponse.class);
         StringJoiner versions = new StringJoiner(",");
         response.versions.stream()
                 .peek(collarVersion -> versions.add(versions.toString()))
@@ -199,7 +190,7 @@ public final class Collar {
                 sendRequest(webSocket, request);
             };
             LOGGER.log(Level.INFO, "Connection established");
-            if (SignalClientIdentityStore.hasIdentityStore(home)) {
+            if (SignalClientIdentityStore.hasIdentityStore(configuration.homeDirectory)) {
                 identityStore = getOrCreateIdentityKeyStore(webSocket, null);
             } else {
                 sendRequest(webSocket, IdentifyRequest.unknown());
@@ -210,14 +201,14 @@ public final class Collar {
         }
 
         private ResettableClientIdentityStore getOrCreateIdentityKeyStore(WebSocket webSocket, UUID owner) {
-            if (ProfileState.exists(home)) {
-                owner = ProfileState.read(home).owner;
+            if (ProfileState.exists(configuration.homeDirectory)) {
+                owner = ProfileState.read(configuration.homeDirectory).owner;
             }
             UUID finalOwner = owner;
-            return new ResettableClientIdentityStore(() -> SignalClientIdentityStore.from(finalOwner, home, signalProtocolStore -> {
+            return new ResettableClientIdentityStore(() -> SignalClientIdentityStore.from(finalOwner, configuration.homeDirectory, signalProtocolStore -> {
                 LOGGER.log(Level.INFO, "New installation. Registering device with server...");
                 IdentityKey publicKey = signalProtocolStore.getIdentityKeyPair().getPublicKey();
-                new ProfileState(finalOwner).write(home);
+                new ProfileState(finalOwner).write(configuration.homeDirectory);
                 ClientIdentity clientIdentity = new ClientIdentity(finalOwner, new PublicKey(publicKey.getFingerprint(), publicKey.serialize()), null);
                 IdentifyRequest request = new IdentifyRequest(clientIdentity);
                 sendRequest(webSocket, request);
@@ -246,27 +237,27 @@ public final class Collar {
 
         @Override
         public void onMessage(@NotNull WebSocket webSocket, @NotNull ByteString message) {
-            LOGGER.log(Level.INFO, "Message received");
             ProtocolResponse resp = readResponse(message.toByteArray());
+            LOGGER.log(Level.INFO, "Message from " + resp.identity);
             ClientIdentity identity = identityStore == null ? null : identityStore.currentIdentity();
             if (resp instanceof IdentifyResponse) {
                 IdentifyResponse response = (IdentifyResponse) resp;
                 if (identityStore == null) {
                     identityStore = getOrCreateIdentityKeyStore(webSocket, response.profile.id);
-                    StartSessionRequest request = new StartSessionRequest(identity, minecraftSession);
+                    StartSessionRequest request = new StartSessionRequest(identity, configuration.sessionSupplier.get());
                     sendRequest(webSocket, request);
-                    keepAlive.stop();
-                    keepAlive.start(identity);
                 } else {
-                    StartSessionRequest request = new StartSessionRequest(identity, minecraftSession);
+                    StartSessionRequest request = new StartSessionRequest(identity, configuration.sessionSupplier.get());
                     sendRequest(webSocket, request);
                 }
+                keepAlive.stop();
+                keepAlive.start(identity);
             } else if (resp instanceof KeepAliveResponse) {
                 LOGGER.log(Level.INFO, "KeepAliveResponse received");
             } else if (resp instanceof RegisterDeviceResponse) {
                 RegisterDeviceResponse registerDeviceResponse = (RegisterDeviceResponse)resp;
                 LOGGER.log(Level.INFO, "RegisterDeviceResponse received with registration url " + ((RegisterDeviceResponse) resp).approvalUrl);
-                listener.onConfirmDeviceRegistration(collar, registerDeviceResponse.approvalUrl);
+                configuration.listener.onConfirmDeviceRegistration(collar, registerDeviceResponse.approvalUrl);
             } else if (resp instanceof DeviceRegisteredResponse) {
                 DeviceRegisteredResponse response = (DeviceRegisteredResponse)resp;
                 identityStore = getOrCreateIdentityKeyStore(webSocket, response.profile.id);
@@ -281,7 +272,7 @@ public final class Collar {
                 }
                 identityStore.trustIdentity(response);
                 LOGGER.log(Level.INFO, "PreKeys have been exchanged successfully");
-                sendRequest(webSocket, new StartSessionRequest(identity, minecraftSession));
+                sendRequest(webSocket, new StartSessionRequest(identity, configuration.sessionSupplier.get()));
             } else if (resp instanceof StartSessionResponse) {
                 LOGGER.log(Level.INFO, "Session has started. Checking if the client and server are in a trusted relationship");
                 sendRequest(webSocket, new CheckTrustRelationshipRequest(identity));
@@ -290,7 +281,7 @@ public final class Collar {
                 if (resp instanceof MojangVerificationFailedResponse) {
                     MojangVerificationFailedResponse response = (MojangVerificationFailedResponse)resp;
                     LOGGER.log(Level.INFO, "SessionFailedResponse with mojang session verification failure");
-                    listener.onMinecraftAccountVerificationFailed(collar, response.minecraftSession);
+                    configuration.listener.onMinecraftAccountVerificationFailed(collar, response.minecraftSession);
                 } else {
                     LOGGER.log(Level.INFO, "SessionFailedResponse with general server failure");
                 }
@@ -302,7 +293,7 @@ public final class Collar {
             } else if (resp instanceof IsUntrustedRelationshipResponse) {
                 LOGGER.log(Level.INFO, "Server has declared the client as untrusted. Consumer should reset the identity store and reconnect.");
                 collar.changeState(State.DISCONNECTED);
-                listener.onClientUntrusted(collar, identityStore);
+                configuration.listener.onClientUntrusted(collar, identityStore);
             } else {
                 // Find the first Feature that handles the request and return the result
                 boolean wasHandled = collar.features.values().stream()

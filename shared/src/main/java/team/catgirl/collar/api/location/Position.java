@@ -3,6 +3,9 @@ package team.catgirl.collar.api.location;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class Position {
+
+    public static final Position UNKNOWN = new Position(-1d, -1d, -1d, -100);
+
     @JsonProperty("x")
     public final Double x;
     @JsonProperty("y")

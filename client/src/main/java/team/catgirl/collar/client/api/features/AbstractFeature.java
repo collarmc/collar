@@ -44,7 +44,8 @@ public abstract class AbstractFeature<T extends ApiListener> {
         listeners.remove(listener);
     }
 
-    protected void fireListener(Consumer<T> listener) {
+    protected void fireListener(String name, Consumer<T> listener) {
+        LOGGER.log(Level.INFO, "Firing " + name + " listeners");
         listeners.forEach(t -> {
             try {
                 listener.accept(t);

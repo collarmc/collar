@@ -87,14 +87,27 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
         sender.accept(new AcceptGroupMembershipRequest(identity(), invitation.groupId, Group.MembershipState.ACCEPTED));
     }
 
+    /**
+     * Start sharing your coordinates with a group
+     * @param group to share with
+     */
     public void shareCoordinates(Group group) {
         sharingState.put(group.id, CoordinateSharingState.SHARING);
     }
 
+    /**
+     * Start sharing your coordinates with a group
+     * @param group to stop sharing with
+     */
     public void stopSharingCoordinates(Group group) {
         sharingState.put(group.id, CoordinateSharingState.NOT_SHARING);
     }
 
+    /**
+     * Tests if you are currently sharing with the group
+     * @param group to test
+     * @return sharing
+     */
     public boolean isSharingCoordinatesWith(Group group) {
         CoordinateSharingState coordinateSharingState = sharingState.get(group.id);
         return coordinateSharingState == CoordinateSharingState.SHARING;
@@ -161,9 +174,11 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
     }
 
     private void startOrStopSharingPosition() {
+        // Clean these out
         if (groups.isEmpty()) {
             sharingState.clear();
         }
+        // Update the position
         if (positionUpdater != null) {
             if (groups.isEmpty()) {
                 positionUpdater.stop();

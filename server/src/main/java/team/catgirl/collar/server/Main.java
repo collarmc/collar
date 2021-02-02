@@ -255,7 +255,8 @@ public class Main {
             });
         });
 
-        LOGGER.info("Collar server started. Do you want to play a block game game?");
+        LOGGER.info("Collar server started.");
+        LOGGER.info("Do you want to play a block game game?");
     }
 
     public static String render(Map<String, Object> context, String templatePath) {

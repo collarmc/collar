@@ -35,17 +35,17 @@ repositories {
   mavenLocal()
 }
 dependencies {
-  compile group: 'team.catgirl.collar.coordshare', name: 'client', version: '1.0-SNAPSHOT'
+  compile group: 'team.catgirl.collar.collar', name: 'client', version: '1.0-SNAPSHOT'
 }
 apply plugin: 'com.github.johnrengelman.shadow'
 shadowJar {
   // Only shadow fluent-hc
   dependencies {
-    include(dependency('team.catgirl.collar.coordshare:client:.*'))
+    include(dependency('team.catgirl.collar:client:.*'))
   }
 
   // Replace com.yourpackage with your mods package
-  relocate 'team.catgirl.collar.coordshare', 'com.yourpackage.team.catgirl.collar.coordshare'
+  relocate 'team.catgirl.collar', 'com.yourpackage.team.catgirl.collar'
 
   classifier '' // Replace the default JAR
 }

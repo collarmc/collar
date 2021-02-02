@@ -71,7 +71,7 @@ public final class Collar {
         changeState(State.DISCONNECTED);
         this.features = new HashMap<>();
         this.identityStoreSupplier = () -> identityStore;
-        this.groupsFeature = new GroupsFeature(this, identityStoreSupplier, request -> sender.accept(request));
+        this.groupsFeature = new GroupsFeature(this, identityStoreSupplier, request -> sender.accept(request), configuration.playerPosition);
         this.features.put(GroupsFeature.class, groupsFeature);
     }
 

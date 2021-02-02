@@ -63,7 +63,7 @@ public class Configuration {
                 Mongo.database("mongodb://localhost/collar-dev"),
                 new DefaultAppUrlProvider("http://localhost:3000"),
                 new TokenCrypter("insecureTokenCrypterPassword"),
-                new PasswordHashing("insecurePasswordSalt"),
+                new PasswordHashing("VSZL*bR8-=r]r5P_"),
                 new MojangMinecraftSessionVerifier()
         );
     }

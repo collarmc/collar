@@ -2,14 +2,12 @@ package team.catgirl.collar.client.security.signal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.whispersystems.libsignal.*;
-import org.whispersystems.libsignal.state.PreKeyBundle;
-import org.whispersystems.libsignal.state.PreKeyRecord;
-import org.whispersystems.libsignal.state.SignalProtocolStore;
-import org.whispersystems.libsignal.state.SignedPreKeyRecord;
+import org.whispersystems.libsignal.state.*;
 import org.whispersystems.libsignal.util.KeyHelper;
 import team.catgirl.collar.client.HomeDirectory;
 import team.catgirl.collar.client.security.ClientIdentityStore;
-import team.catgirl.collar.client.security.IdentityState;
+import team.catgirl.collar.client.security.ProfileState;
+import team.catgirl.collar.protocol.devices.DeviceRegisteredResponse;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysResponse;
 import team.catgirl.collar.security.ClientIdentity;
@@ -26,8 +24,12 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public final class SignalClientIdentityStore implements ClientIdentityStore {
+
+    private static final Logger LOGGER = Logger.getLogger(SignalClientIdentityStore.class.getName());
 
     private final UUID owner;
     private final ClientSignalProtocolStore store;
@@ -46,12 +48,12 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     @Override
     public ClientIdentity currentIdentity() {
         IdentityKeyPair identityKeyPair = this.store.getIdentityKeyPair();
-        return new ClientIdentity(owner, new KeyPair.PublicKey(identityKeyPair.getPublicKey().getFingerprint(), identityKeyPair.getPublicKey().serialize()));
+        return new ClientIdentity(owner, new KeyPair.PublicKey(identityKeyPair.getPublicKey().getFingerprint(), identityKeyPair.getPublicKey().serialize()), state.deviceId);
     }
 
     @Override
     public boolean isTrustedIdentity(ServerIdentity identity) {
-        return store.isTrustedIdentity(signalProtocolAddressFrom(identity), identityKeyFrom(identity));
+        return store.isTrustedIdentity(signalProtocolAddressFrom(identity), identityKeyFrom(identity), null);
     }
 
     @Override
@@ -70,6 +72,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         } catch (InvalidKeyException | UntrustedIdentityException e) {
             throw new IllegalStateException(e);
         }
+        LOGGER.log(Level.INFO, "Trusted identity and started signal session for " + address);
     }
 
     @Override
@@ -97,7 +100,13 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public SendPreKeysRequest createSendPreKeysRequest() {
+    public int getDeviceId() {
+        // TODO: add read lock
+        return state.deviceId;
+    }
+
+    @Override
+    public SendPreKeysRequest createSendPreKeysRequest(DeviceRegisteredResponse response) {
         if (state.deviceId == null || state.deviceId < 1) {
             throw new IllegalStateException("deviceId has not been negotated");
         }
@@ -111,7 +120,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         } finally {
             readLock.unlock();
         }
-        PreKeyBundle bundle = PreKeys.generate(store, deviceId);
+        PreKeyBundle bundle = PreKeys.generate(new SignalProtocolAddress(response.profile.id.toString(), deviceId), store);
         try {
             return new SendPreKeysRequest(currentIdentity(), PreKeys.preKeyBundleToBytes(bundle));
         } catch (IOException e) {
@@ -127,7 +136,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
         try {
             readLock.lockInterruptibly();
-            return new SignalProtocolAddress(serverIdentity.id().toString(), state.deviceId);
+            return new SignalProtocolAddress(serverIdentity.id().toString(), serverIdentity.deviceId());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
@@ -168,10 +177,10 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     }
 
     public static boolean hasIdentityStore(HomeDirectory homeDirectory) {
-        return IdentityState.exists(homeDirectory);
+        return ProfileState.exists(homeDirectory);
     }
 
-    public static SignalClientIdentityStore from(UUID profileId, HomeDirectory homeDirectory, Consumer<SignalProtocolStore> onInstall, Consumer<SignalProtocolStore> onReady) {
+    public static SignalClientIdentityStore from(UUID profileId, HomeDirectory homeDirectory, Consumer<SignalProtocolStore> onInstall, Consumer<ClientSignalProtocolStore> onReady) {
         ClientSignalProtocolStore store;
         try {
             store = ClientSignalProtocolStore.from(homeDirectory);

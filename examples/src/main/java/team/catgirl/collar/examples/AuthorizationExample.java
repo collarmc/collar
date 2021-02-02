@@ -13,7 +13,7 @@ public class AuthorizationExample {
     public static void main(String[] args) throws Exception {
         String username = args[0];
         String password = args[1];
-        File file = Files.createTempDir();
+        File file = new File("target");
         MinecraftSession minecraftSession = MinecraftSession.from(username, password, "smp.catgirl.team");
         Collar collar = Collar.create(minecraftSession, "http://localhost:3000/", file, new CollarListener() {
             @Override
@@ -23,12 +23,12 @@ public class AuthorizationExample {
 
             @Override
             public void onClientUntrusted(Collar collar, ClientIdentityStore store) {
-                try {
-                    System.out.println("Client is untrusted - resetting store");
-                    store.reset();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                System.out.println("Client is untrusted - resetting store?");
+            }
+
+            @Override
+            public void onMinecraftAccountVerificationFailed(Collar collar, MinecraftSession session) {
+                collar.disconnect();
             }
         });
 

@@ -10,7 +10,7 @@ Including:
 ## To-do's
 
 ### Short term
-* End to end encryption (or at least session check?) to verify that sender is who they say they are
+* ~~End to end encryption and session check~~
 * Tests for `GroupManager` as it is somewhat complicated
 * Group waypoints
 * Friend lists

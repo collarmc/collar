@@ -1,7 +1,9 @@
 package team.catgirl.collar.examples;
 
 import team.catgirl.collar.api.groups.Group;
+import team.catgirl.collar.api.location.Position;
 import team.catgirl.collar.client.Collar;
+import team.catgirl.collar.client.CollarConfiguration;
 import team.catgirl.collar.client.CollarListener;
 import team.catgirl.collar.client.api.groups.GroupInvitation;
 import team.catgirl.collar.client.api.groups.GroupListener;
@@ -18,7 +20,6 @@ public class GroupsExample {
         String username = args[0];
         String password = args[1];
         File file = new File("target");
-        MinecraftSession minecraftSession = MinecraftSession.from(username, password, "smp.catgirl.team");
 
         GroupListener listener = new GroupListener() {
             @Override
@@ -35,7 +36,7 @@ public class GroupsExample {
             }
 
             @Override
-            public void onGroupMemberPositionUpdated(Collar collar, GroupsFeature feature, Group group) {
+            public void onGroupsUpdated(Collar collar, GroupsFeature feature, Group group) {
             }
 
             @Override
@@ -47,7 +48,7 @@ public class GroupsExample {
             }
         };
 
-        Collar collar = Collar.create(minecraftSession, "http://localhost:3000", file, new CollarListener() {
+        CollarListener collarListener = new CollarListener() {
 
             @Override
             public void onConfirmDeviceRegistration(Collar collar, String approvalUrl) {
@@ -72,12 +73,21 @@ public class GroupsExample {
                         collar.groups().create(new ArrayList<>());
                         break;
                     case DISCONNECTED:
-//                        collar.groups().unsubscribe(listener);
+                        collar.groups().unsubscribe(listener);
                         break;
                 }
             }
-        });
+        };
 
+        CollarConfiguration configuration = new CollarConfiguration.Builder()
+                .withCollarServer("http://localhost:3000/")
+                .withHomeDirectory(new File("target"))
+                .withMojangAuthentication(() -> MinecraftSession.from(username, password, "smp.catgirl.team"))
+                .withPlayerPosition(() -> new Position(1d, 1d, 1d, 0))
+                .withListener(collarListener)
+                .build();
+
+        Collar collar = Collar.create(configuration);
         collar.connect();
 
         while (collar.getState() != Collar.State.DISCONNECTED) {

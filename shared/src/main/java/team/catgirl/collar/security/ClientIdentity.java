@@ -6,6 +6,9 @@ import team.catgirl.collar.security.KeyPair.PublicKey;
 import java.util.Objects;
 import java.util.UUID;
 
+/**
+ * Identifies a client
+ */
 public final class ClientIdentity implements Identity {
 
     @JsonProperty("owner")
@@ -44,5 +47,10 @@ public final class ClientIdentity implements Identity {
     @Override
     public int hashCode() {
         return Objects.hash(owner, publicKey, deviceId);
+    }
+
+    @Override
+    public String toString() {
+        return id() + ":" + deviceId;
     }
 }

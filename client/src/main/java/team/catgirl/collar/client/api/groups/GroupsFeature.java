@@ -1,6 +1,8 @@
 package team.catgirl.collar.client.api.groups;
 
+import com.google.common.base.Suppliers;
 import team.catgirl.collar.api.groups.Group;
+import team.catgirl.collar.api.location.Position;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.api.features.AbstractFeature;
 import team.catgirl.collar.client.security.ClientIdentityStore;
@@ -14,6 +16,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -86,36 +89,36 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
         if (resp instanceof CreateGroupResponse) {
             CreateGroupResponse response = (CreateGroupResponse)resp;
             groups.put(response.group.id, response.group);
-            fireListener(groupListener -> {
+            fireListener("onGroupCreated", groupListener -> {
                 groupListener.onGroupCreated(collar, this, response.group);
             });
             return true;
         } else if (resp instanceof AcceptGroupMembershipResponse) {
             AcceptGroupMembershipResponse response = (AcceptGroupMembershipResponse)resp;
             groups.put(response.group.id, response.group);
-            fireListener(groupListener -> {
+            fireListener("onGroupJoined", groupListener -> {
                 groupListener.onGroupJoined(collar, this, response.group);
             });
             return true;
         } else if (resp instanceof GroupInviteResponse) {
             GroupInviteResponse response = (GroupInviteResponse)resp;
             Group group = groups.get(response.groupId);
-            fireListener(groupListener -> {
+            fireListener("onGroupMemberInvitationsSent", groupListener -> {
                 groupListener.onGroupMemberInvitationsSent(collar, this, group);
             });
             return true;
         } else if (resp instanceof LeaveGroupResponse) {
             LeaveGroupResponse response = (LeaveGroupResponse)resp;
             Group group = groups.remove(response.groupId);
-            fireListener(groupListener -> {
+            fireListener("onGroupLeft", groupListener -> {
                 groupListener.onGroupLeft(collar, this, group);
             });
             return true;
-        } else if (resp instanceof UpdateGroupMemberPositionResponse) {
-            UpdateGroupMemberPositionResponse response = (UpdateGroupMemberPositionResponse)resp;
+        } else if (resp instanceof UpdateGroupsUpdatedResponse) {
+            UpdateGroupsUpdatedResponse response = (UpdateGroupsUpdatedResponse)resp;
             response.groups.forEach(group -> {
-                fireListener(groupListener -> {
-                    groupListener.onGroupMemberPositionUpdated(collar, this, group);
+                fireListener("onGroupsUpdated", groupListener -> {
+                    groupListener.onGroupsUpdated(collar, this, group);
                 });
             });
             return true;
@@ -123,7 +126,7 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
             GroupMembershipRequest request = (GroupMembershipRequest)resp;
             GroupInvitation invitation = GroupInvitation.from(request);
             invitations.put(invitation.groupId, invitation);
-            fireListener(groupListener -> {
+            fireListener("GroupMembershipRequest", groupListener -> {
                 groupListener.onGroupInvited(collar, this, invitation);
             });
             return true;

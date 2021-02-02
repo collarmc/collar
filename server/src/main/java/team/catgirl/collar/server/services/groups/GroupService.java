@@ -80,7 +80,7 @@ public final class GroupService {
         synchronized (group.id) {
             group = group.removeMember(sender);
             response = response.concat(refreshGroupState(group, req.identity, new LeaveGroupResponse(serverIdentity, group.id)));
-            response = response.concat(createGroupResponses(sender, group, new UpdateGroupMemberPositionResponse(serverIdentity, ImmutableList.of(group))));
+            response = response.concat(createGroupResponses(sender, group, new UpdateGroupsUpdatedResponse(serverIdentity, ImmutableList.of(group))));
         }
         LOGGER.log(Level.INFO, "Group count " + groupsById.size());
         return response;
@@ -170,10 +170,10 @@ public final class GroupService {
             synchronized (group.id) {
                 group = group.updateMemberPosition(owner, req.position);
                 responses = responses.concat(refreshGroupState(group, req.identity, null));
-                responses = responses.concat(createGroupResponses(owner, group, new UpdateGroupMemberPositionResponse(serverIdentity, groups)));
+                responses = responses.concat(createGroupResponses(owner, group, new UpdateGroupsUpdatedResponse(serverIdentity, groups)));
             }
         }
-        return responses.add(req.identity, new UpdateGroupMemberPositionResponse(serverIdentity, findGroupsForPlayer(owner)));
+        return responses.add(req.identity, new UpdateGroupsUpdatedResponse(serverIdentity, findGroupsForPlayer(owner)));
     }
 
     private List<Group> findGroupsForPlayer(MinecraftPlayer player) {
@@ -201,7 +201,7 @@ public final class GroupService {
                 for (Member member : group.members.values()) {
                     List<Group> groupsForPlayer = findGroupsForPlayer(member.player);
                     if (!groupsForPlayer.isEmpty()) {
-                        BatchProtocolResponse groupResponses = createGroupResponses(null, group, new UpdateGroupMemberPositionResponse(serverIdentity, groupsForPlayer));
+                        BatchProtocolResponse groupResponses = createGroupResponses(null, group, new UpdateGroupsUpdatedResponse(serverIdentity, groupsForPlayer));
                         response = groupResponses.concat(groupResponses);
                     }
                 }

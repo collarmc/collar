@@ -42,4 +42,9 @@ public final class ServerIdentity implements Identity {
     public int hashCode() {
         return Objects.hash(publicKey);
     }
+
+    @Override
+    public String toString() {
+        return id() + ":" + deviceId();
+    }
 }

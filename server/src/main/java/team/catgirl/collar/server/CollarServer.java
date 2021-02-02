@@ -80,8 +80,8 @@ public class CollarServer {
 
     @OnWebSocketMessage
     public void message(Session session, InputStream is) throws IOException {
-        LOGGER.log(Level.INFO, "Received message ");
         ProtocolRequest req = read(session, is);
+        LOGGER.log(Level.INFO, "Message from " + req.identity);
         ServerIdentity serverIdentity = identityStore.getIdentity();
         if (req instanceof KeepAliveRequest) {
             LOGGER.log(Level.INFO, "KeepAliveRequest received. Sending KeepAliveRequest.");

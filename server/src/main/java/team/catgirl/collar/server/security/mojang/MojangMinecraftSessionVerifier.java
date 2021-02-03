@@ -18,6 +18,9 @@ public class MojangMinecraftSessionVerifier implements MinecraftSessionVerifier 
 
     @Override
     public boolean verify(MinecraftSession session) {
+        if (session.accessToken == null || session.clientToken == null) {
+            return false;
+        }
         try {
             RefreshResponse resp = OpenMCAuthenticator.refresh(session.accessToken, session.clientToken);
             return resp.getSelectedProfile().getUUID().equals(session.id);

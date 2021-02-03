@@ -209,4 +209,32 @@ public final class GroupService {
         }
         return response;
     }
+
+    public ProtocolResponse removeMember(RemoveGroupMemberRequest req) {
+        Group group = groupsById.get(req.groupId);
+        if (group == null) {
+            return new RemoveGroupMemberResponse(serverIdentity, null, null);
+        }
+        MinecraftPlayer sender = sessions.findPlayer(req.identity);
+        if (sender == null) {
+            throw new IllegalStateException("Could not find player for identity " + req.identity);
+        }
+        Optional<Member> playerMemberRecord = group.members.values().stream().filter(member -> member.player.equals(sender) && member.membershipRole.equals(Group.MembershipRole.OWNER)).findFirst();
+        if (playerMemberRecord.isPresent()) {
+            Optional<Member> memberToRemove = group.members.values().stream().filter(member -> member.player.id.equals(req.player)).findFirst();
+            if (memberToRemove.isPresent()) {
+                BatchProtocolResponse response = new BatchProtocolResponse(serverIdentity);
+                synchronized (group.id) {
+                    group = group.removeMember(memberToRemove.get().player);
+                    response = response.concat(refreshGroupState(group, req.identity, new LeaveGroupResponse(serverIdentity, group.id)));
+                    response = response.concat(createGroupResponses(sender, group, new RemoveGroupMemberResponse(serverIdentity, group.id, memberToRemove.get().player.id)));
+                }
+                return response;
+            } else {
+                return new RemoveGroupMemberResponse(serverIdentity, group.id, null);
+            }
+        } else {
+            return new RemoveGroupMemberResponse(serverIdentity, group.id, null);
+        }
+    }
 }

@@ -4,7 +4,7 @@ import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.groups.Group.Member;
 import team.catgirl.collar.api.location.Position;
 import team.catgirl.collar.client.Collar;
-import team.catgirl.collar.client.api.features.AbstractFeature;
+import team.catgirl.collar.client.api.features.AbstractApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
@@ -19,16 +19,15 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Logger;
 
-public final class GroupsFeature extends AbstractFeature<GroupListener> {
+public final class GroupsApi extends AbstractApi<GroupsListener> {
     private final ConcurrentMap<UUID, Group> groups = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, GroupInvitation> invitations = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, CoordinateSharingState> sharingState = new ConcurrentHashMap<>();
     private final Supplier<Position> positionSupplier;
     private PositionUpdater positionUpdater;
 
-    public GroupsFeature(Collar collar, Supplier<ClientIdentityStore> identityStoreSupplier, Consumer<ProtocolRequest> sender, Supplier<Position> positionSupplier) {
+    public GroupsApi(Collar collar, Supplier<ClientIdentityStore> identityStoreSupplier, Consumer<ProtocolRequest> sender, Supplier<Position> positionSupplier) {
         super(collar, identityStoreSupplier, sender);
         this.positionSupplier = positionSupplier;
     }
@@ -102,8 +101,9 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
      * Start sharing your coordinates with a group
      * @param group to share with
      */
-    public void shareCoordinates(Group group) {
+    public void startSharingCoordinates(Group group) {
         sharingState.put(group.id, CoordinateSharingState.SHARING);
+        startOrStopSharingPosition();
     }
 
     /**
@@ -112,6 +112,7 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
      */
     public void stopSharingCoordinates(Group group) {
         sharingState.put(group.id, CoordinateSharingState.NOT_SHARING);
+        startOrStopSharingPosition();
     }
 
     /**
@@ -129,16 +130,16 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
         if (resp instanceof CreateGroupResponse) {
             CreateGroupResponse response = (CreateGroupResponse)resp;
             groups.put(response.group.id, response.group);
-            fireListener("onGroupCreated", groupListener -> {
-                groupListener.onGroupCreated(collar, this, response.group);
+            fireListener("onGroupCreated", groupsListener -> {
+                groupsListener.onGroupCreated(collar, this, response.group);
             });
             startOrStopSharingPosition();
             return true;
         } else if (resp instanceof AcceptGroupMembershipResponse) {
             AcceptGroupMembershipResponse response = (AcceptGroupMembershipResponse)resp;
             groups.put(response.group.id, response.group);
-            fireListener("onGroupJoined", groupListener -> {
-                groupListener.onGroupJoined(collar, this, response.group);
+            fireListener("onGroupJoined", groupsListener -> {
+                groupsListener.onGroupJoined(collar, this, response.group);
             });
             startOrStopSharingPosition();
             return true;
@@ -148,8 +149,8 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
             if (group == null) {
                 return false;
             }
-            fireListener("onGroupMemberInvitationsSent", groupListener -> {
-                groupListener.onGroupMemberInvitationsSent(collar, this, group);
+            fireListener("onGroupMemberInvitationsSent", groupsListener -> {
+                groupsListener.onGroupMemberInvitationsSent(collar, this, group);
             });
             startOrStopSharingPosition();
             return true;
@@ -159,16 +160,16 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
             if (group == null) {
                 return false;
             }
-            fireListener("onGroupLeft", groupListener -> {
-                groupListener.onGroupLeft(collar, this, group);
+            fireListener("onGroupLeft", groupsListener -> {
+                groupsListener.onGroupLeft(collar, this, group);
             });
             startOrStopSharingPosition();
             return true;
         } else if (resp instanceof UpdateGroupsUpdatedResponse) {
             UpdateGroupsUpdatedResponse response = (UpdateGroupsUpdatedResponse)resp;
             response.groups.forEach(group -> {
-                fireListener("onGroupsUpdated", groupListener -> {
-                    groupListener.onGroupsUpdated(collar, this, group);
+                fireListener("onGroupsUpdated", groupsListener -> {
+                    groupsListener.onGroupUpdated(collar, this, group);
                 });
             });
             startOrStopSharingPosition();
@@ -177,8 +178,8 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
             GroupMembershipRequest request = (GroupMembershipRequest)resp;
             GroupInvitation invitation = GroupInvitation.from(request);
             invitations.put(invitation.groupId, invitation);
-            fireListener("GroupMembershipRequest", groupListener -> {
-                groupListener.onGroupInvited(collar, this, invitation);
+            fireListener("GroupMembershipRequest", groupsListener -> {
+                groupsListener.onGroupInvited(collar, this, invitation);
             });
             startOrStopSharingPosition();
             return true;
@@ -210,10 +211,10 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
         }
         // Update the position
         if (positionUpdater != null) {
-            if (groups.isEmpty()) {
+            if (groups.isEmpty() && positionUpdater.isRunning()) {
                 positionUpdater.stop();
                 positionUpdater = null;
-            } else {
+            } else if (!positionUpdater.isRunning()) {
                 positionUpdater.start();
             }
         } else if (!groups.isEmpty()) {
@@ -229,28 +230,32 @@ public final class GroupsFeature extends AbstractFeature<GroupListener> {
 
     static class PositionUpdater {
         private final ClientIdentity identity;
-        private final GroupsFeature groupsFeature;
+        private final GroupsApi groupsApi;
         private final Supplier<Position> position;
         private ScheduledExecutorService scheduler;
 
-        public PositionUpdater(ClientIdentity identity, GroupsFeature groupsFeature, Supplier<Position> position) {
+        public PositionUpdater(ClientIdentity identity, GroupsApi groupsApi, Supplier<Position> position) {
             this.identity = identity;
-            this.groupsFeature = groupsFeature;
+            this.groupsApi = groupsApi;
             this.position = position;
+        }
+
+        public boolean isRunning() {
+            return !scheduler.isShutdown();
         }
 
         public void start() {
             scheduler = Executors.newScheduledThreadPool(1);
             scheduler.scheduleAtFixedRate(() -> {
-                groupsFeature.groups().stream()
-                    .filter(groupsFeature::isSharingCoordinatesWith)
-                    .findFirst().ifPresent(group -> groupsFeature.updatePosition(new UpdateGroupMemberPositionRequest(identity, position.get()))
+                groupsApi.groups().stream()
+                    .filter(groupsApi::isSharingCoordinatesWith)
+                    .findFirst().ifPresent(group -> groupsApi.updatePosition(new UpdateGroupMemberPositionRequest(identity, position.get()))
                 );
             }, 0, 10, TimeUnit.SECONDS);
         }
 
         public void stop() {
-            groupsFeature.updatePosition(new UpdateGroupMemberPositionRequest(identity, Position.UNKNOWN));
+            groupsApi.updatePosition(new UpdateGroupMemberPositionRequest(identity, Position.UNKNOWN));
             if (this.scheduler != null) {
                 this.scheduler.shutdown();
             }

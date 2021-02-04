@@ -6,43 +6,48 @@ import team.catgirl.collar.api.location.Position;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.CollarConfiguration;
 import team.catgirl.collar.client.CollarListener;
-import team.catgirl.collar.client.api.groups.GroupInvitation;
-import team.catgirl.collar.client.api.groups.GroupListener;
-import team.catgirl.collar.client.api.groups.GroupsFeature;
+import team.catgirl.collar.client.api.groups.*;
+import team.catgirl.collar.client.api.groups.GroupsListener;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.security.mojang.MinecraftSession;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.UUID;
 
 public class GroupsExample {
     public static void main(String[] args) throws Exception {
-        GroupListener listener = new GroupListener() {
+
+        GroupsListener listener = new GroupsListener() {
             @Override
-            public void onGroupCreated(Collar collar, GroupsFeature feature, Group group) {
+            public void onGroupCreated(Collar collar, GroupsApi feature, Group group) {
                 System.out.println("Group created!! " + group.id);
+                feature.startSharingCoordinates(group);
             }
 
             @Override
-            public void onGroupJoined(Collar collar, GroupsFeature feature, Group group) {
+            public void onGroupJoined(Collar collar, GroupsApi feature, Group group) {
             }
 
             @Override
-            public void onGroupLeft(Collar collar, GroupsFeature feature, Group group) {
+            public void onGroupLeft(Collar collar, GroupsApi feature, Group group) {
             }
 
             @Override
-            public void onGroupsUpdated(Collar collar, GroupsFeature feature, Group group) {
+            public void onGroupUpdated(Collar collar, GroupsApi feature, Group group) {
+                group.members.forEach((minecraftPlayer, member) -> {
+                    System.out.println("Member " + member.player.id + " at position " + member.position);
+                });
             }
 
             @Override
-            public void onGroupMemberInvitationsSent(Collar collar, GroupsFeature feature, Group group) {
+            public void onGroupMemberInvitationsSent(Collar collar, GroupsApi feature, Group group) {
             }
 
             @Override
-            public void onGroupInvited(Collar collar, GroupsFeature feature, GroupInvitation invitation) {
+            public void onGroupInvited(Collar collar, GroupsApi feature, GroupInvitation invitation) {
             }
         };
 
@@ -81,7 +86,10 @@ public class GroupsExample {
                 .withCollarServer("http://localhost:3000/")
                 .withHomeDirectory(new File("target"))
                 .withMojangAuthentication(() -> MinecraftSession.noJang(UUID.randomUUID(), "smp.catgirl.team"))
-                .withPlayerPosition(() -> new Position(1d, 1d, 1d, Dimension.OVERWORLD))
+                .withPlayerPosition(() -> {
+                    Random random = new Random();
+                    return new Position(random.nextDouble(), random.nextDouble(), random.nextDouble(), Dimension.OVERWORLD);
+                })
                 .withListener(collarListener)
                 .build();
 

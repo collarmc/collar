@@ -12,9 +12,9 @@ import team.catgirl.collar.api.http.CollarVersion;
 import team.catgirl.collar.api.http.DiscoverResponse;
 import team.catgirl.collar.client.CollarException.ConnectionException;
 import team.catgirl.collar.client.CollarException.UnsupportedServerVersionException;
-import team.catgirl.collar.client.api.features.AbstractFeature;
+import team.catgirl.collar.client.api.features.AbstractApi;
 import team.catgirl.collar.client.api.features.ApiListener;
-import team.catgirl.collar.client.api.groups.GroupsFeature;
+import team.catgirl.collar.client.api.groups.GroupsApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.client.security.ProfileState;
 import team.catgirl.collar.client.security.signal.ResettableClientIdentityStore;
@@ -56,10 +56,10 @@ public final class Collar {
 
     private final CollarConfiguration configuration;
     private final OkHttpClient http;
-    private final GroupsFeature groupsFeature;
+    private final GroupsApi groupsApi;
     private WebSocket webSocket;
     private State state;
-    private final Map<Class<?>, AbstractFeature<? extends ApiListener>> features;
+    private final Map<Class<?>, AbstractApi<? extends ApiListener>> features;
     private Consumer<ProtocolRequest> sender;
     private ResettableClientIdentityStore identityStore;
     private final Supplier<ClientIdentityStore> identityStoreSupplier;
@@ -70,8 +70,8 @@ public final class Collar {
         changeState(State.DISCONNECTED);
         this.features = new HashMap<>();
         this.identityStoreSupplier = () -> identityStore;
-        this.groupsFeature = new GroupsFeature(this, identityStoreSupplier, request -> sender.accept(request), configuration.playerPosition);
-        this.features.put(GroupsFeature.class, groupsFeature);
+        this.groupsApi = new GroupsApi(this, identityStoreSupplier, request -> sender.accept(request), configuration.playerPosition);
+        this.features.put(GroupsApi.class, groupsApi);
     }
 
     /**
@@ -111,8 +111,8 @@ public final class Collar {
     /**
      * @return groups api
      */
-    public GroupsFeature groups() {
-        return groupsFeature;
+    public GroupsApi groups() {
+        return groupsApi;
     }
 
     public State getState() {

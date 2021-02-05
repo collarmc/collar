@@ -6,7 +6,8 @@ import team.catgirl.collar.api.location.Position;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.CollarConfiguration;
 import team.catgirl.collar.client.CollarListener;
-import team.catgirl.collar.client.api.groups.*;
+import team.catgirl.collar.client.api.groups.GroupInvitation;
+import team.catgirl.collar.client.api.groups.GroupsApi;
 import team.catgirl.collar.client.api.groups.GroupsListener;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.security.mojang.MinecraftSession;
@@ -63,6 +64,7 @@ public class GroupsExample {
                 try {
                     System.out.println("Client is untrusted - resetting store");
                     store.reset();
+                    collar.connect();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

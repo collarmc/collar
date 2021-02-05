@@ -1,26 +1,25 @@
-package team.catgirl.collar.protocol.groups;
+package team.catgirl.collar.protocol.waypoints;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import team.catgirl.collar.api.groups.Group.MembershipState;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.security.ClientIdentity;
 
 import java.util.UUID;
 
-public final class AcceptGroupMembershipRequest extends ProtocolRequest {
+public final class RemoveWaypointRequest extends ProtocolRequest {
     @JsonProperty("groupId")
     public final UUID groupId;
-    @JsonProperty("state")
-    public final MembershipState state;
+    @JsonProperty("waypointId")
+    public final UUID waypointId;
 
     @JsonCreator
-    public AcceptGroupMembershipRequest(
+    public RemoveWaypointRequest(
             @JsonProperty("identity") ClientIdentity identity,
             @JsonProperty("groupId") UUID groupId,
-            @JsonProperty("state") MembershipState state) {
+            @JsonProperty("waypointId") UUID waypointId) {
         super(identity);
         this.groupId = groupId;
-        this.state = state;
+        this.waypointId = waypointId;
     }
 }

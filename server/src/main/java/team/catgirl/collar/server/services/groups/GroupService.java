@@ -1,11 +1,16 @@
 package team.catgirl.collar.server.services.groups;
 
-import com.google.common.collect.ImmutableList;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.groups.Group.Member;
 import team.catgirl.collar.api.location.Position;
+import team.catgirl.collar.api.waypoints.Waypoint;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.groups.*;
+import team.catgirl.collar.protocol.waypoints.CreateWaypointRequest;
+import team.catgirl.collar.protocol.waypoints.CreateWaypointResponse.CreateWaypointFailedResponse;
+import team.catgirl.collar.protocol.waypoints.CreateWaypointResponse.CreateWaypointSuccessResponse;
+import team.catgirl.collar.protocol.waypoints.RemoveWaypointRequest;
+import team.catgirl.collar.protocol.waypoints.RemoveWaypointResponse.RemoveWaypointFailedResponse;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.Identity;
 import team.catgirl.collar.security.ServerIdentity;
@@ -82,7 +87,7 @@ public final class GroupService {
         synchronized (group.id) {
             group = group.removeMember(sender);
             response = response.concat(refreshGroupState(group, req.identity, new LeaveGroupResponse(serverIdentity, group.id)));
-            response = response.concat(createResponses(sender, group, (identity, group1, member) -> new UpdateGroupsUpdatedResponse(serverIdentity, ImmutableList.of(group1))));
+            response = response.concat(sendUpdatesToMembers(sender, group, (identity, group1, member) -> new CreateGroupResponse(serverIdentity, group1)));
         }
         LOGGER.log(Level.INFO, "Group count " + groupsById.size());
         return response;
@@ -166,23 +171,22 @@ public final class GroupService {
     public BatchProtocolResponse updatePosition(UpdateGroupMemberPositionRequest req) {
         MinecraftPlayer owner = sessions.findPlayer(req.identity);
         List<Group> groups = findGroupsForPlayer(owner);
-        BatchProtocolResponse responses = new BatchProtocolResponse(null);
+        BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
         for (Group group : groups) {
             synchronized (group.id) {
                 group = group.updateMemberPosition(owner, req.position);
                 responses = responses.concat(refreshGroupState(group, req.identity, null));
-                BatchProtocolResponse groupUpdatedResponses = createResponses(owner, group, (identity, group1, member) -> new UpdateGroupsUpdatedResponse(serverIdentity, groups));
-                responses = responses.concat(groupUpdatedResponses);
+                responses = responses.concat(sendUpdatesToMembers(owner, group, (identity, group1, member) -> new GroupChangedResponse(serverIdentity, groups)));
             }
         }
-        return responses.add(req.identity, new UpdateGroupsUpdatedResponse(serverIdentity, findGroupsForPlayer(owner)));
+        return responses.add(req.identity, new GroupChangedResponse(serverIdentity, findGroupsForPlayer(owner)));
     }
 
     private List<Group> findGroupsForPlayer(MinecraftPlayer player) {
         return groupsById.values().stream().filter(group -> group.members.containsKey(player)).collect(Collectors.toList());
     }
 
-    private BatchProtocolResponse createResponses(MinecraftPlayer sender, Group group, MessageCreator messageCreator) {
+    private BatchProtocolResponse sendUpdatesToMembers(MinecraftPlayer sender, Group group, MessageCreator messageCreator) {
         synchronized (group.id) {
             Map<ProtocolResponse, ClientIdentity> responses = group.members.entrySet().stream()
                     .filter(entry -> !entry.getKey().equals(sender))
@@ -207,8 +211,8 @@ public final class GroupService {
                     }
                     List<Group> groupsForPlayer = findGroupsForPlayer(member.player);
                     if (!groupsForPlayer.isEmpty()) {
-                        BatchProtocolResponse groupResponses = createResponses(sessions.findPlayer(identity), group, (identity1, group1, member1) -> new UpdateGroupsUpdatedResponse(serverIdentity, groupsForPlayer));
-                        response = response.concat(groupResponses);
+                        BatchProtocolResponse groupResponses = sendUpdatesToMembers(sessions.findPlayer(identity), group, (identity1, group1, member1) -> new GroupChangedResponse(serverIdentity, groupsForPlayer));
+                        response = groupResponses.concat(groupResponses);
                     }
                 }
             }
@@ -237,7 +241,7 @@ public final class GroupService {
                 synchronized (group.id) {
                     group = group.removeMember(memberToRemove.get().player);
                     response = response.concat(refreshGroupState(group, req.identity, new LeaveGroupResponse(serverIdentity, group.id)));
-                    response = response.concat(createResponses(sender, group, (identity, group1, member) -> new RemoveGroupMemberResponse(serverIdentity, group1.id, memberToRemove.get().player.id)));
+                    response = response.concat(sendUpdatesToMembers(sender, group, (identity, group1, member) -> new RemoveGroupMemberResponse(serverIdentity, group1.id, memberToRemove.get().player.id)));
                 }
                 return response;
             } else {
@@ -246,5 +250,59 @@ public final class GroupService {
         } else {
             return new RemoveGroupMemberResponse(serverIdentity, group.id, null);
         }
+    }
+
+    public ProtocolResponse createWaypoint(CreateWaypointRequest req) {
+        Group group = groupsById.get(req.groupId);
+        if (group == null) {
+            return new CreateWaypointFailedResponse(serverIdentity, req.groupId, req.waypointName);
+        }
+        MinecraftPlayer player = sessions.findPlayer(req.identity);
+        if (player == null) {
+            throw new IllegalStateException("no player registered for " + req.identity);
+        }
+        if (group.members.values().stream().noneMatch(member -> member.player.inServerWith(player))) {
+            return new CreateWaypointFailedResponse(serverIdentity, req.groupId, req.waypointName);
+        }
+        Waypoint waypoint = new Waypoint(UUID.randomUUID(), req.waypointName, req.position);
+        BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
+        synchronized (group.id) {
+            group = group.addWaypoint(waypoint);
+            groupsById.put(group.id, group);
+        }
+        responses = responses.concat(sendUpdatesToMembers(player, group, (identity, group1, member) -> new GroupChangedResponse(serverIdentity, List.of(group1))));
+        responses = responses.concat(refreshGroupState(group, req.identity, new CreateWaypointSuccessResponse(serverIdentity, group.id, waypoint)));
+        return responses;
+    }
+
+    public ProtocolResponse removeWaypoint(RemoveWaypointRequest req) {
+        Group group = groupsById.get(req.groupId);
+        if (group == null) {
+            return new RemoveWaypointFailedResponse(serverIdentity, req.groupId, req.waypointId);
+        }
+        MinecraftPlayer player = sessions.findPlayer(req.identity);
+        if (player == null) {
+            throw new IllegalStateException("no player registered for " + req.identity);
+        }
+        if (group.members.values().stream().noneMatch(member -> member.player.inServerWith(player))) {
+            return new RemoveWaypointFailedResponse(serverIdentity, req.groupId, req.waypointId);
+        }
+        Waypoint waypoint = group.waypoints.get(req.waypointId);
+        if (waypoint == null) {
+            return new RemoveWaypointFailedResponse(serverIdentity, req.groupId, req.waypointId);
+        }
+        synchronized (group.id) {
+            group = group.removeWaypoint(req.waypointId);
+            if (group != null) {
+                groupsById.put(group.id, group);
+            }
+        }
+        if (group == null) {
+            return new RemoveWaypointFailedResponse(serverIdentity, req.groupId, req.waypointId);
+        }
+        BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
+        responses = responses.concat(sendUpdatesToMembers(player, group, (identity, group1, member) -> new GroupChangedResponse(serverIdentity, List.of(group1))));
+        responses = responses.concat(refreshGroupState(group, req.identity, new RemoveWaypointFailedResponse(serverIdentity, group.id, waypoint.id)));
+        return responses;
     }
 }

@@ -3,6 +3,8 @@ package team.catgirl.collar.server.protocol;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.groups.*;
+import team.catgirl.collar.protocol.waypoints.CreateWaypointRequest;
+import team.catgirl.collar.protocol.waypoints.RemoveWaypointRequest;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.CollarServer;
@@ -47,6 +49,12 @@ public final class GroupsProtocolHandler extends ProtocolHandler {
         } else if (req instanceof RemoveGroupMemberRequest) {
             RemoveGroupMemberRequest request = (RemoveGroupMemberRequest) req;
             resp = groups.removeMember(request);
+        } else if (req instanceof CreateWaypointRequest) {
+            CreateWaypointRequest request = (CreateWaypointRequest) req;
+            resp = groups.createWaypoint(request);
+        } else if (req instanceof RemoveWaypointRequest) {
+            RemoveWaypointRequest request = (RemoveWaypointRequest) req;
+            resp = groups.removeWaypoint(request);
         } else {
             resp = null;
         }

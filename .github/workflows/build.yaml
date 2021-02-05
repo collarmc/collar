@@ -24,3 +24,13 @@ jobs:
         with:
           name: coverage-report
           path: tests/target/site/jacoco-aggregate/
+      - name: Upload server.jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: server.jar
+          path: server/target/server.jar
+      - name: Upload client.jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: server.jar
+          path: client/target/client.jar

@@ -49,7 +49,6 @@
         <dependency>
             <groupId>at.favre.lib</groupId>
             <artifactId>bcrypt</artifactId>
-            <version>0.9.0</version>
         </dependency>
         <dependency>
             <groupId>org.jasypt</groupId>

@@ -2,6 +2,7 @@ package team.catgirl.collar.server.security.signal;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.InvalidKeyIdException;
@@ -10,18 +11,22 @@ import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.KeyHelper;
-import team.catgirl.collar.server.mongo.DatabaseTest;
+import team.catgirl.collar.server.junit.MongoDatabaseTestRule;
 
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ServerSignalProtocolStoreTest extends DatabaseTest {
+public class ServerSignalProtocolStoreTest {
+
+    @Rule
+    public MongoDatabaseTestRule dbRule = new MongoDatabaseTestRule();
+
     private ServerSignalProtocolStore store;
 
     @Before
     public void createStore() {
-        store = ServerSignalProtocolStore.from(db);
+        store = ServerSignalProtocolStore.from(dbRule.db);
     }
 
     @Test

@@ -24,9 +24,7 @@ public final class DeviceService {
     private static final int MAX_DEVICES = 100;
     private static final String FIELD_OWNER = "owner";
     private static final String FIELD_DEVICE_ID = "deviceId";
-    private static final String FIELD_PUBLIC_KEY = "publicKey";
     private static final String FIELD_NAME = "name";
-    private static final String FIELD_FINGERPRINT = "fingerprint";
 
     private final MongoCollection<Document> docs;
 

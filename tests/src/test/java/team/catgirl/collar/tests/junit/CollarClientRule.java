@@ -19,17 +19,16 @@ public final class CollarClientRule implements TestRule {
         do {
             try {
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
                 collar.disconnect();
-                throw new IllegalStateException();
             }
         } while (collar.getState() != Collar.State.DISCONNECTED);
     }, "Collar Client Test Loop");
 
-    public CollarClientRule(CollarConfiguration.Builder builder) {
+    public CollarClientRule(UUID playerId, CollarConfiguration.Builder builder) {
         this.builder = builder.withCollarServer("http://localhost:3001")
                 .withHomeDirectory(Files.createTempDir())
-                .withNoJangAuthentication(UUID.randomUUID(), "hypixel.net");
+                .withNoJangAuthentication(playerId, "hypixel.net");
     }
 
     @Override
@@ -42,7 +41,7 @@ public final class CollarClientRule implements TestRule {
                 try {
                     base.evaluate();
                 } finally {
-                    thread.stop();
+                    thread.interrupt();
                 }
             }
         };

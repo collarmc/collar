@@ -7,6 +7,7 @@ import com.mongodb.client.result.InsertOneResult;
 import org.bson.BsonObjectId;
 import org.bson.Document;
 import team.catgirl.collar.api.http.HttpException.BadRequestException;
+import team.catgirl.collar.api.http.HttpException.ConflictException;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
 import team.catgirl.collar.api.http.HttpException.ServerErrorException;
 import team.catgirl.collar.server.http.RequestContext;
@@ -41,6 +42,9 @@ public class ProfileService {
 
     public CreateProfileResponse createProfile(RequestContext context, CreateProfileRequest req) {
         context.assertAnonymous();
+        if (docs.find(eq(FIELD_EMAIL, req.email)).iterator().hasNext()) {
+            throw new ConflictException("profile with this email already exists");
+        }
         String hashedPassword = passwordHashing.hash(req.password);
         Map<String, Object> state = new HashMap<>();
         state.put(FIELD_PROFILE_ID, UUID.randomUUID());

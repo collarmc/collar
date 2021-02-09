@@ -12,8 +12,8 @@
     <artifactId>tests</artifactId>
 
     <properties>
-        <maven.compiler.source>14</maven.compiler.source>
-        <maven.compiler.target>14</maven.compiler.target>
+        <maven.compiler.source>15</maven.compiler.source>
+        <maven.compiler.target>15</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -26,13 +26,8 @@
             <artifactId>server</artifactId>
         </dependency>
         <dependency>
-            <groupId>team.catgirl.collar</groupId>
-            <artifactId>shared</artifactId>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <scope>compile</scope>
         </dependency>
     </dependencies>
 

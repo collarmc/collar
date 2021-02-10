@@ -39,11 +39,14 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         if (req instanceof AddFriendRequest) {
             AddFriendRequest request = (AddFriendRequest) req;
             UUID profileId;
-            if (request.player != null) {
-                profileId = sessions.getSessionStateByPlayer(request.player).map(sessionState -> sessionState.player.id).orElse(null);
-            } else if (request.profile != null) {
+            if (request.profile != null) {
                 profileId = request.profile;
-            } else {
+            } else if (request.player != null) {
+                profileId = sessions.getSessionStateByPlayer(request.player).map(sessionState -> sessionState.identity.owner).orElse(null);
+            }  else {
+                profileId = null;
+            }
+            if (profileId == null) {
                 LOGGER.log(Level.SEVERE, "Could not add friend for " + req.identity);
                 return true;
             }
@@ -53,12 +56,15 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         } else if (req instanceof RemoveFriendRequest) {
             RemoveFriendRequest request = (RemoveFriendRequest) req;
             UUID profileId;
-            if (request.player != null) {
-                profileId = sessions.getSessionStateByPlayer(request.player).map(sessionState -> sessionState.player.id).orElse(null);
-            } else if (request.profile != null) {
+            if (request.profile != null) {
                 profileId = request.profile;
-            } else {
-                LOGGER.log(Level.SEVERE, "Could not remove friend for " + req.identity);
+            } else if (request.player != null) {
+                profileId = sessions.getSessionStateByPlayer(request.player).map(sessionState -> sessionState.identity.owner).orElse(null);
+            }  else {
+                profileId = null;
+            }
+            if (profileId == null) {
+                LOGGER.log(Level.SEVERE, "Could not add friend for " + req.identity);
                 return true;
             }
             UUID deletedFriend = friends.deleteFriend(new DeleteFriendRequest(request.identity.owner, profileId)).friend;

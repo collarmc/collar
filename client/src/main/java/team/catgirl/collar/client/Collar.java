@@ -15,6 +15,7 @@ import team.catgirl.collar.client.CollarException.UnsupportedServerVersionExcept
 import team.catgirl.collar.client.api.features.AbstractApi;
 import team.catgirl.collar.client.api.features.ApiListener;
 import team.catgirl.collar.client.api.groups.GroupsApi;
+import team.catgirl.collar.client.api.location.LocationApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.client.security.ProfileState;
 import team.catgirl.collar.client.security.signal.ResettableClientIdentityStore;
@@ -58,9 +59,10 @@ public final class Collar {
     private final CollarConfiguration configuration;
     private final OkHttpClient http;
     private final GroupsApi groupsApi;
+    private final LocationApi locationApi;
     private WebSocket webSocket;
     private State state;
-    private final Map<Class<?>, AbstractApi<? extends ApiListener>> features;
+    private final List<AbstractApi<? extends ApiListener>> apis;
     private Consumer<ProtocolRequest> sender;
     private ResettableClientIdentityStore identityStore;
     private final Supplier<ClientIdentityStore> identityStoreSupplier;
@@ -69,10 +71,12 @@ public final class Collar {
         this.http = http;
         this.configuration = configuration;
         changeState(State.DISCONNECTED);
-        this.features = new HashMap<>();
+        this.apis = new ArrayList<>();
         this.identityStoreSupplier = () -> identityStore;
-        this.groupsApi = new GroupsApi(this, identityStoreSupplier, request -> sender.accept(request), configuration.playerPosition);
-        this.features.put(GroupsApi.class, groupsApi);
+        this.groupsApi = new GroupsApi(this, identityStoreSupplier, request -> sender.accept(request));
+        this.locationApi = new LocationApi(this, identityStoreSupplier, request -> sender.accept(request), groupsApi, configuration.playerLocation);
+        this.apis.add(groupsApi);
+        this.apis.add(locationApi);
     }
 
     /**
@@ -112,7 +116,16 @@ public final class Collar {
      * @return groups api
      */
     public GroupsApi groups() {
+        assertConnected();
         return groupsApi;
+    }
+
+    /**
+     * @return location api
+     */
+    public LocationApi location() {
+        assertConnected();
+        return locationApi;
     }
 
     /**
@@ -137,7 +150,7 @@ public final class Collar {
         State previousState = this.state;
         if (previousState != state) {
             this.state = state;
-            if (previousState != null && state == State.DISCONNECTED) {
+            if (previousState != null && previousState != State.DISCONNECTED && state == State.DISCONNECTED) {
                 disconnect();
             }
             if (previousState == null) {
@@ -151,6 +164,7 @@ public final class Collar {
             }
             if (previousState != null) {
                 this.configuration.listener.onStateChanged(this, state);
+                this.groupsApi.onStageChanged(state);
             }
         } else {
             throw new IllegalStateException("Cannot change state " + state + " to the same state");
@@ -183,7 +197,7 @@ public final class Collar {
                 throw new IllegalStateException("nojang verification scheme requested but was provided an invalid MinecraftSession");
             }
         });
-        findFeature(response, "groups:coordinates").orElseThrow(() -> new IllegalStateException("Server does not support groups:coordinates"));
+        findFeature(response, "groups:locations").orElseThrow(() -> new IllegalStateException("Server does not support groups:locations"));
         findFeature(response, "groups:waypoints").orElseThrow(() -> new IllegalStateException("Server does not support groups:waypoints"));
     }
 
@@ -216,6 +230,12 @@ public final class Collar {
      */
     public MinecraftPlayer player() {
         return configuration.sessionSupplier.get().toPlayer();
+    }
+
+    private void assertConnected() {
+        if (state != State.CONNECTED) {
+            throw new IllegalStateException("Cannot use the API until client is CONNECTED");
+        }
     }
 
     class CollarWebSocket extends WebSocketListener {
@@ -318,7 +338,6 @@ public final class Collar {
                 identityStore.trustIdentity(response);
                 LOGGER.log(Level.INFO, "PreKeys have been exchanged successfully");
                 sendRequest(webSocket, new IdentifyRequest(identity));
-//                sendRequest(webSocket, new StartSessionRequest(identity, configuration.sessionSupplier.get()));
             } else if (resp instanceof StartSessionResponse) {
                 LOGGER.log(Level.INFO, "Session has started. Checking if the client and server are in a trusted relationship");
                 sendRequest(webSocket, new CheckTrustRelationshipRequest(identity));
@@ -341,14 +360,10 @@ public final class Collar {
                 collar.changeState(State.DISCONNECTED);
                 configuration.listener.onClientUntrusted(collar, identityStore);
             } else {
-                // Find the first Feature that handles the request and return the result
-                boolean wasHandled = collar.features.values().stream()
-                        .map(feature -> feature.handleResponse(resp))
-                        .filter(handled -> handled)
-                        .findFirst()
-                        .orElse(false);
-                if (!wasHandled) {
-                    throw new IllegalStateException("Did not understand received protocol response " + resp.getClass());
+                for (AbstractApi<?> api : collar.apis) {
+                    if (api.handleResponse(resp)) {
+                        break;
+                    }
                 }
             }
         }

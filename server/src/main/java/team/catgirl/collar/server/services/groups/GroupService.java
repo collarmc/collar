@@ -6,7 +6,6 @@ import team.catgirl.collar.api.location.Location;
 import team.catgirl.collar.api.waypoints.Waypoint;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.groups.*;
-import team.catgirl.collar.protocol.location.UpdateLocationResponse;
 import team.catgirl.collar.protocol.location.UpdateLocationRequest;
 import team.catgirl.collar.protocol.waypoints.CreateWaypointRequest;
 import team.catgirl.collar.protocol.waypoints.CreateWaypointResponse.CreateWaypointFailedResponse;
@@ -40,6 +39,16 @@ public final class GroupService {
     public GroupService(ServerIdentity serverIdentity, SessionManager sessions) {
         this.serverIdentity = serverIdentity;
         this.sessions = sessions;
+    }
+
+    /**
+     * @param groupIds to find
+     * @return the list of matching groups
+     */
+    public List<Group> findGroups(List<UUID> groupIds) {
+        return groupsById.entrySet().stream()
+                .filter(entry -> groupIds.contains(entry.getKey()))
+                .map(Map.Entry::getValue).collect(Collectors.toList());
     }
 
     /**
@@ -154,25 +163,6 @@ public final class GroupService {
             }
             return response;
         }
-    }
-
-    /**
-     * Update the player state
-     * @param req to update player position
-     * @return response to send to client
-     */
-    public BatchProtocolResponse updatePosition(UpdateLocationRequest req) {
-        MinecraftPlayer owner = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("cannot find player for " + req.identity.id()));
-        List<Group> groups = findGroupsForPlayer(owner);
-        BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
-//        for (Group group : groups) {
-//            synchronized (group.id) {
-//                group = group.updateMemberPosition(owner, req.location);
-//                updateState(group);
-//                responses = responses.concat(sendUpdatesToMembers(owner, group, Group.MembershipState.ACCEPTED, (identity, group1, member) -> new UpdateLocationResponse(serverIdentity, req.identity, owner, req.location)));
-//            }
-//        }
-        return responses;
     }
 
     public ProtocolResponse ejectMember(EjectGroupMemberRequest req) {

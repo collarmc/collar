@@ -38,21 +38,25 @@ public class FriendsProtocolHandler extends ProtocolHandler {
     public boolean handleRequest(CollarServer collar, ProtocolRequest req, Consumer<ProtocolResponse> sender) {
         if (req instanceof AddFriendRequest) {
             AddFriendRequest request = (AddFriendRequest) req;
-            UUID profileId = request.profile;
+            UUID profileId;
             if (request.player != null) {
                 profileId = sessions.getSessionStateByPlayer(request.player).map(sessionState -> sessionState.player.id).orElse(null);
+            } else if (request.profile != null) {
+                profileId = request.profile;
             } else {
                 LOGGER.log(Level.SEVERE, "Could not add friend for " + req.identity);
                 return true;
             }
-            Friend friend = friends.createFriend(new CreateFriendRequest(request.profile, profileId)).friend;
+            Friend friend = friends.createFriend(new CreateFriendRequest(request.identity.owner, profileId)).friend;
             sender.accept(new AddFriendResponse(serverIdentity, friend));
             return true;
         } else if (req instanceof RemoveFriendRequest) {
             RemoveFriendRequest request = (RemoveFriendRequest) req;
-            UUID profileId = request.profile;
+            UUID profileId;
             if (request.player != null) {
                 profileId = sessions.getSessionStateByPlayer(request.player).map(sessionState -> sessionState.player.id).orElse(null);
+            } else if (request.profile != null) {
+                profileId = request.profile;
             } else {
                 LOGGER.log(Level.SEVERE, "Could not remove friend for " + req.identity);
                 return true;

@@ -43,6 +43,12 @@ public final class FriendsService {
     }
 
     public AddFriendResponse createFriend(CreateFriendRequest request) {
+        if (request.owner == null) {
+            throw new BadRequestException("owner");
+        }
+        if (request.friend == null) {
+            throw new BadRequestException("friend");
+        }
         Map<String, Object> state = Map.of(
             FIELD_OWNER, request.owner,
             FIELD_FRIEND, request.friend

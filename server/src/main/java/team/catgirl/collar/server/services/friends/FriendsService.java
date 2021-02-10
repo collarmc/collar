@@ -70,6 +70,7 @@ public final class FriendsService {
     public GetFriendsResponse getFriends(GetFriendsRequest request) {
         FindIterable<Document> documents;
         if (request.byFriend != null) {
+            // TODO: use distinct on owner here?
             documents = docs.find(eq(FIELD_FRIEND, request.byFriend));
         } else if (request.byOwner != null) {
             documents = docs.find(eq(FIELD_OWNER, request.byOwner));

@@ -88,6 +88,7 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
             fireListener("onFriendAdded", listener -> {
                 listener.onFriendAdded(collar, this, response.friend);
             });
+            return true;
         } else if (resp instanceof RemoveFriendResponse) {
             RemoveFriendResponse response = (RemoveFriendResponse) resp;
             Friend removed = friends.remove(response.friend);

@@ -8,6 +8,8 @@ import java.util.UUID;
 public final class Friend {
     @JsonProperty("id")
     public final UUID id;
+    @JsonProperty("friendOf")
+    public final UUID friendOf;
     @JsonProperty("status")
     public final Status status;
     /** Note: not using MinecraftPlayer here as it would leak server ip info to friends */
@@ -15,9 +17,11 @@ public final class Friend {
     public final List<UUID> playerIds;
 
     public Friend(@JsonProperty("id") UUID id,
+                  @JsonProperty("friendOf") UUID friendOf,
                   @JsonProperty("status") Status status,
                   @JsonProperty("playerIds") List<UUID> playerIds) {
         this.id = id;
+        this.friendOf = friendOf;
         this.status = status;
         this.playerIds = playerIds;
     }

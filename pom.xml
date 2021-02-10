@@ -20,6 +20,8 @@
     </scm>
 
     <properties>
+        <!-- skip for now as it blows up when releasing -->
+        <maven.javadoc.skip>true</maven.javadoc.skip>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <jackson-databind.version>2.12.1</jackson-databind.version>

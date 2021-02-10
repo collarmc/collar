@@ -41,7 +41,7 @@ public class TextureService {
 
     public CreateTextureResponse createTexture(RequestContext context, CreateTextureRequest request) throws BadRequestException {
         context.assertNotAnonymous();
-        if (request.bytes.length > (1024*2)) {
+        if (request.bytes.length > (2*1e+6)) {
             throw new BadRequestException("bytes must be less than 2mb");
         }
         if (docs.find(and(eq(FIELD_OWNER, request.owner), eq(FIELD_TYPE, request.type.name()))).iterator().hasNext()) {

@@ -16,7 +16,7 @@ Execute:
 
 ## Using in Forge
 
-We need to shadow the client dependency in your Jar and relocate the `team.catgirl.collar.coordshare` package
+We need to shadow the client dependency in your Jar and relocate the `team.catgirl.collar` package
 in order to avoid conflicts with other mods.
 
 ```
@@ -28,7 +28,7 @@ dependencies {
 }
 apply plugin: 'com.github.johnrengelman.shadow'
 shadowJar {
-  // Only shadow fluent-hc
+  // Only shadow collar
   dependencies {
     include(dependency('team.catgirl.collar:client:.*'))
   }

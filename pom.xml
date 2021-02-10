@@ -15,6 +15,10 @@
         <module>tests</module>
     </modules>
 
+    <scm>
+        <connection>scm:git:git@github.com:team-catgirl/collar.git</connection>
+    </scm>
+
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>

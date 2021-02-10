@@ -48,9 +48,9 @@ reobf {
 ```
 CollarConfiguration configuration = new CollarConfiguration.Builder()
                 .withCollarServer("http://localhost:3000/")
-                .withHomeDirectory(new File("target"))
+                .withHomeDirectory(new File(...))
                 .withMojangAuthentication(() -> MinecraftSession.from(username, password, "smp.catgirl.team"))
-                .withPlayerPosition(() -> new Position(1d, 1d, 1d, 0))
+                .withPlayerLocation(() -> new Location(1d, 1d, 1d, 0))
                 .withListener(collarListener)
                 .build();
 Collar collar = Collar.create(configuration);

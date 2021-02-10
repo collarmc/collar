@@ -10,6 +10,7 @@ import java.io.*;
  * Encodes and decodes packets for/from the wire, handling encryption and different types of signal messages
  * Packet format is int(ENCRYPTEDMODE)+int(SIGNAL_MESSAGE_TYPE)+CiphertextMessage()
  * TODO: stabilize packet format before 1.0
+ * TODO: limit the size of packets so people don't do scuffed things
  */
 public final class PacketIO {
 

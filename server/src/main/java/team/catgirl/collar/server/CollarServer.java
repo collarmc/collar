@@ -141,7 +141,11 @@ public class CollarServer {
         PacketIO packetIO = new PacketIO(services.packetMapper, services.identityStore.createCypher());
         try {
             ClientIdentity identity = services.sessions.getIdentity(session).orElse(null);
-            return packetIO.decode(identity, message, ProtocolRequest.class);
+            ProtocolRequest request = packetIO.decode(identity, message, ProtocolRequest.class);
+            if (!request.identity.equals(identity)) {
+                throw new IllegalStateException("client is sending bad identity. Session will end.");
+            }
+            return request;
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }

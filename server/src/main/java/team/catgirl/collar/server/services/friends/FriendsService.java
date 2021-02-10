@@ -87,10 +87,11 @@ public final class FriendsService {
     }
 
     private Friend mapFriend(Document document) {
+        UUID owner = document.get(FIELD_OWNER, UUID.class);
         UUID friend = document.get(FIELD_FRIEND, UUID.class);
         return sessions.getSessionStateByOwner(friend)
-                .map(sessionState -> new Friend(friend, Status.ONLINE, List.of(sessionState.player.id)))
-                .orElse(new Friend(friend, Status.OFFLINE, List.of()));
+                .map(sessionState -> new Friend(friend, owner, Status.ONLINE, List.of(sessionState.player.id)))
+                .orElse(new Friend(friend, owner, Status.OFFLINE, List.of()));
     }
 
     public static final class CreateFriendRequest {

@@ -80,9 +80,12 @@ public class FriendsProtocolHandler extends ProtocolHandler {
 
     @Override
     public void onSessionStopped(ClientIdentity identity, MinecraftPlayer player, Consumer<ProtocolResponse> sender) {
-        // Broadcast to friends that you are offline
+        // Broadcast to the players friends that the player is now offline
         friends.getFriends(new FriendsService.GetFriendsRequest(null, identity.owner)).friends.forEach(friend -> {
-            friend.playerIds.forEach(uuid -> sender.accept(new FriendChangedResponse(serverIdentity, new Friend(identity.owner, Status.OFFLINE, List.of()))));
+            friend.playerIds.forEach(uuid -> {
+                Friend offline = new Friend(friend.friendOf, friend.id, Status.OFFLINE, List.of());
+                sender.accept(new FriendChangedResponse(serverIdentity, offline));
+            });
         });
     }
 }

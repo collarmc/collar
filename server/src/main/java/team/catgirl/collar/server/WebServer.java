@@ -74,6 +74,14 @@ public class WebServer {
         protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.getIdentity(), services.sessions, services.textures));
         webSocket("/api/1/listen", new CollarServer(services, protocolHandlers));
 
+        before((request, response) -> {
+            String forwarded = request.headers("X-Forwarded-Proto");
+            if (forwarded != null && forwarded.indexOf("https") != 0) {
+                String pathInfo = (request.pathInfo() != null) ? request.pathInfo() : "";
+                response.redirect("https://" + request.raw().getServerName() + pathInfo, 301);
+            }
+        });
+
         // API routes
         path("/api", () -> {
 

@@ -1,8 +1,11 @@
 package team.catgirl.collar.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import spark.ModelAndView;
 import spark.Request;
 import team.catgirl.collar.api.http.*;
+import team.catgirl.collar.api.http.HttpException.ForbiddenException;
+import team.catgirl.collar.api.http.HttpException.UnauthorisedException;
 import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.server.common.ServerVersion;
 import team.catgirl.collar.server.configuration.Configuration;
@@ -17,9 +20,11 @@ import team.catgirl.collar.server.protocol.TexturesProtocolHandler;
 import team.catgirl.collar.server.services.authentication.AuthenticationService;
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
 import team.catgirl.collar.server.services.devices.DeviceService;
+import team.catgirl.collar.server.services.devices.DeviceService.TrustDeviceResponse;
 import team.catgirl.collar.server.services.profiles.Profile;
 import team.catgirl.collar.server.services.profiles.ProfileService;
 import team.catgirl.collar.server.services.textures.TextureService.GetTextureContentRequest;
+import team.catgirl.collar.utils.Utils;
 
 import javax.servlet.ServletOutputStream;
 import java.io.IOException;
@@ -53,13 +58,21 @@ public class WebServer {
         defaultResponseTransformer(services.jsonMapper::writeValueAsString);
         exception(HttpException.class, (e, request, response) -> {
             response.status(e.code);
-            response.body(e.getMessage());
+            try {
+                response.body(Utils.jsonMapper().writeValueAsString(new ErrorResponse(e.getMessage())));
+            } catch (JsonProcessingException jsonProcessingException) {
+                throw new RuntimeException(e);
+            }
             LOGGER.log(Level.SEVERE, request.pathInfo(), e);
         });
 
         exception(Exception.class, (e, request, response) -> {
             response.status(500);
-            response.body(e.getMessage());
+            try {
+                response.body(Utils.jsonMapper().writeValueAsString(new ErrorResponse(e.getMessage())));
+            } catch (JsonProcessingException jsonProcessingException) {
+                throw new RuntimeException(e);
+            }
             LOGGER.log(Level.SEVERE, request.pathInfo(), e);
         });
 
@@ -72,23 +85,30 @@ public class WebServer {
         protocolHandlers.add(new GroupsProtocolHandler(services.groups));
         protocolHandlers.add(new LocationProtocolHandler(services.playerLocations));
         protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.getIdentity(), services.sessions, services.textures));
-        webSocket("/api/1/listen", new CollarServer(services, protocolHandlers));
+
+        options("/*", (request, response) -> {
+
+            String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
+            if (accessControlRequestHeaders != null) {
+                response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
+            }
+
+            String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
+            if (accessControlRequestMethod != null) {
+                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+            }
+
+            return "OK";
+        }, Object::toString);
 
         before((request, response) -> {
-            String forwarded = request.headers("X-Forwarded-Proto");
-            if (forwarded != null && forwarded.indexOf("https") != 0) {
-                String pathInfo = (request.pathInfo() != null) ? request.pathInfo() : "";
-                response.redirect("https://" + request.raw().getServerName() + pathInfo, 301);
-            }
+            response.header("Access-Control-Allow-Origin", "*");
         });
+
+        webSocket("/api/1/listen", new CollarServer(services, protocolHandlers));
 
         // API routes
         path("/api", () -> {
-
-            after((request, response) -> {
-                response.header("Access-Control-Allow-Origin", configuration.corsOrigin);
-                response.header("Access-Control-Allow-Methods", "*");
-            });
 
             // Version 1
             path("/1", () -> {
@@ -118,6 +138,15 @@ public class WebServer {
                     get("/devices", (request, response) -> {
                         return services.devices.findDevices(RequestContext.from(request), services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.FindDevicesRequest.class));
                     });
+                    post("/devices/trust", (request, response) -> {
+                        RequestContext context = RequestContext.from(request);
+                        context.assertNotAnonymous();
+                        DeviceService.TrustDeviceRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.TrustDeviceRequest.class);
+                        DeviceService.CreateDeviceResponse device = services.devices.createDevice(context, new DeviceService.CreateDeviceRequest(context.owner, req.deviceName));
+                        PublicProfile profile = services.profiles.getProfile(context, ProfileService.GetProfileRequest.byId(context.owner)).profile.toPublic();
+                        services.sessions.onDeviceRegistered(services.identityStore.getIdentity(), profile, req.token, device);
+                        return new TrustDeviceResponse();
+                    });
                     delete("/devices/:id", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         String deviceId = request.params("id");
@@ -135,7 +164,7 @@ public class WebServer {
                         return services.auth.login(RequestContext.from(request), req);
                     });
                     // Create an account
-                    get("/create", (request, response) -> {
+                    post("/create", (request, response) -> {
                         AuthenticationService.CreateAccountRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), AuthenticationService.CreateAccountRequest.class);
                         return services.auth.createAccount(RequestContext.from(request), req);
                     });
@@ -285,10 +314,21 @@ public class WebServer {
         } else if (authorization.startsWith("Bearer ")) {
             String tokenString = authorization.substring(authorization.lastIndexOf(" "));
             AuthToken token = AuthToken.deserialize(crypter, tokenString);
+            if (new Date().after(new Date(token.expiresAt))) {
+                throw new UnauthorisedException("old token");
+            }
             context = token.fromToken();
         } else {
-            throw new HttpException.UnauthorisedException("bad authorization header");
+            throw new UnauthorisedException("bad authorization header");
         }
         request.attribute("requestContext", context);
+    }
+
+    public static final class ErrorResponse {
+        public final String message;
+
+        public ErrorResponse(String message) {
+            this.message = message;
+        }
     }
 }

@@ -106,7 +106,7 @@ All requests must be sent with an `Authorization: Bearer <token>` with a token r
 
 **Request**
 
-`GET /api/1/profiles/<profile uuid>`
+`GET /api/1/profile/<profile uuid>`
 
 **Response**
 
@@ -121,7 +121,7 @@ All requests must be sent with an `Authorization: Bearer <token>` with a token r
 
 **Request**
 
-`GET /api/1/profiles/me`
+`GET /api/1/profile/me`
 
 **Response**
 
@@ -137,7 +137,7 @@ All requests must be sent with an `Authorization: Bearer <token>` with a token r
 
 **Request**
 
-`GET /api/1/profiles/me/devices`
+`GET /api/1/profile/me/devices`
 
 **Response**
 
@@ -155,7 +155,7 @@ All requests must be sent with an `Authorization: Bearer <token>` with a token r
 
 **Request**
 
-`GET /api/1/profiles/me/devices/<deviceId>`
+`GET /api/1/profile/me/devices/<deviceId>`
 
 **Response**
 

@@ -156,5 +156,19 @@ public final class DeviceService {
         }
     }
 
+    public static class TrustDeviceRequest {
+        @JsonProperty("deviceName")
+        public final String deviceName;
+        @JsonProperty("token")
+        public final String token;
+
+        public TrustDeviceRequest(@JsonProperty("deviceName") String deviceName, @JsonProperty("token") String token) {
+            this.deviceName = deviceName;
+            this.token = token;
+        }
+    }
+
+    public static class TrustDeviceResponse {}
+
     public static class DeleteDeviceResponse {}
 }

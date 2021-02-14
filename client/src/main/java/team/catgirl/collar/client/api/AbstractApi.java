@@ -59,7 +59,7 @@ public abstract class AbstractApi<T extends ApiListener> {
      * Listen to state changes from the client
      * @param state state
      */
-    public abstract void onStageChanged(Collar.State state);
+    public abstract void onStateChanged(Collar.State state);
 
     /**
      * Handle a protocol response

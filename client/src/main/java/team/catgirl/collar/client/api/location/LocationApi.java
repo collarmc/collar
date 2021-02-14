@@ -120,7 +120,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
     }
 
     @Override
-    public void onStageChanged(Collar.State state) {
+    public void onStateChanged(Collar.State state) {
         if (state == Collar.State.DISCONNECTED) {
             synchronized (this) {
                 playerLocations.clear();

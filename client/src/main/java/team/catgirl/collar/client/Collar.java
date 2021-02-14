@@ -173,7 +173,7 @@ public final class Collar {
             }
             if (previousState != null) {
                 this.configuration.listener.onStateChanged(this, state);
-                this.groupsApi.onStageChanged(state);
+                this.groupsApi.onStateChanged(state);
             }
         } else {
             throw new IllegalStateException("Cannot change state " + state + " to the same state");

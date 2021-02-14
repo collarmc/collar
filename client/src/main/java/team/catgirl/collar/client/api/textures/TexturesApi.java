@@ -38,5 +38,5 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
     }
 
     @Override
-    public void onStageChanged(Collar.State state) {}
+    public void onStateChanged(Collar.State state) {}
 }

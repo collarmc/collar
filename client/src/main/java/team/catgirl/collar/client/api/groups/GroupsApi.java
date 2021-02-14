@@ -127,7 +127,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
     }
 
     @Override
-    public void onStageChanged(Collar.State state) {
+    public void onStateChanged(Collar.State state) {
         if (state == Collar.State.DISCONNECTED) {
             synchronized (this) {
                 groups.clear();

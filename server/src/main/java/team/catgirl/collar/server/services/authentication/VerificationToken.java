@@ -1,40 +1,39 @@
-package team.catgirl.collar.server.http;
+package team.catgirl.collar.server.services.authentication;
 
 import com.google.common.io.BaseEncoding;
-import spark.Request;
-import spark.Response;
-import team.catgirl.collar.server.services.authentication.TokenCrypter;
 
+import javax.swing.text.html.Option;
 import java.io.*;
 import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class Cookie {
+/**
+ * Used by the {@link AuthenticationService} for identifying users for password resets, etc.
+ */
+public final class VerificationToken {
+
+    private static final Logger LOGGER = Logger.getLogger(VerificationToken.class.getName());
 
     private static final int VERSION = 1;
 
     public final UUID profileId;
     public final long expiresAt;
 
-    public Cookie(UUID profileId, long expiresAt) {
+    public VerificationToken(UUID profileId, long expiresAt) {
         this.profileId = profileId;
         this.expiresAt = expiresAt;
     }
 
-    public static void remove(Response response) {
-        response.cookie("identity", null);
-    }
-
-    public static Cookie from(TokenCrypter crypter, Request request) {
-        String identity = request.cookie("identity");
-        if (identity == null) {
-            return null;
-        }
+    public static Optional<VerificationToken> from(TokenCrypter crypter, String token) {
         byte[] bytes; {
             try {
-                bytes = crypter.decrypt(BaseEncoding.base64Url().decode(identity));
+                bytes = crypter.decrypt(BaseEncoding.base64Url().decode(token));
             } catch (Throwable e) {
-                return null;
+                LOGGER.log(Level.SEVERE, "Problem decoding token bytes", e);
+                return Optional.empty();
             }
         }
         try (ByteArrayInputStream byteStream = new ByteArrayInputStream(bytes)) {
@@ -50,23 +49,28 @@ public class Cookie {
                     default:
                         throw new IllegalStateException("unsupported version " + version);
                 }
-                return new Date().after(new Date(expiresAt)) ? null : new Cookie(UUID.fromString(profileId), expiresAt);
+                Date expiredAt = new Date(expiresAt);
+                if (new Date().after(expiredAt)) {
+                    LOGGER.log(Level.INFO, "Token expired at " + expiredAt);
+                    return Optional.empty();
+                } else {
+                    return Optional.of(new VerificationToken(UUID.fromString(profileId), expiresAt));
+                }
             }
         } catch (IOException e) {
-            return null;
+            LOGGER.log(Level.SEVERE, "Decoding token structure", e);
+            return Optional.empty();
         }
     }
 
-    public void set(TokenCrypter crypter, Response response) throws IOException {
+    public String serialize(TokenCrypter crypter) throws IOException {
         try (ByteArrayOutputStream byteStream = new ByteArrayOutputStream()) {
             try (DataOutputStream objectStream = new DataOutputStream(byteStream)) {
                 objectStream.writeInt(VERSION);
                 objectStream.writeUTF(profileId.toString());
                 objectStream.writeLong(expiresAt);
             }
-            byteStream.flush();
-            String encoded = BaseEncoding.base64Url().encode(crypter.crypt(byteStream.toByteArray()));
-            response.cookie("identity", encoded);
+            return BaseEncoding.base64Url().encode(crypter.crypt(byteStream.toByteArray()));
         }
     }
 }

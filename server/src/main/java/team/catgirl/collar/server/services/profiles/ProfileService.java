@@ -4,6 +4,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.bson.BsonObjectId;
 import org.bson.Document;
 import team.catgirl.collar.api.http.HttpException.BadRequestException;
@@ -44,6 +45,18 @@ public class ProfileService {
         context.assertAnonymous();
         if (docs.find(eq(FIELD_EMAIL, req.email)).iterator().hasNext()) {
             throw new ConflictException("profile with this email already exists");
+        }
+        if (req.name == null) {
+            throw new BadRequestException("name missing");
+        }
+        if (req.email == null) {
+            throw new BadRequestException("email missing");
+        }
+        if (req.password == null) {
+            throw new BadRequestException("password missing");
+        }
+        if (EmailValidator.getInstance().isValid(req.email)) {
+            throw new BadRequestException("email address is invalid");
         }
         String hashedPassword = passwordHashing.hash(req.password);
         Map<String, Object> state = new HashMap<>();

@@ -3,7 +3,7 @@ package team.catgirl.collar.client.api.location;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.location.Location;
 import team.catgirl.collar.client.Collar;
-import team.catgirl.collar.client.api.features.AbstractApi;
+import team.catgirl.collar.client.api.AbstractApi;
 import team.catgirl.collar.client.api.groups.GroupsApi;
 import team.catgirl.collar.client.api.groups.GroupsListener;
 import team.catgirl.collar.client.security.ClientIdentityStore;

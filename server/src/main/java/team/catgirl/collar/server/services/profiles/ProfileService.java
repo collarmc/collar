@@ -1,9 +1,11 @@
 package team.catgirl.collar.server.services.profiles;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.bson.BsonObjectId;
 import org.bson.Document;
@@ -28,6 +30,7 @@ public class ProfileService {
     private static final String FIELD_EMAIL = "email";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_HASHED_PASSWORD = "hashedPassword";
+    private static final String FIELD_EMAIL_VERIFIED = "emailVerified";
 
     private final MongoCollection<Document> docs;
     private final PasswordHashing passwordHashing;
@@ -64,6 +67,7 @@ public class ProfileService {
         state.put(FIELD_NAME, req.name);
         state.put(FIELD_EMAIL, req.email.toLowerCase());
         state.put(FIELD_HASHED_PASSWORD, hashedPassword);
+        state.put(FIELD_EMAIL_VERIFIED, false);
         InsertOneResult insertOneResult = docs.insertOne(new Document(state));
         if (insertOneResult.wasAcknowledged()) {
             BsonObjectId id = Objects.requireNonNull(insertOneResult.getInsertedId()).asObjectId();
@@ -93,6 +97,27 @@ public class ProfileService {
         }
         Document doc = cursor.next();
         return new GetProfileResponse(map(doc));
+    }
+
+    public UpdateProfileResponse updateProfile(RequestContext context, UpdateProfileRequest req) {
+        context.assertNotAnonymous();
+        UpdateResult result;
+        if (req.emailVerified != null) {
+            result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_EMAIL_VERIFIED, req.emailVerified)));
+        } else if (req.hashedPassword != null) {
+            result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_HASHED_PASSWORD, req.hashedPassword)));
+        } else {
+            throw new BadRequestException("bad request");
+        }
+        if (result.wasAcknowledged()) {
+            Document first = docs.find(eq(FIELD_PROFILE_ID, req.profile)).first();
+            if (first == null) {
+                throw new NotFoundException("could not find profile");
+            }
+            return new UpdateProfileResponse(map(first));
+        } else {
+            throw new ServerErrorException("could not update profile");
+        }
     }
 
     public static class CreateProfileRequest {
@@ -146,6 +171,41 @@ public class ProfileService {
         String email = doc.getString(FIELD_EMAIL);
         String name = doc.getString(FIELD_NAME);
         String hashedPassword = doc.getString(FIELD_HASHED_PASSWORD);
-        return new Profile(profileId, email, name, hashedPassword);
+        boolean emailVerified = doc.getBoolean(FIELD_EMAIL_VERIFIED);
+        return new Profile(profileId, email, name, hashedPassword, emailVerified);
+    }
+
+    public static final class UpdateProfileRequest {
+        @JsonProperty("profile")
+        public final UUID profile;
+        @JsonProperty("emailVerified")
+        public final Boolean emailVerified;
+        @JsonProperty("hashedPassword")
+        public final String hashedPassword;
+
+        public UpdateProfileRequest(@JsonProperty("profile") UUID profile,
+                                    @JsonProperty("emailVerified") Boolean emailVerified,
+                                    @JsonProperty("hashedPassword") String hashedPassword) {
+            this.profile = profile;
+            this.emailVerified = emailVerified;
+            this.hashedPassword = hashedPassword;
+        }
+
+        public static UpdateProfileRequest emailVerified(UUID profile) {
+            return new UpdateProfileRequest(profile, true, null);
+        }
+
+        public static UpdateProfileRequest hashedPassword(UUID profile, String newPassword) {
+            return new UpdateProfileRequest(profile, null, newPassword);
+        }
+    }
+
+    public static final class UpdateProfileResponse {
+        @JsonProperty("profile")
+        public final Profile profile;
+
+        public UpdateProfileResponse(@JsonProperty("profile") Profile profile) {
+            this.profile = profile;
+        }
     }
 }

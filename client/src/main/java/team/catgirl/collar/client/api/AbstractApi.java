@@ -1,4 +1,4 @@
-package team.catgirl.collar.client.api.features;
+package team.catgirl.collar.client.api;
 
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.security.ClientIdentityStore;

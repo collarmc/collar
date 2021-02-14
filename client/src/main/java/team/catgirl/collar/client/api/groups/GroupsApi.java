@@ -5,7 +5,7 @@ import team.catgirl.collar.api.groups.Group.Member;
 import team.catgirl.collar.api.location.Location;
 import team.catgirl.collar.api.waypoints.Waypoint;
 import team.catgirl.collar.client.Collar;
-import team.catgirl.collar.client.api.features.AbstractApi;
+import team.catgirl.collar.client.api.AbstractApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;

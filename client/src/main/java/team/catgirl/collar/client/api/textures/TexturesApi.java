@@ -3,7 +3,7 @@ package team.catgirl.collar.client.api.textures;
 import io.mikael.urlbuilder.UrlBuilder;
 import team.catgirl.collar.api.textures.TextureType;
 import team.catgirl.collar.client.Collar;
-import team.catgirl.collar.client.api.features.AbstractApi;
+import team.catgirl.collar.client.api.AbstractApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;

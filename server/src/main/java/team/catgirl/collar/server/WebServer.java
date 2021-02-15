@@ -116,8 +116,6 @@ public class WebServer {
             response.header("Access-Control-Allow-Origin", "*");
         });
 
-        webSocket("/api/1/listen", new CollarServer(services, protocolHandlers));
-
         // API routes
         path("/api", () -> {
 

@@ -53,7 +53,7 @@ public class ProfileServiceTest {
         } catch (NotFoundException ignored) {}
 
         try {
-            profiles.createProfile(RequestContext.ANON, new ProfileService.CreateProfileRequest("bob@example.com", "password", "Bob UwU"));
+            profiles.createProfile(RequestContext.ANON, new ProfileService.CreateProfileRequest("bad-romance", "password", "Bob UwU"));
             fail();
         } catch (HttpException.BadRequestException e) {
             Assert.assertEquals("email address is invalid", e.getMessage());

@@ -58,7 +58,7 @@ public class ProfileService {
         if (req.password == null) {
             throw new BadRequestException("password missing");
         }
-        if (EmailValidator.getInstance().isValid(req.email)) {
+        if (!EmailValidator.getInstance().isValid(req.email)) {
             throw new BadRequestException("email address is invalid");
         }
         String hashedPassword = passwordHashing.hash(req.password);

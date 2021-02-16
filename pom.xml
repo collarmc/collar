@@ -11,6 +11,7 @@
         <module>client</module>
         <module>shared</module>
         <module>tests</module>
+        <module>plugin</module>
     </modules>
 
     <scm>
@@ -93,6 +94,12 @@
             <dependency>
                 <groupId>team.catgirl.collar</groupId>
                 <artifactId>client</artifactId>
+                <version>${project.version}</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>team.catgirl.collar</groupId>
+                <artifactId>plugin</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>

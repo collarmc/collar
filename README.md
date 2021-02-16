@@ -8,6 +8,9 @@ Including:
 * Messaging (private, faction & group)
 * Shared textures
 
+## Discord
+[Join the Discord](https://discord.gg/EG2e9dkPBf)
+
 ## Building
 To build run you will need to have Maven 3 installed. 
 

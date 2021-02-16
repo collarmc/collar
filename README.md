@@ -12,7 +12,7 @@ Including:
 [Join the Discord](https://discord.gg/EG2e9dkPBf)
 
 ## Building
-To build run you will need to have Maven 3 installed. 
+To build run you will need to have Maven 3 installed and JDK 15.
 
 Execute:
 `mvn clean install`

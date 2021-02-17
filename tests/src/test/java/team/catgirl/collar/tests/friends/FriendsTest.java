@@ -139,8 +139,8 @@ public class FriendsTest extends CollarTest {
         }
 
         @Override
-        public void onFriendAdded(Collar collar, FriendsApi friendsApi, Friend friend) {
-            friendAdded.add(friend);
+        public void onFriendAdded(Collar collar, FriendsApi friendsApi, Friend added) {
+            friendAdded.add(added);
         }
 
         @Override

@@ -88,7 +88,7 @@ public final class CollarConfiguration {
          * @return builder
          */
         public Builder withCollarDevelopmentServer() {
-            withCollarServer("https://api.collarmc.com/");
+            withCollarServer("https://dev.api.collarmc.com/");
             return this;
         }
 

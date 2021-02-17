@@ -26,9 +26,9 @@ import static team.catgirl.collar.tests.junit.CollarAssert.waitForCondition;
 public abstract class CollarTest {
 
     private final AtomicReference<Services> services = new AtomicReference<>();
-    private final AtomicReference<Profile> aliceProfile = new AtomicReference<>();
-    private final AtomicReference<Profile> bobProfile = new AtomicReference<>();
-    private final AtomicReference<Profile> eveProfile = new AtomicReference<>();
+    protected final AtomicReference<Profile> aliceProfile = new AtomicReference<>();
+    protected final AtomicReference<Profile> bobProfile = new AtomicReference<>();
+    protected final AtomicReference<Profile> eveProfile = new AtomicReference<>();
     protected final UUID alicePlayerId = UUID.randomUUID();
     protected final UUID bobPlayerId = UUID.randomUUID();
     protected final UUID evePlayerId = UUID.randomUUID();

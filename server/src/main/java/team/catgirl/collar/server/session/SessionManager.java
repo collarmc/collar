@@ -170,6 +170,18 @@ public final class SessionManager {
         });
     }
 
+    public Optional<SessionState> getSessionStateByOwner(UUID owner) {
+        return sessions.values().stream()
+                .filter(sessionState -> sessionState.identity.owner.equals(owner))
+                .findFirst();
+    }
+
+    public Optional<SessionState> getSessionStateByPlayer(UUID player) {
+        return sessions.values().stream()
+                .filter(sessionState -> sessionState.player.id.equals(player))
+                .findFirst();
+    }
+
     public static final class SessionState {
         public final Session session;
         public final ClientIdentity identity;

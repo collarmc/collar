@@ -2,6 +2,7 @@ package team.catgirl.collar.server.http;
 
 import spark.Request;
 import team.catgirl.collar.api.http.HttpException.UnauthorisedException;
+import team.catgirl.collar.security.ClientIdentity;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -20,6 +21,10 @@ public final class RequestContext {
 
     public static RequestContext from(UUID profileId) {
         return new RequestContext(profileId);
+    }
+
+    public static RequestContext from(ClientIdentity identity) {
+        return new RequestContext(identity.owner);
     }
 
     public void assertAnonymous() {

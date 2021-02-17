@@ -1,5 +1,6 @@
 package team.catgirl.collar.server.protocol;
 
+import org.eclipse.jetty.websocket.api.Session;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.location.StartSharingLocationRequest;
@@ -10,6 +11,7 @@ import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.CollarServer;
 import team.catgirl.collar.server.services.location.PlayerLocationService;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class LocationProtocolHandler extends ProtocolHandler {
@@ -41,8 +43,8 @@ public class LocationProtocolHandler extends ProtocolHandler {
     }
 
     @Override
-    public void onSessionStopped(ClientIdentity identity, MinecraftPlayer player, Consumer<ProtocolResponse> sender) {
+    public void onSessionStopping(ClientIdentity identity, MinecraftPlayer player, BiConsumer<Session, ProtocolResponse> sender) {
         BatchProtocolResponse resp = playerLocations.stopSharing(player);
-        sender.accept(resp);
+        sender.accept(null, resp);
     }
 }

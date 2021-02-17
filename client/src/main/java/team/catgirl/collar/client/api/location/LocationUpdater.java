@@ -2,11 +2,7 @@ package team.catgirl.collar.client.api.location;
 
 import team.catgirl.collar.client.minecraft.Ticks;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
-public class LocationUpdater implements Ticks.TickListener {
+class LocationUpdater implements Ticks.TickListener {
     private final LocationApi locationApi;
     private final Ticks ticks;
 

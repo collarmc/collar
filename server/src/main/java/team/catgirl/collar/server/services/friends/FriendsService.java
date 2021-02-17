@@ -111,45 +111,52 @@ public final class FriendsService {
     }
 
     public static final class AddFriendResponse {
+        @JsonProperty("friend")
         public final Friend friend;
 
-        public AddFriendResponse(Friend friend) {
+        public AddFriendResponse(@JsonProperty("friend") Friend friend) {
             this.friend = friend;
         }
     }
 
     public static final class DeleteFriendRequest {
+        @JsonProperty("owner")
         public final UUID owner;
+        @JsonProperty("friend")
         public final UUID friend;
 
-        public DeleteFriendRequest(UUID owner, UUID friend) {
+        public DeleteFriendRequest(@JsonProperty("owner") UUID owner, @JsonProperty("friend") UUID friend) {
             this.owner = owner;
             this.friend = friend;
         }
     }
 
     public static final class DeleteFriendResponse {
+        @JsonProperty("friend")
         public final UUID friend;
 
-        public DeleteFriendResponse(UUID friend) {
+        public DeleteFriendResponse(@JsonProperty("friend") UUID friend) {
             this.friend = friend;
         }
     }
 
     public static final class GetFriendsRequest {
+        @JsonProperty("byOwner")
         public final UUID byOwner;
+        @JsonProperty("byFriend")
         public final UUID byFriend;
 
-        public GetFriendsRequest(UUID byOwner, UUID byFriend) {
+        public GetFriendsRequest(@JsonProperty("byOwner") UUID byOwner, @JsonProperty("byFriend") UUID byFriend) {
             this.byOwner = byOwner;
             this.byFriend = byFriend;
         }
     }
 
     public static final class GetFriendsResponse {
+        @JsonProperty("friends")
         public final List<Friend> friends;
 
-        public GetFriendsResponse(List<Friend> friends) {
+        public GetFriendsResponse(@JsonProperty("friends") List<Friend> friends) {
             this.friends = friends;
         }
     }

@@ -1,5 +1,6 @@
 package team.catgirl.collar.server.services.friends;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -12,6 +13,7 @@ import team.catgirl.collar.api.friends.Status;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.api.http.HttpException.BadRequestException;
 import team.catgirl.collar.api.http.HttpException.ServerErrorException;
+import team.catgirl.collar.server.http.RequestContext;
 import team.catgirl.collar.server.session.SessionManager;
 
 import java.util.List;
@@ -42,7 +44,8 @@ public final class FriendsService {
         this.sessions = sessions;
     }
 
-    public AddFriendResponse createFriend(CreateFriendRequest request) {
+    public AddFriendResponse createFriend(RequestContext context, CreateFriendRequest request) {
+        context.assertCallerIs(context.owner);
         if (request.owner == null) {
             throw new BadRequestException("owner");
         }
@@ -65,7 +68,8 @@ public final class FriendsService {
         return new AddFriendResponse(friend);
     }
 
-    public DeleteFriendResponse deleteFriend(DeleteFriendRequest request) {
+    public DeleteFriendResponse deleteFriend(RequestContext context, DeleteFriendRequest request) {
+        context.assertCallerIs(request.owner);
         DeleteResult result = docs.deleteOne(and(eq(FIELD_OWNER, request.owner), eq(FIELD_FRIEND, request.friend)));
         if (!result.wasAcknowledged()) {
             throw new HttpException.NotFoundException("couldn't find friend to delete");
@@ -73,10 +77,10 @@ public final class FriendsService {
         return new DeleteFriendResponse(request.friend);
     }
 
-    public GetFriendsResponse getFriends(GetFriendsRequest request) {
+    public GetFriendsResponse getFriends(RequestContext context, GetFriendsRequest request) {
+        context.assertNotAnonymous();
         FindIterable<Document> documents;
         if (request.byFriend != null) {
-            // TODO: use distinct on owner here?
             documents = docs.find(eq(FIELD_FRIEND, request.byFriend));
         } else if (request.byOwner != null) {
             documents = docs.find(eq(FIELD_OWNER, request.byOwner));
@@ -90,15 +94,17 @@ public final class FriendsService {
         UUID owner = document.get(FIELD_OWNER, UUID.class);
         UUID friend = document.get(FIELD_FRIEND, UUID.class);
         return sessions.getSessionStateByOwner(friend)
-                .map(sessionState -> new Friend(friend, owner, Status.ONLINE, List.of(sessionState.player.id)))
+                .map(sessionState -> new Friend(owner, friend, Status.ONLINE, List.of(sessionState.player.id)))
                 .orElse(new Friend(friend, owner, Status.OFFLINE, List.of()));
     }
 
     public static final class CreateFriendRequest {
+        @JsonProperty("owner")
         public final UUID owner;
+        @JsonProperty("friend")
         public final UUID friend;
 
-        public CreateFriendRequest(UUID owner, UUID friend) {
+        public CreateFriendRequest(@JsonProperty("owner") UUID owner, @JsonProperty("friend") UUID friend) {
             this.owner = owner;
             this.friend = friend;
         }

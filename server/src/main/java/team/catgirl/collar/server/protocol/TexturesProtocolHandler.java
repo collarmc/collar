@@ -1,5 +1,6 @@
 package team.catgirl.collar.server.protocol;
 
+import org.eclipse.jetty.websocket.api.Session;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
@@ -15,6 +16,7 @@ import team.catgirl.collar.server.services.textures.TextureService.FindTextureRe
 import team.catgirl.collar.server.services.textures.TextureService.Texture;
 import team.catgirl.collar.server.session.SessionManager;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class TexturesProtocolHandler extends ProtocolHandler {
@@ -47,5 +49,5 @@ public class TexturesProtocolHandler extends ProtocolHandler {
     }
 
     @Override
-    public void onSessionStopped(ClientIdentity identity, MinecraftPlayer player, Consumer<ProtocolResponse> sender) {}
+    public void onSessionStopping(ClientIdentity identity, MinecraftPlayer player, BiConsumer<Session, ProtocolResponse> sender) {}
 }

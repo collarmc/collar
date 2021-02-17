@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -50,9 +49,7 @@ public class CollarServer {
     public CollarServer(Services services, List<ProtocolHandler> protocolHandlers) {
         this.services = services;
         this.protocolHandlers = protocolHandlers;
-        this.sessionStopped = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStopped(identity, player, protocolResponse -> {
-            send(null, protocolResponse);
-        }));
+        this.sessionStopped = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStopping(identity, player, this::send));
     }
 
     @OnWebSocketConnect

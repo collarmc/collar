@@ -183,7 +183,7 @@ public final class SessionManager {
     }
 
     public static final class SessionState {
-        private final Session session;
+        public final Session session;
         public final ClientIdentity identity;
         public final MinecraftPlayer player;
 

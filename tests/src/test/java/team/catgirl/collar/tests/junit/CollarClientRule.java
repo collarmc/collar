@@ -6,19 +6,24 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.CollarConfiguration;
+import team.catgirl.collar.client.minecraft.Ticks;
 
 import java.util.UUID;
 
 public final class CollarClientRule implements TestRule {
 
     public Collar collar;
+    private Ticks ticks;
 
     private final CollarConfiguration.Builder builder;
     private final Thread thread = new Thread(() -> {
         collar.connect();
         do {
             try {
-                Thread.sleep(1000);
+                if (collar.getState() == Collar.State.CONNECTED) {
+                    ticks.onTick();
+                }
+                Thread.sleep(500);
             } catch (InterruptedException ignored) {
                 collar.disconnect();
             }
@@ -26,9 +31,11 @@ public final class CollarClientRule implements TestRule {
     }, "Collar Client Test Loop");
 
     public CollarClientRule(UUID playerId, CollarConfiguration.Builder builder) {
+        this.ticks = new Ticks();
         this.builder = builder.withCollarServer("http://localhost:3001")
                 .withHomeDirectory(Files.createTempDir())
-                .withNoJangAuthentication(playerId, "hypixel.net");
+                .withNoJangAuthentication(playerId, "hypixel.net")
+                .withTicks(ticks);
     }
 
     @Override

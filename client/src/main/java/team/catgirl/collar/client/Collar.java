@@ -7,6 +7,7 @@ import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.whispersystems.libsignal.IdentityKey;
+import team.catgirl.collar.api.friends.Friend;
 import team.catgirl.collar.api.http.CollarFeature;
 import team.catgirl.collar.api.http.CollarVersion;
 import team.catgirl.collar.api.http.DiscoverResponse;
@@ -14,6 +15,7 @@ import team.catgirl.collar.client.CollarException.ConnectionException;
 import team.catgirl.collar.client.CollarException.UnsupportedServerVersionException;
 import team.catgirl.collar.client.api.AbstractApi;
 import team.catgirl.collar.client.api.ApiListener;
+import team.catgirl.collar.client.api.friends.FriendsApi;
 import team.catgirl.collar.client.api.groups.GroupsApi;
 import team.catgirl.collar.client.api.location.LocationApi;
 import team.catgirl.collar.client.api.textures.TexturesApi;
@@ -62,6 +64,7 @@ public final class Collar {
     private final GroupsApi groupsApi;
     private final LocationApi locationApi;
     private final TexturesApi texturesApi;
+    private final FriendsApi friendsApi;
     private WebSocket webSocket;
     private volatile State state;
     private final List<AbstractApi<? extends ApiListener>> apis;
@@ -79,9 +82,11 @@ public final class Collar {
         this.apis = new ArrayList<>();
         this.locationApi = new LocationApi(this, identityStoreSupplier, request -> sender.accept(request), this.ticks, groupsApi, configuration.playerLocation);
         this.texturesApi = new TexturesApi(this, identityStoreSupplier, request -> sender.accept(request));
+        this.friendsApi = new FriendsApi(this, identityStoreSupplier, request -> sender.accept(request));
         this.apis.add(groupsApi);
         this.apis.add(locationApi);
         this.apis.add(texturesApi);
+        this.apis.add(friendsApi);
     }
 
     /**
@@ -138,6 +143,14 @@ public final class Collar {
     public TexturesApi textures() {
         assertConnected();
         return texturesApi;
+    }
+
+    /**
+     * @return friends api
+     */
+    public FriendsApi friends() {
+        assertConnected();
+        return friendsApi;
     }
 
     /**
@@ -210,6 +223,7 @@ public final class Collar {
         });
         findFeature(response, "groups:locations").orElseThrow(() -> new IllegalStateException("Server does not support groups:locations"));
         findFeature(response, "groups:waypoints").orElseThrow(() -> new IllegalStateException("Server does not support groups:waypoints"));
+        findFeature(response, "profile:friends").orElseThrow(() -> new IllegalStateException("Server does not support profile:friends"));
     }
 
     private static Optional<CollarFeature> findFeature(DiscoverResponse response, String feature) {

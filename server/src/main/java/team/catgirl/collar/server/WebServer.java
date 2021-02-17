@@ -15,10 +15,7 @@ import team.catgirl.collar.server.http.ApiToken;
 import team.catgirl.collar.server.http.Cookie;
 import team.catgirl.collar.server.http.HandlebarsTemplateEngine;
 import team.catgirl.collar.server.http.RequestContext;
-import team.catgirl.collar.server.protocol.GroupsProtocolHandler;
-import team.catgirl.collar.server.protocol.LocationProtocolHandler;
-import team.catgirl.collar.server.protocol.ProtocolHandler;
-import team.catgirl.collar.server.protocol.TexturesProtocolHandler;
+import team.catgirl.collar.server.protocol.*;
 import team.catgirl.collar.server.services.authentication.AuthenticationService.*;
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
 import team.catgirl.collar.server.services.authentication.VerificationToken;
@@ -88,6 +85,8 @@ public class WebServer {
         protocolHandlers.add(new GroupsProtocolHandler(services.groups));
         protocolHandlers.add(new LocationProtocolHandler(services.playerLocations));
         protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.getIdentity(), services.sessions, services.textures));
+        protocolHandlers.add(new FriendsProtocolHandler(services.identityStore.getIdentity(), services.friends, services.sessions));
+
 
         // TODO: all routes should go into their own class/package
         // Setup WebSockets
@@ -215,6 +214,7 @@ public class WebServer {
             features.add(new CollarFeature("auth:verification_scheme", configuration.minecraftSessionVerifier.getName()));
             features.add(new CollarFeature("groups:locations", true));
             features.add(new CollarFeature("groups:waypoints", true));
+            features.add(new CollarFeature("profile:friends", true));
             return new DiscoverResponse(versions, features);
         });
 

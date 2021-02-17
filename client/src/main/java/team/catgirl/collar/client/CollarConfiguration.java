@@ -2,6 +2,7 @@ package team.catgirl.collar.client;
 
 import com.google.common.base.MoreObjects;
 import team.catgirl.collar.api.location.Location;
+import team.catgirl.collar.client.minecraft.Ticks;
 import team.catgirl.collar.security.mojang.MinecraftSession;
 
 import java.io.File;
@@ -23,13 +24,20 @@ public final class CollarConfiguration {
     public final HomeDirectory homeDirectory;
     public final URL collarServerURL;
     public final CollarListener listener;
+    public final Ticks ticks;
 
-    private CollarConfiguration(Supplier<Location> playerLocation, Supplier<MinecraftSession> sessionSupplier, HomeDirectory homeDirectory, URL collarServerURL, CollarListener listener) {
+    private CollarConfiguration(Supplier<Location> playerLocation,
+                                Supplier<MinecraftSession> sessionSupplier,
+                                HomeDirectory homeDirectory,
+                                URL collarServerURL,
+                                CollarListener listener,
+                                Ticks ticks) {
         this.playerLocation = playerLocation;
         this.sessionSupplier = sessionSupplier;
         this.homeDirectory = homeDirectory;
         this.collarServerURL = collarServerURL;
         this.listener = listener;
+        this.ticks = ticks;
     }
 
     public final static class Builder {
@@ -38,6 +46,7 @@ public final class CollarConfiguration {
         private Supplier<MinecraftSession> sessionSupplier;
         private File homeDirectory;
         private URL collarServerURL;
+        private Ticks ticks;
 
         public Builder() {}
 
@@ -136,6 +145,16 @@ public final class CollarConfiguration {
         }
 
         /**
+         * Provides Collar with Minecraft client tick events
+         * @param ticks ticks
+         * @return builder
+         */
+        public Builder withTicks(Ticks ticks) {
+            this.ticks = ticks;
+            return this;
+        }
+
+        /**
          * Builds the new configuration
          * @return configuration of the collar client
          * @throws IOException if collar state directories cant be created
@@ -145,12 +164,13 @@ public final class CollarConfiguration {
             Objects.requireNonNull(collarServerURL, "Collar server URL must be set");
             Objects.requireNonNull(homeDirectory, "Minecraft home directory must be set");
             Objects.requireNonNull(sessionSupplier, "Session supplier not set");
+            Objects.requireNonNull(ticks, "Ticks not set");
             HomeDirectory from = HomeDirectory.from(homeDirectory, collarServerURL.getHost());
             Supplier<Location> playerPosition = MoreObjects.firstNonNull(this.playerLocation, () -> {
                 LOGGER.log(Level.WARNING, "Location features are disabled. Consumer did not provide a player position supplier");
                 return Location.UNKNOWN;
             });
-            return new CollarConfiguration(playerPosition, sessionSupplier, from, collarServerURL, listener);
+            return new CollarConfiguration(playerPosition, sessionSupplier, from, collarServerURL, listener, ticks);
         }
     }
 }

@@ -25,14 +25,14 @@ import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.http.RequestContext;
-import team.catgirl.collar.server.protocol.BatchProtocolResponse;
-import team.catgirl.collar.server.protocol.ProtocolHandler;
+import team.catgirl.collar.server.protocol.*;
 import team.catgirl.collar.server.services.profiles.ProfileService.GetProfileRequest;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
@@ -40,16 +40,22 @@ import java.util.logging.Logger;
 
 @WebSocket
 public class CollarServer {
-    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(CollarServer.class.getName());
 
     private final List<ProtocolHandler> protocolHandlers;
     private final BiConsumer<ClientIdentity, MinecraftPlayer> sessionStopped;
     private final Services services;
 
-    public CollarServer(Services services, List<ProtocolHandler> protocolHandlers) {
+    public CollarServer(Services services) {
         this.services = services;
-        this.protocolHandlers = protocolHandlers;
+        this.protocolHandlers = new ArrayList<>();
         this.sessionStopped = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStopping(identity, player, this::send));
+
+        protocolHandlers.add(new GroupsProtocolHandler(services.groups));
+        protocolHandlers.add(new LocationProtocolHandler(services.playerLocations));
+        protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.getIdentity(), services.sessions, services.textures));
+        protocolHandlers.add(new IdentityProtocolHandler(services.sessions, services.identityStore.getIdentity()));
+        protocolHandlers.add(new MessagingProtocolHandler(services.sessions, services.identityStore.getIdentity()));
     }
 
     @OnWebSocketConnect
@@ -72,10 +78,10 @@ public class CollarServer {
     @OnWebSocketMessage
     public void message(Session session, InputStream is) throws IOException {
         ProtocolRequest req = read(session, is);
-        LOGGER.log(Level.INFO, req.getClass().getSimpleName() + " from " + req.identity);
+        LOGGER.log(Level.FINE, req.getClass().getSimpleName() + " from " + req.identity);
         ServerIdentity serverIdentity = services.identityStore.getIdentity();
         if (req instanceof KeepAliveRequest) {
-            LOGGER.log(Level.INFO, "KeepAliveRequest received. Sending KeepAliveRequest.");
+            LOGGER.log(Level.FINE, "KeepAliveRequest received. Sending KeepAliveRequest.");
             sendPlain(session, new KeepAliveResponse(serverIdentity));
         } else if (req instanceof IdentifyRequest) {
             IdentifyRequest request = (IdentifyRequest)req;
@@ -126,11 +132,19 @@ public class CollarServer {
             }
         } else {
             for (ProtocolHandler handler : protocolHandlers) {
-                if (handler.handleRequest(this, req, response -> send(session, response))) {
+                if (handler.handleRequest(this, req, createSender())) {
                     break;
                 }
             }
         }
+    }
+
+    private BiConsumer<ClientIdentity, ProtocolResponse> createSender() {
+        return (identity, response) -> {
+            services.sessions.getSession(identity).ifPresent(recipientSession -> {
+                send(recipientSession, response);
+            });
+        };
     }
 
     @Nonnull
@@ -156,6 +170,9 @@ public class CollarServer {
                 });
             });
         } else {
+            if (session == null) {
+                throw new IllegalStateException("Session cannot be null");
+            }
             PacketIO packetIO = new PacketIO(services.packetMapper, services.identityStore.createCypher());
             byte[] bytes;
             if (services.sessions.isIdentified(session)) {

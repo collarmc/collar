@@ -11,12 +11,9 @@ import team.catgirl.collar.client.HomeDirectory;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.client.security.ProfileState;
 import team.catgirl.collar.protocol.devices.DeviceRegisteredResponse;
+import team.catgirl.collar.protocol.identity.CreateTrustRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
-import team.catgirl.collar.protocol.signal.SendPreKeysResponse;
-import team.catgirl.collar.security.ClientIdentity;
-import team.catgirl.collar.security.Cypher;
-import team.catgirl.collar.security.KeyPair;
-import team.catgirl.collar.security.ServerIdentity;
+import team.catgirl.collar.security.*;
 import team.catgirl.collar.security.signal.PreKeys;
 import team.catgirl.collar.security.signal.SignalCypher;
 import team.catgirl.collar.utils.Utils;
@@ -51,34 +48,34 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     @Override
     public ClientIdentity currentIdentity() {
         IdentityKeyPair identityKeyPair = this.store.getIdentityKeyPair();
-        return new ClientIdentity(owner, new KeyPair.PublicKey(identityKeyPair.getPublicKey().getFingerprint(), identityKeyPair.getPublicKey().serialize()), state.deviceId);
+        return new ClientIdentity(owner, new PublicKey(identityKeyPair.getPublicKey().serialize()), state.deviceId);
     }
 
     @Override
-    public boolean isTrustedIdentity(ServerIdentity identity) {
+    public boolean isTrustedIdentity(Identity identity) {
         return store.isTrustedIdentity(signalProtocolAddressFrom(identity), identityKeyFrom(identity), null);
     }
 
     @Override
-    public void trustIdentity(SendPreKeysResponse resp) {
-        if (isTrustedIdentity(resp.identity)) {
-            throw new IllegalStateException(resp.identity + " is already trusted");
+    public void trustIdentity(Identity owner, byte[] preKeyBundle) {
+        if (isTrustedIdentity(owner)) {
+            throw new IllegalStateException(owner + " is already trusted");
         }
         PreKeyBundle bundle;
         try {
-            bundle = PreKeys.preKeyBundleFromBytes(resp.preKeyBundle);
+            bundle = PreKeys.preKeyBundleFromBytes(preKeyBundle);
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
-        SignalProtocolAddress address = signalProtocolAddressFrom(resp.identity);
+        SignalProtocolAddress address = signalProtocolAddressFrom(owner);
         store.saveIdentity(address, bundle.getIdentityKey());
         SessionBuilder sessionBuilder = new SessionBuilder(store, address);
         try {
             sessionBuilder.process(bundle);
         } catch (InvalidKeyException | UntrustedIdentityException e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("Problem trusting PreKeyBundle for " + owner, e);
         }
-        LOGGER.log(Level.INFO, "Trust established with " + address);
+        LOGGER.log(Level.INFO, currentIdentity() + " now trusts " + owner);
     }
 
     @Override
@@ -134,15 +131,25 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         }
     }
 
+    @Override
+    public CreateTrustRequest createSendPreKeysRequest(ClientIdentity recipient, long id) {
+        PreKeyBundle bundle = PreKeys.generate(new SignalProtocolAddress(currentIdentity().id().toString(), currentIdentity().deviceId), store);
+        try {
+            return new CreateTrustRequest(currentIdentity(), id, recipient, PreKeys.preKeyBundleToBytes(bundle));
+        } catch (IOException e) {
+            throw new IllegalStateException("could not generate PreKeyBundle");
+        }
+    }
+
     public void delete() throws IOException {
         store.delete();
     }
 
-    private SignalProtocolAddress signalProtocolAddressFrom(ServerIdentity serverIdentity) {
+    private SignalProtocolAddress signalProtocolAddressFrom(Identity identity) {
         ReentrantReadWriteLock.ReadLock readLock = lock.readLock();
         try {
             readLock.lockInterruptibly();
-            return new SignalProtocolAddress(serverIdentity.id().toString(), serverIdentity.deviceId());
+            return new SignalProtocolAddress(identity.id().toString(), identity.deviceId());
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
@@ -150,10 +157,10 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         }
     }
 
-    private static IdentityKey identityKeyFrom(ServerIdentity identity) {
+    private static IdentityKey identityKeyFrom(Identity identity) {
         IdentityKey identityKey;
         try {
-            identityKey = new IdentityKey(identity.publicKey.key, 0);
+            identityKey = new IdentityKey(identity.publicKey().key, 0);
         } catch (InvalidKeyException e) {
             throw new IllegalStateException("bad key");
         }

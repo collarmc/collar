@@ -10,7 +10,8 @@ public final class SendPreKeysRequest extends ProtocolRequest {
     public final byte[] preKeyBundle;
 
     @JsonCreator
-    public SendPreKeysRequest(@JsonProperty("identity") ClientIdentity identity, @JsonProperty("preKeyBundle") byte[] preKeyBundle) {
+    public SendPreKeysRequest(@JsonProperty("identity") ClientIdentity identity,
+                              @JsonProperty("preKeyBundle") byte[] preKeyBundle) {
         super(identity);
         this.preKeyBundle = preKeyBundle;
     }

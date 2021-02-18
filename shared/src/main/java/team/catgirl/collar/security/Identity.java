@@ -8,5 +8,9 @@ public interface Identity {
     @JsonIgnore
     UUID id();
 
+    @JsonIgnore
     Integer deviceId();
+
+    @JsonIgnore
+    PublicKey publicKey();
 }

@@ -1,11 +1,11 @@
 package team.catgirl.collar.client.security;
 
 import team.catgirl.collar.protocol.devices.DeviceRegisteredResponse;
+import team.catgirl.collar.protocol.identity.CreateTrustRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
-import team.catgirl.collar.protocol.signal.SendPreKeysResponse;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.Cypher;
-import team.catgirl.collar.security.ServerIdentity;
+import team.catgirl.collar.security.Identity;
 
 import java.io.IOException;
 
@@ -20,13 +20,14 @@ public interface ClientIdentityStore {
      * @param identity to test
      * @return trusted or not
      */
-    boolean isTrustedIdentity(ServerIdentity identity);
+    boolean isTrustedIdentity(Identity identity);
 
     /**
-     * Trust the server identity
-     * @param resp with PreKeyBundle
+     * Trusts the identity
+     * @param owner identity
+     * @param preKeyBundle belonging to the owner
      */
-    void trustIdentity(SendPreKeysResponse resp);
+    void trustIdentity(Identity owner, byte[] preKeyBundle);
 
     /**
      * @return creates a new {@link Cypher}
@@ -38,13 +39,23 @@ public interface ClientIdentityStore {
      */
     void setDeviceId(int deviceId);
 
+    /**
+     * @return device id of this client
+     */
     int getDeviceId();
 
     /**
-     * @return new {@link SendPreKeysRequest}
-     * @param response
+     * @param response of the device registration
+     * @return SendPreKeyRequest to send to the server
      */
     SendPreKeysRequest createSendPreKeysRequest(DeviceRegisteredResponse response);
+
+    /**
+     * @param identity client identity to exchange keys with
+     * @param id unique for this request
+     * @return SendPreKeyRequest to send to the provided client identity
+     */
+    CreateTrustRequest createSendPreKeysRequest(ClientIdentity identity, long id);
 
     /**
      * Resets the identity store and recreates it

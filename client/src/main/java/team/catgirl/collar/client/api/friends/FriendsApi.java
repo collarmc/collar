@@ -9,9 +9,7 @@ import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.friends.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
@@ -26,10 +24,10 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
     }
 
     /**
-     * @return list of friends
+     * @return friends of this player
      */
-    public List<Friend> list() {
-        return new ArrayList<>(friends.values());
+    public Set<Friend> list() {
+        return new HashSet<>(friends.values());
     }
 
     /**

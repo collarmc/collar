@@ -20,6 +20,7 @@ import team.catgirl.collar.server.session.SessionManager;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -85,7 +86,7 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         // Broadcast to the players friends that the player is now offline
         friends.getFriends(RequestContext.from(identity), new GetFriendsRequest(null, identity.owner)).friends.forEach(friend -> {
             sessions.getSessionStateByOwner(friend.owner).ifPresentOrElse(sessionState -> {
-                Friend offline = new Friend(sessionState.identity.owner, identity.owner, Status.OFFLINE, List.of());
+                Friend offline = new Friend(sessionState.identity.owner, identity.owner, Status.OFFLINE, Set.of());
                 sender.accept(sessionState.session, new FriendChangedResponse(serverIdentity, offline));
             }, () -> {
                 LOGGER.log(Level.INFO, "");

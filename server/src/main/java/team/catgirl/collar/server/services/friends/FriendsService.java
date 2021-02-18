@@ -16,10 +16,7 @@ import team.catgirl.collar.api.http.HttpException.ServerErrorException;
 import team.catgirl.collar.server.http.RequestContext;
 import team.catgirl.collar.server.session.SessionManager;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -94,8 +91,8 @@ public final class FriendsService {
         UUID owner = document.get(FIELD_OWNER, UUID.class);
         UUID friend = document.get(FIELD_FRIEND, UUID.class);
         return sessions.getSessionStateByOwner(friend)
-                .map(sessionState -> new Friend(owner, friend, Status.ONLINE, List.of(sessionState.player.id)))
-                .orElse(new Friend(friend, owner, Status.OFFLINE, List.of()));
+                .map(sessionState -> new Friend(owner, friend, Status.ONLINE, Set.of(sessionState.player.id)))
+                .orElse(new Friend(friend, owner, Status.OFFLINE, Set.of()));
     }
 
     public static final class CreateFriendRequest {

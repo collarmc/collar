@@ -22,12 +22,20 @@ public final class TokenGenerator {
         return bytes;
     }
 
+    public static long longToken() {
+        return RANDOM.nextLong();
+    }
+
     public static byte[] byteToken() {
         return byteToken(128);
     }
 
     public static String stringToken() {
         return BaseEncoding.base64Url().encode(byteToken());
+    }
+
+    public static String stringToken(int size) {
+        return BaseEncoding.base64Url().encode(byteToken(size));
     }
 
     /**

@@ -7,10 +7,7 @@ import org.whispersystems.libsignal.state.PreKeyBundle;
 import org.whispersystems.libsignal.state.SessionRecord;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysResponse;
-import team.catgirl.collar.security.ClientIdentity;
-import team.catgirl.collar.security.Cypher;
-import team.catgirl.collar.security.KeyPair;
-import team.catgirl.collar.security.ServerIdentity;
+import team.catgirl.collar.security.*;
 import team.catgirl.collar.security.signal.PreKeys;
 import team.catgirl.collar.security.signal.SignalCypher;
 import team.catgirl.collar.server.security.ServerIdentityStore;
@@ -33,7 +30,7 @@ public class SignalServerIdentityStore implements ServerIdentityStore {
         this.serverIdentitySupplier = Suppliers.memoize(() -> {
             IdentityKey publicKey = store.getIdentityKeyPair().getPublicKey();
             return new ServerIdentity(
-                new KeyPair.PublicKey(publicKey.getFingerprint(), publicKey.serialize()),
+                new PublicKey(publicKey.serialize()),
                 store.identityKeyStore.getServerId()
             );
         });

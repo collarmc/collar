@@ -17,7 +17,9 @@ import team.catgirl.collar.client.api.AbstractApi;
 import team.catgirl.collar.client.api.ApiListener;
 import team.catgirl.collar.client.api.friends.FriendsApi;
 import team.catgirl.collar.client.api.groups.GroupsApi;
+import team.catgirl.collar.client.api.identity.IdentityApi;
 import team.catgirl.collar.client.api.location.LocationApi;
+import team.catgirl.collar.client.api.messaging.MessagingApi;
 import team.catgirl.collar.client.api.textures.TexturesApi;
 import team.catgirl.collar.client.minecraft.Ticks;
 import team.catgirl.collar.client.security.ClientIdentityStore;
@@ -42,7 +44,7 @@ import team.catgirl.collar.protocol.trust.CheckTrustRelationshipRequest;
 import team.catgirl.collar.protocol.trust.CheckTrustRelationshipResponse.IsTrustedRelationshipResponse;
 import team.catgirl.collar.protocol.trust.CheckTrustRelationshipResponse.IsUntrustedRelationshipResponse;
 import team.catgirl.collar.security.ClientIdentity;
-import team.catgirl.collar.security.KeyPair.PublicKey;
+import team.catgirl.collar.security.PublicKey;
 import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.security.mojang.MinecraftSession;
@@ -65,6 +67,8 @@ public final class Collar {
     private final LocationApi locationApi;
     private final TexturesApi texturesApi;
     private final FriendsApi friendsApi;
+    private final IdentityApi identityApi;
+    private final MessagingApi messagingApi;
     private WebSocket webSocket;
     private volatile State state;
     private final List<AbstractApi<? extends ApiListener>> apis;
@@ -77,16 +81,21 @@ public final class Collar {
         this.configuration = configuration;
         changeState(State.DISCONNECTED);
         this.identityStoreSupplier = () -> identityStore;
-        this.groupsApi = new GroupsApi(this, identityStoreSupplier, request -> sender.accept(request));
+        Consumer<ProtocolRequest> sender = request -> this.sender.accept(request);
+        this.groupsApi = new GroupsApi(this, identityStoreSupplier, sender);
         this.ticks = configuration.ticks;
         this.apis = new ArrayList<>();
-        this.locationApi = new LocationApi(this, identityStoreSupplier, request -> sender.accept(request), this.ticks, groupsApi, configuration.playerLocation);
-        this.texturesApi = new TexturesApi(this, identityStoreSupplier, request -> sender.accept(request));
+        this.locationApi = new LocationApi(this, identityStoreSupplier, sender, this.ticks, groupsApi, configuration.playerLocation);
+        this.texturesApi = new TexturesApi(this, identityStoreSupplier, sender);
+        this.identityApi = new IdentityApi(this, identityStoreSupplier, sender);
+        this.messagingApi = new MessagingApi(this, identityStoreSupplier, sender);
         this.friendsApi = new FriendsApi(this, identityStoreSupplier, request -> sender.accept(request));
         this.apis.add(groupsApi);
         this.apis.add(locationApi);
         this.apis.add(texturesApi);
         this.apis.add(friendsApi);
+        this.apis.add(identityApi);
+        this.apis.add(messagingApi);
     }
 
     /**
@@ -146,11 +155,27 @@ public final class Collar {
     }
 
     /**
+     * @return identity api
+     */
+    public IdentityApi identities() {
+        assertConnected();
+        return identityApi;
+    }
+
+    /**
      * @return friends api
      */
     public FriendsApi friends() {
         assertConnected();
         return friendsApi;
+    }
+
+    /**
+     * @return messaging api
+     */
+    public MessagingApi messaging() {
+        assertConnected();
+        return messagingApi;
     }
 
     /**
@@ -304,7 +329,7 @@ public final class Collar {
             }, (store) -> {
                 LOGGER.log(Level.INFO, "Existing installation. Loading the store and identifying with server " + serverIdentity);
                 IdentityKey publicKey = store.getIdentityKeyPair().getPublicKey();
-                ClientIdentity clientIdentity = new ClientIdentity(finalOwner, new PublicKey(publicKey.getFingerprint(), publicKey.serialize()), null);
+                ClientIdentity clientIdentity = new ClientIdentity(finalOwner, new PublicKey(publicKey.serialize()), null);
                 IdentifyRequest request = new IdentifyRequest(clientIdentity);
                 sendRequest(webSocket, request);
             }));
@@ -331,7 +356,7 @@ public final class Collar {
         @Override
         public void onMessage(@NotNull WebSocket webSocket, @NotNull ByteString message) {
             ProtocolResponse resp = readResponse(message.toByteArray());
-            LOGGER.log(Level.INFO, resp.getClass().getSimpleName() + " from " + resp.identity);
+            LOGGER.log(Level.FINE, resp.getClass().getSimpleName() + " from " + resp.identity);
             ClientIdentity identity = identityStore == null ? null : identityStore.currentIdentity();
             if (resp instanceof IdentifyResponse) {
                 IdentifyResponse response = (IdentifyResponse) resp;
@@ -343,7 +368,7 @@ public final class Collar {
                 keepAlive.stop();
                 keepAlive.start(identity);
             } else if (resp instanceof KeepAliveResponse) {
-                LOGGER.log(Level.INFO, "KeepAliveResponse received");
+                LOGGER.log(Level.FINE, "KeepAliveResponse received");
             } else if (resp instanceof RegisterDeviceResponse) {
                 RegisterDeviceResponse registerDeviceResponse = (RegisterDeviceResponse)resp;
                 LOGGER.log(Level.INFO, "RegisterDeviceResponse received with registration url " + ((RegisterDeviceResponse) resp).approvalUrl);
@@ -360,7 +385,7 @@ public final class Collar {
                 if (identityStore == null) {
                     throw new IllegalStateException("identity has not been established");
                 }
-                identityStore.trustIdentity(response);
+                identityStore.trustIdentity(response.identity, response.preKeyBundle);
                 LOGGER.log(Level.INFO, "PreKeys have been exchanged successfully");
                 sendRequest(webSocket, new IdentifyRequest(identity));
             } else if (resp instanceof StartSessionResponse) {

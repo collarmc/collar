@@ -2,11 +2,11 @@ package team.catgirl.collar.client.security.signal;
 
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.protocol.devices.DeviceRegisteredResponse;
+import team.catgirl.collar.protocol.identity.CreateTrustRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
-import team.catgirl.collar.protocol.signal.SendPreKeysResponse;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.Cypher;
-import team.catgirl.collar.security.ServerIdentity;
+import team.catgirl.collar.security.Identity;
 
 import java.io.IOException;
 import java.util.function.Supplier;
@@ -26,13 +26,13 @@ public class ResettableClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public boolean isTrustedIdentity(ServerIdentity identity) {
+    public boolean isTrustedIdentity(Identity identity) {
         return currentIdentityStore.isTrustedIdentity(identity);
     }
 
     @Override
-    public void trustIdentity(SendPreKeysResponse resp) {
-        currentIdentityStore.trustIdentity(resp);
+    public void trustIdentity(Identity owner, byte[] preKeyBundle) {
+        currentIdentityStore.trustIdentity(owner, preKeyBundle);
     }
 
     @Override
@@ -53,6 +53,11 @@ public class ResettableClientIdentityStore implements ClientIdentityStore {
     @Override
     public SendPreKeysRequest createSendPreKeysRequest(DeviceRegisteredResponse response) {
         return currentIdentityStore.createSendPreKeysRequest(response);
+    }
+
+    @Override
+    public CreateTrustRequest createSendPreKeysRequest(ClientIdentity identity, long id) {
+        return currentIdentityStore.createSendPreKeysRequest(identity, id);
     }
 
     @Override

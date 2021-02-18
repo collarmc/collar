@@ -1,7 +1,6 @@
 package team.catgirl.collar.security;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import team.catgirl.collar.security.KeyPair.PublicKey;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -31,6 +30,11 @@ public final class ServerIdentity implements Identity {
     }
 
     @Override
+    public PublicKey publicKey() {
+        return publicKey;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -45,6 +49,6 @@ public final class ServerIdentity implements Identity {
 
     @Override
     public String toString() {
-        return id() + ":" + deviceId();
+        return "_server_@" + id() + ":" + deviceId();
     }
 }

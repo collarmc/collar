@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -31,16 +33,29 @@ public final class Friend {
      * Note: not using MinecraftPlayer here as it would leak server ip info to friends
      */
     @JsonProperty("playerIds")
-    public final List<UUID> playerIds;
+    public final Set<UUID> playerIds;
 
     @JsonCreator
     public Friend(@JsonProperty("owner") UUID owner,
                   @JsonProperty("friendsWith") UUID friend,
                   @JsonProperty("status") Status status,
-                  @JsonProperty("playerIds") List<UUID> playerIds) {
+                  @JsonProperty("playerIds") Set<UUID> playerIds) {
         this.owner = owner;
         this.friend = friend;
         this.status = status;
         this.playerIds = playerIds;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Friend friend1 = (Friend) o;
+        return owner.equals(friend1.owner) && friend.equals(friend1.friend);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(owner, friend);
     }
 }

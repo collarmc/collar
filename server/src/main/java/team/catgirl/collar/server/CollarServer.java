@@ -55,7 +55,7 @@ public class CollarServer {
         protocolHandlers.add(new LocationProtocolHandler(services.playerLocations));
         protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.getIdentity(), services.sessions, services.textures));
         protocolHandlers.add(new IdentityProtocolHandler(services.sessions, services.identityStore.getIdentity()));
-        protocolHandlers.add(new MessagingProtocolHandler(services.sessions, services.identityStore.getIdentity()));
+        protocolHandlers.add(new MessagingProtocolHandler(services.sessions, services.groups, services.identityStore.getIdentity()));
     }
 
     @OnWebSocketConnect
@@ -78,10 +78,10 @@ public class CollarServer {
     @OnWebSocketMessage
     public void message(Session session, InputStream is) throws IOException {
         ProtocolRequest req = read(session, is);
-        LOGGER.log(Level.FINE, req.getClass().getSimpleName() + " from " + req.identity);
+        LOGGER.log(Level.INFO, req.getClass().getSimpleName() + " from " + req.identity);
         ServerIdentity serverIdentity = services.identityStore.getIdentity();
         if (req instanceof KeepAliveRequest) {
-            LOGGER.log(Level.FINE, "KeepAliveRequest received. Sending KeepAliveRequest.");
+            LOGGER.log(Level.INFO, "KeepAliveRequest received. Sending KeepAliveRequest.");
             sendPlain(session, new KeepAliveResponse(serverIdentity));
         } else if (req instanceof IdentifyRequest) {
             IdentifyRequest request = (IdentifyRequest)req;
@@ -141,9 +141,13 @@ public class CollarServer {
 
     private BiConsumer<ClientIdentity, ProtocolResponse> createSender() {
         return (identity, response) -> {
-            services.sessions.getSession(identity).ifPresent(recipientSession -> {
-                send(recipientSession, response);
-            });
+            if (identity == null) {
+                send(null, response);
+            } else {
+                services.sessions.getSession(identity).ifPresent(recipientSession -> {
+                    send(recipientSession, response);
+                });
+            }
         };
     }
 

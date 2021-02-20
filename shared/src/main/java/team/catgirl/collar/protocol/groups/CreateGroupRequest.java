@@ -12,12 +12,16 @@ import java.util.UUID;
  * Create a new group and send {@link GroupInviteRequest}'s for all players in `players`
  */
 public final class CreateGroupRequest extends ProtocolRequest {
+    public final UUID groupId;
     @JsonProperty("players")
     public final List<UUID> players;
 
     @JsonCreator
-    public CreateGroupRequest(@JsonProperty("identity") ClientIdentity identity, @JsonProperty("players") List<UUID> players) {
+    public CreateGroupRequest(@JsonProperty("identity") ClientIdentity identity,
+                              @JsonProperty("groupId") UUID groupId,
+                              @JsonProperty("players") List<UUID> players) {
         super(identity);
+        this.groupId = groupId;
         this.players = players;
     }
 }

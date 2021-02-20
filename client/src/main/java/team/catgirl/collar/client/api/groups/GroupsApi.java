@@ -20,10 +20,7 @@ import team.catgirl.collar.protocol.waypoints.RemoveWaypointResponse;
 import team.catgirl.collar.protocol.waypoints.RemoveWaypointResponse.RemoveWaypointFailedResponse;
 import team.catgirl.collar.protocol.waypoints.RemoveWaypointResponse.RemoveWaypointSuccessResponse;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -46,6 +43,15 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
     }
 
     /**
+     * Find a group by its ID
+     * @param groupId of the group to find
+     * @return group
+     */
+    public Optional<Group> findGroupById(UUID groupId) {
+        return groups.values().stream().filter(group -> group.id.equals(groupId)).findFirst();
+    }
+
+    /**
      * @return pending invitations
      */
     public List<GroupInvitation> invitations() {
@@ -59,7 +65,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param players players
      */
     public void create(List<UUID> players) {
-        sender.accept(new CreateGroupRequest(identity(), players));
+        sender.accept(new CreateGroupRequest(collar.identity(), UUID.randomUUID(), players));
     }
 
     /**
@@ -93,7 +99,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param invitation to accept
      */
     public void accept(GroupInvitation invitation) {
-        sender.accept(new JoinGroupRequest(identity(), invitation.groupId, Group.MembershipState.ACCEPTED));
+        sender.accept(identityStore().createJoinGroupRequest(identity(), invitation.groupId));
         invitations.remove(invitation.groupId);
     }
 
@@ -152,18 +158,25 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
             return true;
         } else if (resp instanceof JoinGroupResponse) {
             synchronized (this) {
-                JoinGroupResponse response = (JoinGroupResponse)resp;
+                JoinGroupResponse response = (JoinGroupResponse) resp;
                 groups.put(response.group.id, response.group);
                 fireListener("onGroupJoined", groupsListener -> {
                     groupsListener.onGroupJoined(collar, this, response.group, response.player);
                 });
                 invitations.remove(response.group.id);
+                AcknowledgedGroupJoinedRequest request = identityStore().processJoinGroupResponse(response);
+                sender.accept(request);
             }
             return true;
+        } else if (resp instanceof AcknowledgedGroupJoinedResponse) {
+            AcknowledgedGroupJoinedResponse response = (AcknowledgedGroupJoinedResponse) resp;
+            if (groups.containsKey(response.group)) {
+                identityStore().processAcknowledgedGroupJoinedResponse(response);
+            }
         } else if (resp instanceof LeaveGroupResponse) {
             synchronized (this) {
                 LeaveGroupResponse response = (LeaveGroupResponse)resp;
-                if (response.player.equals(collar.player())) {
+                if (response.sender.equals(collar.identity())) {
                     // Remove myself from the group
                     Group removed = groups.remove(response.groupId);
                     if (removed != null) {
@@ -183,6 +196,11 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                         });
                     }
                 }
+                // Remove the group sessions of the player who left the group so that any messages they send
+                // will no longer be decrypted by the client.
+                // When this method is called after the client itself has left, it removes the session for the group
+                // until they are invited to join the same group again
+                identityStore().processLeaveGroupResponse(response);
             }
             return true;
         } else if (resp instanceof GroupInviteResponse) {

@@ -1,9 +1,10 @@
 package team.catgirl.collar.security.signal;
 
-import org.whispersystems.libsignal.SessionCipher;
-import org.whispersystems.libsignal.SignalProtocolAddress;
-import org.whispersystems.libsignal.UntrustedIdentityException;
+import org.whispersystems.libsignal.*;
 import org.whispersystems.libsignal.ecc.ECKeyPair;
+import org.whispersystems.libsignal.groups.GroupCipher;
+import org.whispersystems.libsignal.groups.SenderKeyName;
+import org.whispersystems.libsignal.groups.state.SenderKeyStore;
 import org.whispersystems.libsignal.protocol.CiphertextMessage;
 import org.whispersystems.libsignal.protocol.PreKeySignalMessage;
 import org.whispersystems.libsignal.protocol.SignalMessage;
@@ -13,7 +14,9 @@ import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.util.guava.Optional;
+import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.protocol.PacketIO;
+import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.Cypher;
 import team.catgirl.collar.security.Identity;
 
@@ -24,15 +27,19 @@ import java.io.ObjectOutputStream;
 
 public class SignalCypher implements Cypher {
 
-    private final SignalProtocolStore store;
+    private final ClientIdentity clientIdentity;
+    private final SignalProtocolStore signalProtocolStore;
+    private final SenderKeyStore senderKeyStore;
 
-    public SignalCypher(SignalProtocolStore store) {
-        this.store = store;
+    public SignalCypher(ClientIdentity clientIdentity, SignalProtocolStore signalProtocolStore, SenderKeyStore senderKeyStore) {
+        this.clientIdentity = clientIdentity;
+        this.signalProtocolStore = signalProtocolStore;
+        this.senderKeyStore = senderKeyStore;
     }
 
     @Override
     public byte[] crypt(Identity recipient, byte[] bytes) {
-        SessionCipher sessionCipher = new SessionCipher(store, signalProtocolAddressFrom(recipient));
+        SessionCipher sessionCipher = new SessionCipher(signalProtocolStore, signalProtocolAddressFrom(recipient));
         try {
             CiphertextMessage message = sessionCipher.encrypt(bytes);
             int type;
@@ -61,7 +68,7 @@ public class SignalCypher implements Cypher {
     @Override
     public byte[] decrypt(Identity sender, byte[] bytes) {
         SignalProtocolAddress remoteAddress = signalProtocolAddressFrom(sender);
-        SessionCipher sessionCipher = new SessionCipher(store, remoteAddress);
+        SessionCipher sessionCipher = new SessionCipher(signalProtocolStore, remoteAddress);
         try {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
                  ObjectInputStream objectStream = new ObjectInputStream(inputStream)) {
@@ -71,17 +78,17 @@ public class SignalCypher implements Cypher {
                     case 0:
                         return sessionCipher.decrypt(new SignalMessage(serialized));
                     case 1:
-                        SessionRecord sessionRecord = store.loadSession(remoteAddress);
+                        SessionRecord sessionRecord = signalProtocolStore.loadSession(remoteAddress);
                         PreKeySignalMessage message = new PreKeySignalMessage(serialized);
-                        ECKeyPair ourSignedPreKey = store.loadSignedPreKey(message.getSignedPreKeyId()).getKeyPair();
+                        ECKeyPair ourSignedPreKey = signalProtocolStore.loadSignedPreKey(message.getSignedPreKeyId()).getKeyPair();
                         BobSignalProtocolParameters.Builder parameters = BobSignalProtocolParameters.newBuilder();
                         parameters.setTheirBaseKey(message.getBaseKey())
                                 .setTheirIdentityKey(message.getIdentityKey())
-                                .setOurIdentityKey(store.getIdentityKeyPair())
+                                .setOurIdentityKey(signalProtocolStore.getIdentityKeyPair())
                                 .setOurSignedPreKey(ourSignedPreKey)
                                 .setOurRatchetKey(ourSignedPreKey);
-                        if (message.getPreKeyId().isPresent() && store.containsPreKey(message.getPreKeyId().get())) {
-                            PreKeyRecord preKeyRecord = store.loadPreKey(message.getPreKeyId().get());
+                        if (message.getPreKeyId().isPresent() && signalProtocolStore.containsPreKey(message.getPreKeyId().get())) {
+                            PreKeyRecord preKeyRecord = signalProtocolStore.loadPreKey(message.getPreKeyId().get());
                             parameters.setOurOneTimePreKey(Optional.of(preKeyRecord.getKeyPair()));
                         } else {
                             parameters.setOurOneTimePreKey(Optional.absent());
@@ -89,7 +96,7 @@ public class SignalCypher implements Cypher {
                         parameters.setOurOneTimePreKey(Optional.absent());
                         if (!sessionRecord.isFresh()) sessionRecord.archiveCurrentState();
                         RatchetingSession.initializeSession(sessionRecord.getSessionState(), parameters.create());
-                        sessionRecord.getSessionState().setLocalRegistrationId(store.getLocalRegistrationId());
+                        sessionRecord.getSessionState().setLocalRegistrationId(signalProtocolStore.getLocalRegistrationId());
                         sessionRecord.getSessionState().setRemoteRegistrationId(message.getRegistrationId());
                         sessionRecord.getSessionState().setAliceBaseKey(message.getBaseKey().serialize());
                         return sessionCipher.decrypt(message);
@@ -98,11 +105,42 @@ public class SignalCypher implements Cypher {
                 }
             }
         } catch (Throwable e) {
-            throw new IllegalStateException("Problem decrypting packet from " + sender, e);
+            throw new IllegalStateException("Problem decrypting message from " + sender, e);
+        }
+    }
+
+
+    @Override
+    public byte[] crypt(Identity sender, Group recipient, byte[] bytes) {
+        if (senderKeyStore == null) {
+            throw new IllegalStateException("server cannot crypt group messages");
+        }
+        GroupCipher cipher = new GroupCipher(senderKeyStore, senderKeyNameFrom(recipient, sender));
+        try {
+            return cipher.encrypt(bytes);
+        } catch (Throwable e) {
+            throw new IllegalStateException(clientIdentity + " encountered a problem encrypting group message to group " + recipient.id, e);
+        }
+    }
+
+    @Override
+    public byte[] decrypt(Identity sender, Group group, byte[] bytes) {
+        if (senderKeyStore == null) {
+            throw new IllegalStateException("server cannot decrypt group messages");
+        }
+        GroupCipher cipher = new GroupCipher(senderKeyStore, senderKeyNameFrom(group, sender));
+        try {
+            return cipher.decrypt(bytes);
+        } catch (Throwable e) {
+            throw new IllegalStateException(clientIdentity + " encountered a problem decrypting group message from " + sender, e);
         }
     }
 
     private static SignalProtocolAddress signalProtocolAddressFrom(Identity identity) {
         return new SignalProtocolAddress(identity.id().toString(), identity.deviceId());
+    }
+
+    private static SenderKeyName senderKeyNameFrom(Group group, Identity identity) {
+        return new SenderKeyName(group.id.toString(), signalProtocolAddressFrom(identity));
     }
 }

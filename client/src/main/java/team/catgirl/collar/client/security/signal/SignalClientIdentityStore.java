@@ -2,15 +2,20 @@ package team.catgirl.collar.client.security.signal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.whispersystems.libsignal.*;
+import org.whispersystems.libsignal.groups.GroupSessionBuilder;
+import org.whispersystems.libsignal.groups.SenderKeyName;
+import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
 import org.whispersystems.libsignal.state.PreKeyBundle;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.state.SignedPreKeyRecord;
 import org.whispersystems.libsignal.util.KeyHelper;
+import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.client.HomeDirectory;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.client.security.ProfileState;
 import team.catgirl.collar.protocol.devices.DeviceRegisteredResponse;
+import team.catgirl.collar.protocol.groups.*;
 import team.catgirl.collar.protocol.identity.CreateTrustRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.security.*;
@@ -80,7 +85,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
 
     @Override
     public Cypher createCypher() {
-        return new SignalCypher(store);
+        return new SignalCypher(currentIdentity(), store, store);
     }
 
     @Override
@@ -132,6 +137,13 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
+    public JoinGroupRequest createJoinGroupRequest(ClientIdentity identity, UUID groupId) {
+        GroupSessionBuilder builder = new GroupSessionBuilder(store);
+        SenderKeyDistributionMessage message = builder.create(new SenderKeyName(groupId.toString(), signalProtocolAddressFrom(identity)));
+        return new JoinGroupRequest(identity, groupId, Group.MembershipState.ACCEPTED, message.serialize());
+    }
+
+    @Override
     public CreateTrustRequest createSendPreKeysRequest(ClientIdentity recipient, long id) {
         PreKeyBundle bundle = PreKeys.generate(new SignalProtocolAddress(currentIdentity().id().toString(), currentIdentity().deviceId), store);
         try {
@@ -139,6 +151,53 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         } catch (IOException e) {
             throw new IllegalStateException("could not generate PreKeyBundle");
         }
+    }
+
+    @Override
+    public AcknowledgedGroupJoinedRequest processJoinGroupResponse(JoinGroupResponse resp) {
+        GroupSessionBuilder builder = new GroupSessionBuilder(store);
+        // Generate my sender key and send it back to the sender
+        SenderKeyDistributionMessage message = builder.create(new SenderKeyName(resp.group.id.toString(), signalProtocolAddressFrom(currentIdentity())));
+        LOGGER.log(Level.INFO, currentIdentity() + " creating group session for " + currentIdentity() + " in group " + resp.group.id + " to send to " + resp.sender);
+        // Process the joining clients message
+        if (!resp.sender.equals(currentIdentity())) {
+            try {
+                SenderKeyDistributionMessage sendersMessage = new SenderKeyDistributionMessage(resp.keys);
+                builder.process(new SenderKeyName(resp.group.id.toString(), signalProtocolAddressFrom(resp.sender)), sendersMessage);
+            } catch (Throwable e) {
+                throw new IllegalStateException(currentIdentity() + " could not process group keys from " + resp.sender, e);
+            }
+        }
+        return new AcknowledgedGroupJoinedRequest(currentIdentity(), resp.sender, resp.group.id, message.serialize());
+    }
+
+    @Override
+    public void processAcknowledgedGroupJoinedResponse(AcknowledgedGroupJoinedResponse response) {
+        if (response.sender.equals(currentIdentity())) {
+            // Do not process your own identity!
+            // If you do, the private key will be overwritten and the client will not be able to crypt
+            return;
+        }
+        GroupSessionBuilder builder = new GroupSessionBuilder(store);
+        SenderKeyName name = new SenderKeyName(response.group.toString(), signalProtocolAddressFrom(response.sender));
+        SenderKeyDistributionMessage senderKeyDistributionMessage;
+        try {
+            senderKeyDistributionMessage = new SenderKeyDistributionMessage(response.keys);
+        } catch (LegacyMessageException | InvalidMessageException e) {
+            throw new IllegalStateException("could not join group " + response.group, e);
+        }
+        builder.process(name, senderKeyDistributionMessage);
+        LOGGER.log(Level.INFO, currentIdentity() + " processed " + response.sender + "'s session with group " + response.group);
+    }
+
+    @Override
+    public void processLeaveGroupResponse(LeaveGroupResponse response) {
+        store.deleteGroupSession(response.groupId, response.sender);
+    }
+
+    @Override
+    public void clearAllGroupSessions() {
+        store.deleteAllGroupSessions();
     }
 
     public void delete() throws IOException {

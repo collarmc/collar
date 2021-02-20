@@ -1,5 +1,6 @@
 package team.catgirl.collar.client.api.messaging;
 
+import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.messaging.Message;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.api.ApiListener;
@@ -33,4 +34,23 @@ public interface MessagingListener extends ApiListener {
      * @param message the message
      */
     default void onPrivateMessageReceived(Collar collar, MessagingApi messagingApi, MinecraftPlayer sender, Message message) {};
+
+    /**
+     * Fired when a group message was sent to another player via collar
+     * @param collar client
+     * @param messagingApi api
+     * @param group sent to
+     * @param message the message
+     */
+    default void onGroupMessageSent(Collar collar, MessagingApi messagingApi, Group group, Message message) {};
+
+    /**
+     * Fired when a group message was received
+     * @param collar client
+     * @param messagingApi api
+     * @param group sent to
+     * @param sender who sent it
+     * @param message the message
+     */
+    default void onGroupMessageReceived(Collar collar, MessagingApi messagingApi, Group group, MinecraftPlayer sender, Message message) {};
 }

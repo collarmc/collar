@@ -1,16 +1,11 @@
 package team.catgirl.collar.server.services.location;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ConcurrentHashMultiset;
-import org.eclipse.jetty.util.MultiMap;
-import org.eclipse.jetty.util.log.Log;
+import com.google.common.collect.Sets;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.groups.Group.Member;
-import team.catgirl.collar.api.location.Location;
-import team.catgirl.collar.protocol.location.LocationUpdatedResponse;
-import team.catgirl.collar.protocol.location.StartSharingLocationRequest;
-import team.catgirl.collar.protocol.location.StopSharingLocationRequest;
-import team.catgirl.collar.protocol.location.UpdateLocationRequest;
+import team.catgirl.collar.protocol.groups.EjectGroupMemberRequest;
+import team.catgirl.collar.protocol.location.*;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
@@ -18,7 +13,6 @@ import team.catgirl.collar.server.protocol.BatchProtocolResponse;
 import team.catgirl.collar.server.services.groups.GroupService;
 import team.catgirl.collar.server.session.SessionManager;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -32,6 +26,7 @@ public class PlayerLocationService {
     private final SessionManager sessions;
     private final GroupService groups;
     private final ServerIdentity serverIdentity;
+    private final NearbyGroups nearbyGroups = new NearbyGroups();
 
     private final ArrayListMultimap<UUID, MinecraftPlayer> playersSharing = ArrayListMultimap.create();
 
@@ -62,9 +57,9 @@ public class PlayerLocationService {
                 .filter(candidate -> candidate.getValue().contains(player))
                 .map(Map.Entry::getKey)
                 .map(uuid -> stopSharing(uuid, identity, player))
-                .collect(Collectors.toList());;
+                .collect(Collectors.toList());
         for (BatchProtocolResponse response : allResponses) {
-            responses = responses.concat(response);
+            responses.concat(response);
         }
         return responses;
     }
@@ -89,6 +84,12 @@ public class PlayerLocationService {
         return responses;
     }
 
+    public BatchProtocolResponse updateNearbyGroups(UpdateNearbyRequest req) {
+        MinecraftPlayer player = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("could not find player " + req.identity));
+        NearbyGroups.Result result = this.nearbyGroups.updateNearbyGroups(player, req.nearbyHashes);
+        return groups.updateNearbyGroups(result);
+    }
+
     private BatchProtocolResponse createLocationResponses(MinecraftPlayer player, LocationUpdatedResponse resp) {
         BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
         // Find all the groups the requesting player is a member of
@@ -111,9 +112,13 @@ public class PlayerLocationService {
                 }
                 uniquePlayers.add(memberPlayer);
                 ClientIdentity identity = sessions.getIdentity(memberPlayer).orElseThrow(() -> new IllegalStateException("Could not find identity for player " + player));
-                responses = responses.add(identity, resp);
+                responses.add(identity, resp);
             }
         }
         return responses;
+    }
+
+    public void removePlayerState(MinecraftPlayer player) {
+        this.nearbyGroups.removePlayerState(player);
     }
 }

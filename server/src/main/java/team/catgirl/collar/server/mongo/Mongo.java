@@ -30,31 +30,22 @@ public final class Mongo {
         return mongoClient.getDatabase(db);
     }
 
-    private static MongoClientSettings settings(ConnectionString uri) {
-        return getSettingsBuilder(MongoClientSettings.builder()
-                .applyConnectionString(uri))
-                .build();
+    public static MongoDatabase getTestingDatabase() {
+        return MongoClients.create(settings(null)).getDatabase("collar-testing");
+    }
+    private static MongoDatabase getDevelopmentDatabase() {
+        return MongoClients.create(settings(null)).getDatabase("collar-dev");
     }
 
-    private static MongoClientSettings.Builder getSettingsBuilder(MongoClientSettings.Builder builder) {
-        return builder
+    private static MongoClientSettings settings(ConnectionString uri) {
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .readConcern(ReadConcern.MAJORITY)
                 .writeConcern(WriteConcern.MAJORITY)
                 .uuidRepresentation(UuidRepresentation.STANDARD);
-    }
-
-    public static MongoDatabase getTestingDatabase() {
-        MongoClientSettings settings = defaultSettings();
-        return MongoClients.create(settings).getDatabase("collar-testing");
-    }
-
-    private static MongoClientSettings defaultSettings() {
-        return getSettingsBuilder(MongoClientSettings.builder()).build();
-    }
-
-    private static MongoDatabase getDevelopmentDatabase() {
-        MongoClientSettings settings = defaultSettings();
-        return MongoClients.create(settings).getDatabase("collar-dev");
+        if (uri != null) {
+            builder.applyConnectionString(uri);
+        }
+        return builder.build();
     }
 
     private Mongo() {}

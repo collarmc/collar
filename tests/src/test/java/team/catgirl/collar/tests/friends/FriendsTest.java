@@ -1,5 +1,6 @@
 package team.catgirl.collar.tests.friends;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import team.catgirl.collar.api.friends.Friend;
 import team.catgirl.collar.api.friends.Status;
@@ -14,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import static team.catgirl.collar.tests.junit.CollarAssert.waitForCondition;
 
+@Ignore
 public class FriendsTest extends CollarTest {
 
     @Test

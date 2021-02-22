@@ -7,7 +7,7 @@ Online services for minecraft mods.
 * Uploading and distributing player textures, such as capes and avatars.
 * Server stored friend lists
 * Custom message formats for private and group messaging (build your own mod!)
-* Messaging and coordinte sharing is end to end encrypted using [Signal's](https://signal.org) whisper protocol.
+* Messaging and coordinte sharing is end to end encrypted using an implementation of [Signal's](https://signal.org) encryption protocol.
 
 ## Coming soon
 * Server stored Waypoints

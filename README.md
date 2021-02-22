@@ -6,7 +6,7 @@ Online services for minecraft mods.
 * Create groups of players to share coordinates, waypoints and chat.
 * Uploading and distributing player textures, such as capes and avatars.
 * Server stored friend lists
-* Custom message formats for private and group messaging (build your own mod!)
+* Custom message formats for private, group and nearby messaging (build your own mod!)
 * Messaging and coordinte sharing is end to end encrypted using an implementation of [Signal's](https://signal.org) encryption protocol.
 
 ## Coming soon

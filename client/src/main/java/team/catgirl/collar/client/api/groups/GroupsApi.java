@@ -1,6 +1,7 @@
 package team.catgirl.collar.client.api.groups;
 
 import team.catgirl.collar.api.groups.Group;
+import team.catgirl.collar.api.groups.Group.GroupType;
 import team.catgirl.collar.api.groups.Group.Member;
 import team.catgirl.collar.api.location.Location;
 import team.catgirl.collar.api.waypoints.Waypoint;
@@ -24,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class GroupsApi extends AbstractApi<GroupsListener> {
     private final ConcurrentMap<UUID, Group> groups = new ConcurrentHashMap<>();
@@ -38,7 +40,16 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      */
     public List<Group> all() {
         synchronized (this) {
-            return new ArrayList<>(groups.values());
+            return groups.values().stream().filter(group -> group.type == GroupType.PLAYER).collect(Collectors.toList());
+        }
+    }
+
+    /**
+     * @return groups of players the current player is near
+     */
+    public List<Group> locationGroups() {
+        synchronized (this) {
+            return groups.values().stream().filter(group -> group.type == GroupType.NEARBY).collect(Collectors.toList());
         }
     }
 
@@ -176,7 +187,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
         } else if (resp instanceof LeaveGroupResponse) {
             synchronized (this) {
                 LeaveGroupResponse response = (LeaveGroupResponse)resp;
-                if (response.sender.equals(collar.identity())) {
+                if (response.sender == null || response.sender.equals(collar.identity())) {
                     // Remove myself from the group
                     Group removed = groups.remove(response.groupId);
                     if (removed != null) {
@@ -205,12 +216,17 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
             return true;
         } else if (resp instanceof GroupInviteResponse) {
             synchronized (this) {
-                GroupInviteResponse request = (GroupInviteResponse)resp;
-                GroupInvitation invitation = GroupInvitation.from(request);
-                invitations.put(invitation.groupId, invitation);
-                fireListener("onGroupInvited", groupsListener -> {
-                    groupsListener.onGroupInvited(collar, this, invitation);
-                });
+                GroupInviteResponse response = (GroupInviteResponse) resp;
+                GroupInvitation invitation = GroupInvitation.from(response);
+                if (response.groupType == GroupType.PLAYER) {
+                    invitations.put(invitation.groupId, invitation);
+                    fireListener("onGroupInvited", groupsListener -> {
+                        groupsListener.onGroupInvited(collar, this, invitation);
+                    });
+                } else if (response.groupType == GroupType.NEARBY) {
+                    // Auto-accept invitations from location typed groups
+                    accept(invitation);
+                }
             }
             return true;
         } else if (resp instanceof CreateWaypointResponse) {

@@ -6,20 +6,23 @@ import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.location.StartSharingLocationRequest;
 import team.catgirl.collar.protocol.location.StopSharingLocationRequest;
 import team.catgirl.collar.protocol.location.UpdateLocationRequest;
+import team.catgirl.collar.protocol.location.UpdateNearbyRequest;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.CollarServer;
+import team.catgirl.collar.server.services.groups.GroupService;
 import team.catgirl.collar.server.services.location.PlayerLocationService;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class LocationProtocolHandler extends ProtocolHandler {
 
     private final PlayerLocationService playerLocations;
+    private final GroupService groups;
 
-    public LocationProtocolHandler(PlayerLocationService playerLocations) {
+    public LocationProtocolHandler(PlayerLocationService playerLocations, GroupService groups) {
         this.playerLocations = playerLocations;
+        this.groups = groups;
     }
 
     @Override
@@ -38,6 +41,11 @@ public class LocationProtocolHandler extends ProtocolHandler {
             BatchProtocolResponse resp = playerLocations.updateLocation(request);
             sender.accept(request.identity, resp);
             return true;
+        } else if (req instanceof UpdateNearbyRequest) {
+            UpdateNearbyRequest request = (UpdateNearbyRequest) req;
+            BatchProtocolResponse response = playerLocations.updateNearbyGroups(request);
+            sender.accept(null, response);
+            return true;
         }
         return false;
     }
@@ -46,5 +54,6 @@ public class LocationProtocolHandler extends ProtocolHandler {
     public void onSessionStopping(ClientIdentity identity, MinecraftPlayer player, BiConsumer<Session, ProtocolResponse> sender) {
         BatchProtocolResponse resp = playerLocations.stopSharing(player);
         sender.accept(null, resp);
+        playerLocations.removePlayerState(player);
     }
 }

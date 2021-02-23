@@ -1,5 +1,6 @@
 package team.catgirl.collar.tests.messaging;
 
+import org.junit.Assert;
 import org.junit.Test;
 import team.catgirl.collar.api.messaging.Message;
 import team.catgirl.collar.api.messaging.TextMessage;
@@ -17,7 +18,9 @@ public class MessagingTest extends CollarTest {
     @Test
     public void aliceSendsBobAnUwU() {
         MessagingListenerImpl bobMessageListener = new MessagingListenerImpl();
+        MessagingListenerImpl aliceListener = new MessagingListenerImpl();
         bobPlayer.collar.messaging().subscribe(bobMessageListener);
+        alicePlayer.collar.messaging().subscribe(aliceListener);
         alicePlayer.collar.messaging().sendPrivateMessage(bobPlayer.collar.player(), new TextMessage("UwU"));
         waitForCondition("Alice sent an UwU to Bob", () -> {
             if (!(bobMessageListener.lastMessage instanceof TextMessage)) {
@@ -26,6 +29,7 @@ public class MessagingTest extends CollarTest {
             TextMessage message = (TextMessage) bobMessageListener.lastMessage;
             return message.content.equals("UwU");
         });
+        Assert.assertEquals("UwU", ((TextMessage)aliceListener.lastMessageSent).content);
     }
 
     @Test
@@ -45,6 +49,7 @@ public class MessagingTest extends CollarTest {
     private static final class MessagingListenerImpl implements MessagingListener {
         Message lastMessage;
         Message lastUntrustedMessage;
+        Message lastMessageSent;
 
         @Override
         public void onPrivateMessageReceived(Collar collar, MessagingApi messagingApi, MinecraftPlayer sender, Message message) {
@@ -54,6 +59,11 @@ public class MessagingTest extends CollarTest {
         @Override
         public void onPrivateMessageRecipientIsUntrusted(Collar collar, MessagingApi messagingApi, MinecraftPlayer player, Message message) {
             this.lastUntrustedMessage = message;
+        }
+
+        @Override
+        public void onPrivateMessageSent(Collar collar, MessagingApi messagingApi, Message message) {
+            this.lastMessageSent = message;
         }
     }
 }

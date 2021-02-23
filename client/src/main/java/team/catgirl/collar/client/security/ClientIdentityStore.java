@@ -1,6 +1,5 @@
 package team.catgirl.collar.client.security;
 
-import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.devices.DeviceRegisteredResponse;
 import team.catgirl.collar.protocol.groups.*;
 import team.catgirl.collar.protocol.identity.CreateTrustRequest;
@@ -10,7 +9,6 @@ import team.catgirl.collar.security.Cypher;
 import team.catgirl.collar.security.Identity;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.UUID;
 
 public interface ClientIdentityStore {
@@ -39,9 +37,9 @@ public interface ClientIdentityStore {
     Cypher createCypher();
 
     /**
-     * @param deviceId of the registered device
+     * @param response of the registered device
      */
-    void setDeviceId(int deviceId);
+    void processDeviceRegisteredResponse(DeviceRegisteredResponse response);
 
     /**
      * @return device id of this client

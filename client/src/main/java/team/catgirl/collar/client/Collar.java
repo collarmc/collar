@@ -7,7 +7,6 @@ import okio.ByteString;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.whispersystems.libsignal.IdentityKey;
-import team.catgirl.collar.api.friends.Friend;
 import team.catgirl.collar.api.http.CollarFeature;
 import team.catgirl.collar.api.http.CollarVersion;
 import team.catgirl.collar.api.http.DiscoverResponse;
@@ -382,7 +381,7 @@ public final class Collar {
             } else if (resp instanceof DeviceRegisteredResponse) {
                 DeviceRegisteredResponse response = (DeviceRegisteredResponse)resp;
                 identityStore = getOrCreateIdentityKeyStore(webSocket, response.profile.id);
-                identityStore.setDeviceId(response.deviceId);
+                identityStore.processDeviceRegisteredResponse(response);
                 LOGGER.log(Level.INFO, "Ready to exchange keys for device " + response.deviceId);
                 SendPreKeysRequest request = identityStore.createSendPreKeysRequest(response);
                 sendRequest(webSocket, request);

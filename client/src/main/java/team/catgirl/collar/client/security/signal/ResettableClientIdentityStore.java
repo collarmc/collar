@@ -43,8 +43,8 @@ public class ResettableClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public void setDeviceId(int deviceId) {
-        currentIdentityStore.setDeviceId(deviceId);
+    public void processDeviceRegisteredResponse(DeviceRegisteredResponse response) {
+        currentIdentityStore.processDeviceRegisteredResponse(response);
     }
 
     @Override

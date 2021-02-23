@@ -89,14 +89,14 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public void setDeviceId(int deviceId) {
+    public void processDeviceRegisteredResponse(DeviceRegisteredResponse response) {
         ReentrantReadWriteLock.WriteLock writeLock = lock.writeLock();
         try {
             writeLock.lockInterruptibly();
             if (state.deviceId != null) {
                 throw new IllegalStateException("deviceId has already been set");
             }
-            state.deviceId = deviceId;
+            state.deviceId = response.deviceId;
             writeState(file, state);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);

@@ -11,9 +11,10 @@ public interface MessagingListener extends ApiListener {
      * Fired when a private message was sent to another player via collar
      * @param collar client
      * @param messagingApi api
+     * @param player sent to
      * @param message the message
      */
-    default void onPrivateMessageSent(Collar collar, MessagingApi messagingApi, Message message) {};
+    default void onPrivateMessageSent(Collar collar, MessagingApi messagingApi, MinecraftPlayer player, Message message) {};
 
     /**
      * Fired when a private message was attempted with another player but there was not sufficent trust to deliver

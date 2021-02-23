@@ -50,7 +50,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                         }
                         this.sender.accept(new SendMessageRequest(collar.identity(), sender.get(), null, messageBytes));
                         fireListener("onPrivateMessageSent", listener -> {
-                            listener.onPrivateMessageSent(collar, this, message);
+                            listener.onPrivateMessageSent(collar, this, player, message);
                         });
                     } else {
                         LOGGER.log(Level.INFO, collar.identity() + " could not locate identity for " + player + ". The private message was not sent.");

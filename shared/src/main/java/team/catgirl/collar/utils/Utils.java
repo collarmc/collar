@@ -52,7 +52,7 @@ public final class Utils {
 
     static {
         try {
-            SECURERANDOM = SecureRandom.getInstance("SHA1PRNG");
+            SECURERANDOM = SecureRandom.getInstanceStrong();
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }

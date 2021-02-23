@@ -62,7 +62,7 @@ public class MessagingTest extends CollarTest {
         }
 
         @Override
-        public void onPrivateMessageSent(Collar collar, MessagingApi messagingApi, Message message) {
+        public void onPrivateMessageSent(Collar collar, MessagingApi messagingApi, MinecraftPlayer player, Message message) {
             this.lastMessageSent = message;
         }
     }

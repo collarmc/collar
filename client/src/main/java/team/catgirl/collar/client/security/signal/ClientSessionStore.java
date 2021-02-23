@@ -169,10 +169,10 @@ public class ClientSessionStore implements SessionStore {
     }
 
     public static ClientSessionStore from(HomeDirectory homeDirectory, ObjectMapper mapper) throws IOException {
-        File file = new File(homeDirectory.security(), "clientSessionStore.json");
+        File file = new File(homeDirectory.security(), "clientSessionStore");
         State state;
         if (file.exists()) {
-            state = Utils.jsonMapper().readValue(file, State.class);
+            state = mapper.readValue(file, State.class);
         } else {
             state = new State(new HashMap<>());
         }

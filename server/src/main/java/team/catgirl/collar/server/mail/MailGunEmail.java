@@ -48,6 +48,7 @@ public class MailGunEmail extends AbstractEmail {
             if (response.code() != 200) {
                 throw new UnmappedHttpException(response.code(), response.message());
             }
+            LOGGER.log(Level.INFO, "Sent " + templateName + " email to " + profile.email);
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Connection issue", e);
         }

@@ -121,9 +121,7 @@ public class WebServer {
 
                 path("/profile", () -> {
                     before("/*", (request, response) -> {
-                        if (!request.requestMethod().equals("OPTIONS")) {
-                            RequestContext.from(request).assertNotAnonymous();
-                        }
+                        assertAuthenticated(request);
                     });
                     // Get your own profile
                     get("/me", (request, response) -> {
@@ -321,6 +319,13 @@ public class WebServer {
         callback.accept(services);
         LOGGER.info("Collar server started.");
         LOGGER.info(services.urlProvider.homeUrl());
+    }
+
+    private void assertAuthenticated(Request request) {
+        // Must let in OPTIONS because CORS is horrible
+        if (!request.requestMethod().equals("OPTIONS")) {
+            RequestContext.from(request).assertNotAnonymous();
+        }
     }
 
     private void setLoginCookie(Services services, Response response, Profile profile) throws IOException {

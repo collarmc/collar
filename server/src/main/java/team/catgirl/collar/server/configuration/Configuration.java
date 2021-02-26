@@ -41,6 +41,7 @@ public class Configuration {
         this.enableWeb = enableWeb;
         this.httpPort = httpPort;
         this.email = email;
+        LOGGER.log(Level.INFO, "Using Email type " + email.getClass().getSimpleName());
     }
 
     public static Configuration fromEnvironment() {

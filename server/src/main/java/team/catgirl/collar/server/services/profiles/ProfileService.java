@@ -171,7 +171,7 @@ public class ProfileService {
         String email = doc.getString(FIELD_EMAIL);
         String name = doc.getString(FIELD_NAME);
         String hashedPassword = doc.getString(FIELD_HASHED_PASSWORD);
-        boolean emailVerified = doc.getBoolean(FIELD_EMAIL_VERIFIED);
+        boolean emailVerified = doc.getBoolean(FIELD_EMAIL_VERIFIED, false);
         return new Profile(profileId, email, name, hashedPassword, emailVerified);
     }
 

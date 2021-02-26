@@ -1,12 +1,14 @@
 package team.catgirl.collar.server.mail;
 
-import com.commit451.mailgun.Contact;
-import com.commit451.mailgun.Mailgun;
-import com.commit451.mailgun.SendMessageRequest;
+import com.google.common.io.BaseEncoding;
+import okhttp3.*;
+import team.catgirl.collar.api.http.HttpException.UnmappedHttpException;
 import team.catgirl.collar.server.http.AppUrlProvider;
 import team.catgirl.collar.server.services.profiles.Profile;
+import team.catgirl.collar.utils.Utils;
 
-import java.util.List;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -15,23 +17,39 @@ public class MailGunEmail extends AbstractEmail {
 
     private static final Logger LOGGER = Logger.getLogger(MailGunEmail.class.getName());
 
-    private final Mailgun mailgun;
+    private final String domain;
+    private final String apiKey;
 
-    public MailGunEmail(AppUrlProvider urlProvider, Mailgun mailgun) {
+    public MailGunEmail(AppUrlProvider urlProvider, String domain, String apiKey) {
         super(urlProvider);
-        this.mailgun = mailgun;
+        this.domain = domain;
+        this.apiKey = apiKey;
     }
 
     @Override
     public void send(Profile profile, String subject, String templateName, Map<String, Object> variables) {
         variables = prepareVariables(profile, variables);
-        SendMessageRequest message = new SendMessageRequest.Builder(new Contact("noreply@collarmc.com", "Collar"))
-                .to(List.of(new Contact(profile.email, profile.name)))
-                .subject(subject)
-                .text(renderText(templateName, variables))
-                .html(renderHtml(templateName, variables))
+        RequestBody formBody = new FormBody.Builder()
+                .add("from", "no-reply@collarmc.com")
+                .add("to", profile.email)
+                .add("subject", subject)
+                .add("html", renderHtml(templateName, variables))
+                .add("text", renderText(templateName, variables))
                 .build();
-        LOGGER.log(Level.INFO, "Sending email to " + profile.email);
-        mailgun.sendMessage(message);
+
+        String auth = BaseEncoding.base64().encode(("api:" + apiKey).getBytes(StandardCharsets.UTF_8));
+        Request request = new Request.Builder()
+                .url("https://api.mailgun.net/v3/" + domain + " /messages")
+                .addHeader("Authorization", "Basic " + auth)
+                .post(formBody)
+                .build();
+
+        try (Response response = Utils.http().newCall(request).execute()) {
+            if (response.code() != 200) {
+                throw new UnmappedHttpException(response.code(), response.message());
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Connection issue", e);
+        }
     }
 }

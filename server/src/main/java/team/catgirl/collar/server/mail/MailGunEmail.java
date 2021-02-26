@@ -8,8 +8,13 @@ import team.catgirl.collar.server.services.profiles.Profile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MailGunEmail extends AbstractEmail {
+
+    private static final Logger LOGGER = Logger.getLogger(MailGunEmail.class.getName());
+
     private final Mailgun mailgun;
 
     public MailGunEmail(AppUrlProvider urlProvider, Mailgun mailgun) {
@@ -26,6 +31,7 @@ public class MailGunEmail extends AbstractEmail {
                 .text(renderText(templateName, variables))
                 .html(renderHtml(templateName, variables))
                 .build();
+        LOGGER.log(Level.INFO, "Sending email to " + profile.email);
         mailgun.sendMessage(message);
     }
 }

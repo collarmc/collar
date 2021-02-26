@@ -3,6 +3,7 @@ package team.catgirl.collar.server.configuration;
 import com.commit451.mailgun.Mailgun;
 import com.mongodb.client.MongoDatabase;
 import team.catgirl.collar.server.http.AppUrlProvider;
+import team.catgirl.collar.server.http.CollarWebAppUrlProvider;
 import team.catgirl.collar.server.http.DefaultAppUrlProvider;
 import team.catgirl.collar.server.mail.Email;
 import team.catgirl.collar.server.mail.LocalEmail;
@@ -70,7 +71,7 @@ public class Configuration {
         if (mailgunApiKey == null) {
             throw new IllegalStateException("MAILGUN_API_KEY not set");
         }
-        DefaultAppUrlProvider appUrlProvider = new DefaultAppUrlProvider(baseUrl);
+        AppUrlProvider appUrlProvider = new CollarWebAppUrlProvider("http://localhost:3000");
         return new Configuration(
                 Mongo.database(),
                 appUrlProvider,

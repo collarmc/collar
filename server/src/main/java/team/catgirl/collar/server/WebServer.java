@@ -97,7 +97,7 @@ public class WebServer {
 
             String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
             if (accessControlRequestMethod != null) {
-                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+                response.header("Access-Control-Allow-Methods", "*");
             }
 
             return "OK";

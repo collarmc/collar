@@ -97,14 +97,15 @@ public class WebServer {
 
             String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
             if (accessControlRequestMethod != null) {
-                response.header("Access-Control-Allow-Methods", "*");
+                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
             }
-
+            response.header("Access-Control-Allow-Credentials", "true");
             return "OK";
         }, Object::toString);
 
         before((request, response) -> {
             response.header("Access-Control-Allow-Origin", "*");
+            response.header("Access-Control-Allow-Credentials", "true");
         });
 
         // API routes

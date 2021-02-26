@@ -1,6 +1,5 @@
 package team.catgirl.collar.server.configuration;
 
-import com.commit451.mailgun.Mailgun;
 import com.mongodb.client.MongoDatabase;
 import team.catgirl.collar.server.http.AppUrlProvider;
 import team.catgirl.collar.server.http.CollarWebAppUrlProvider;
@@ -8,7 +7,6 @@ import team.catgirl.collar.server.http.DefaultAppUrlProvider;
 import team.catgirl.collar.server.mail.Email;
 import team.catgirl.collar.server.mail.LocalEmail;
 import team.catgirl.collar.server.mail.MailGunEmail;
-import team.catgirl.collar.server.mail.SimpleMailGunEmail;
 import team.catgirl.collar.server.mongo.Mongo;
 import team.catgirl.collar.server.security.hashing.PasswordHashing;
 import team.catgirl.collar.server.security.mojang.MinecraftSessionVerifier;
@@ -83,7 +81,7 @@ public class Configuration {
                 corsOrigin,
                 enableWeb,
                 httpPort(),
-                new SimpleMailGunEmail(appUrlProvider, mailgunDomain, mailgunApiKey)
+                new MailGunEmail(appUrlProvider, mailgunDomain, mailgunApiKey)
                 );
     }
 

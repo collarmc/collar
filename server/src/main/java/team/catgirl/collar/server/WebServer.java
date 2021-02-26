@@ -89,12 +89,10 @@ public class WebServer {
 
         // Setup CORS
         options("/*", (request, response) -> {
-
             String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
             if (accessControlRequestHeaders != null) {
                 response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
             }
-
             String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
             if (accessControlRequestMethod != null) {
                 response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
@@ -123,7 +121,9 @@ public class WebServer {
 
                 path("/profile", () -> {
                     before("/*", (request, response) -> {
-                        RequestContext.from(request).assertNotAnonymous();
+                        if (!request.requestMethod().equals("OPTIONS")) {
+                            RequestContext.from(request).assertNotAnonymous();
+                        }
                     });
                     // Get your own profile
                     get("/me", (request, response) -> {

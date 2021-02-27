@@ -7,15 +7,11 @@ import java.io.*;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Used for authorizing API calls
  */
 public class ApiToken {
-
-    private static final Logger LOGGER = Logger.getLogger(ApiToken.class.getName());
 
     private static final int VERSION = 1;
 
@@ -43,14 +39,11 @@ public class ApiToken {
                 dataStream.writeUTF(profileId.toString());
                 dataStream.writeLong(expiresAt);
             }
-            String token = BaseEncoding.base64Url().encode(crypter.crypt(outputStream.toByteArray()));
-            LOGGER.log(Level.INFO, "Created token '" + token + "'");
-            return token;
+            return BaseEncoding.base64Url().encode(crypter.crypt(outputStream.toByteArray()));
         }
     }
 
     public static ApiToken deserialize(TokenCrypter crypter, String token) throws IOException {
-        LOGGER.log(Level.INFO, "deserialize token '" + token + "'");
         byte[] bytes = BaseEncoding.base64Url().decode(token);
         byte[] decryptedBytes = crypter.decrypt(bytes);
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(decryptedBytes)) {

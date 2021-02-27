@@ -33,6 +33,9 @@ public class ApiToken {
     }
 
     public static ApiToken deserialize(TokenCrypter crypter, String token) throws IOException {
+        if (!token.endsWith("==")) {
+            token = token + "==";
+        }
         byte[] bytes = BaseEncoding.base64Url().decode(token);
         try (ByteArrayInputStream bbis = new ByteArrayInputStream(crypter.decrypt(bytes))) {
             try (ObjectInputStream bis = new ObjectInputStream(bbis)) {

@@ -4,7 +4,9 @@ import com.google.common.io.BaseEncoding;
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
 
 import java.io.*;
+import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Used for authorizing API calls
@@ -21,6 +23,15 @@ public class ApiToken {
         this.expiresAt = expiresAt;
     }
 
+    public ApiToken(UUID profileId) {
+        this.profileId = profileId;
+        this.expiresAt = new Date().getTime() * TimeUnit.HOURS.toMillis(24);
+    }
+
+    public boolean isExpired() {
+        return new Date().after(new Date(expiresAt));
+    }
+
     public String serialize(TokenCrypter crypter) throws IOException {
         try (ByteArrayOutputStream boos = new ByteArrayOutputStream()) {
             try (ObjectOutputStream oos = new ObjectOutputStream(boos)) {
@@ -34,7 +45,8 @@ public class ApiToken {
 
     public static ApiToken deserialize(TokenCrypter crypter, String token) throws IOException {
         byte[] bytes = BaseEncoding.base64Url().decode(token);
-        try (ByteArrayInputStream bbis = new ByteArrayInputStream(crypter.decrypt(bytes))) {
+        byte[] decryptedBytes = crypter.decrypt(bytes);
+        try (ByteArrayInputStream bbis = new ByteArrayInputStream(decryptedBytes)) {
             try (ObjectInputStream bis = new ObjectInputStream(bbis)) {
                 int version = bis.read();
                 String uuidAsString;

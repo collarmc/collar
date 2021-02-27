@@ -138,7 +138,7 @@ public class AuthenticationService {
     }
 
     private String tokenFrom(Profile profile) {
-        ApiToken apiToken = new ApiToken(profile.id, new Date().getTime() * TimeUnit.HOURS.toMillis(24));
+        ApiToken apiToken = new ApiToken(profile.id);
         String token;
         try {
             token = apiToken.serialize(tokenCrypter);

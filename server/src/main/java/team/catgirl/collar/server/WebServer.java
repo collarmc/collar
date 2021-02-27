@@ -359,10 +359,10 @@ public class WebServer {
         if (authorization == null) {
             context = RequestContext.ANON;
         } else if (authorization.startsWith("Bearer ")) {
-            String tokenString = authorization.substring(authorization.lastIndexOf(" "));
+            String tokenString = authorization.substring(authorization.indexOf(" "));
             ApiToken token = ApiToken.deserialize(crypter, tokenString);
-            if (new Date().after(new Date(token.expiresAt))) {
-                throw new UnauthorisedException("old token");
+            if (token.isExpired()) {
+                throw new UnauthorisedException("expired token");
             }
             context = token.fromToken();
         } else {

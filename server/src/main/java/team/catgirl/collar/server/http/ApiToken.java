@@ -33,28 +33,28 @@ public class ApiToken {
     }
 
     public String serialize(TokenCrypter crypter) throws IOException {
-        try (ByteArrayOutputStream boos = new ByteArrayOutputStream()) {
-            try (ObjectOutputStream oos = new ObjectOutputStream(boos)) {
-                oos.write(VERSION);
-                oos.writeUTF(profileId.toString());
-                oos.writeLong(expiresAt);
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+            try (DataOutputStream dataStream = new DataOutputStream(outputStream)) {
+                dataStream.write(VERSION);
+                dataStream.writeUTF(profileId.toString());
+                dataStream.writeLong(expiresAt);
             }
-            return BaseEncoding.base64Url().encode(crypter.crypt(boos.toByteArray()));
+            return BaseEncoding.base64Url().encode(crypter.crypt(outputStream.toByteArray()));
         }
     }
 
     public static ApiToken deserialize(TokenCrypter crypter, String token) throws IOException {
         byte[] bytes = BaseEncoding.base64Url().decode(token);
         byte[] decryptedBytes = crypter.decrypt(bytes);
-        try (ByteArrayInputStream bbis = new ByteArrayInputStream(decryptedBytes)) {
-            try (ObjectInputStream bis = new ObjectInputStream(bbis)) {
-                int version = bis.read();
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(decryptedBytes)) {
+            try (DataInputStream dataStream = new DataInputStream(inputStream)) {
+                int version = dataStream.read();
                 String uuidAsString;
                 long expiresAt;
                 switch (version) {
                     case 1:
-                        uuidAsString = bis.readUTF();
-                        expiresAt = bis.readLong();
+                        uuidAsString = dataStream.readUTF();
+                        expiresAt = dataStream.readLong();
                         break;
                     default:
                         throw new IllegalStateException("unknown version " + version);

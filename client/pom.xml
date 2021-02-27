@@ -120,6 +120,18 @@
                             <pattern>net.chris54721</pattern>
                             <shadedPattern>team.catgirl.collar.libs.net.chris54721</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>com.stoyanr.evict</pattern>
+                            <shadedPattern>team.catgirl.collar.libs.com.stoyanr.evict</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>org.msgpack</pattern>
+                            <shadedPattern>team.catgirl.collar.libs.org.msgpack</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>google.protobuf</pattern>
+                            <shadedPattern>team.catgirl.collar.libs.google.protobuf</shadedPattern>
+                        </relocation>
                     </relocations>
                 </configuration>
             </plugin>

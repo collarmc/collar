@@ -5,13 +5,22 @@ import team.catgirl.collar.protocol.groups.*;
 import team.catgirl.collar.protocol.identity.CreateTrustRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.security.ClientIdentity;
-import team.catgirl.collar.security.Cypher;
+import team.catgirl.collar.security.cipher.Cipher;
 import team.catgirl.collar.security.Identity;
 
 import java.io.IOException;
 import java.util.UUID;
 
 public interface ClientIdentityStore {
+    /**
+     * This token is stored by the server on first register and is used to check
+     * if the private identity of the client has changed. If it has changed, we
+     * the user has willingly generated a new token and forfeits any privately
+     * encrypted state on the server
+     * @return the players private identity token
+     */
+    byte[] privateIdentityToken();
+
     /**
      * @return the players identity
      */
@@ -32,9 +41,9 @@ public interface ClientIdentityStore {
     void trustIdentity(Identity owner, byte[] preKeyBundle);
 
     /**
-     * @return creates a new {@link Cypher}
+     * @return creates a new {@link Cipher}
      */
-    Cypher createCypher();
+    Cipher createCypher();
 
     /**
      * @param response of the registered device

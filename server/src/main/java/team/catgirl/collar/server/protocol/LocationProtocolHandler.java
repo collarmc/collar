@@ -1,28 +1,37 @@
 package team.catgirl.collar.server.protocol;
 
 import org.eclipse.jetty.websocket.api.Session;
+import team.catgirl.collar.api.waypoints.EncryptedWaypoint;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.location.StartSharingLocationRequest;
 import team.catgirl.collar.protocol.location.StopSharingLocationRequest;
 import team.catgirl.collar.protocol.location.UpdateLocationRequest;
 import team.catgirl.collar.protocol.location.UpdateNearbyRequest;
+import team.catgirl.collar.protocol.waypoints.CreateWaypointRequest;
+import team.catgirl.collar.protocol.waypoints.GetWaypointsRequest;
+import team.catgirl.collar.protocol.waypoints.GetWaypointsResponse;
+import team.catgirl.collar.protocol.waypoints.RemoveWaypointRequest;
 import team.catgirl.collar.security.ClientIdentity;
+import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.CollarServer;
-import team.catgirl.collar.server.services.groups.GroupService;
 import team.catgirl.collar.server.services.location.PlayerLocationService;
+import team.catgirl.collar.server.services.location.WaypointService;
 
+import java.util.List;
 import java.util.function.BiConsumer;
 
 public class LocationProtocolHandler extends ProtocolHandler {
 
     private final PlayerLocationService playerLocations;
-    private final GroupService groups;
+    private final WaypointService waypoints;
+    private final ServerIdentity serverIdentity;
 
-    public LocationProtocolHandler(PlayerLocationService playerLocations, GroupService groups) {
+    public LocationProtocolHandler(PlayerLocationService playerLocations, WaypointService waypoints, ServerIdentity serverIdentity) {
         this.playerLocations = playerLocations;
-        this.groups = groups;
+        this.waypoints = waypoints;
+        this.serverIdentity = serverIdentity;
     }
 
     @Override
@@ -39,12 +48,25 @@ public class LocationProtocolHandler extends ProtocolHandler {
         } else if (req instanceof UpdateLocationRequest) {
             UpdateLocationRequest request = (UpdateLocationRequest) req;
             BatchProtocolResponse resp = playerLocations.updateLocation(request);
-            sender.accept(request.identity, resp);
+            sender.accept(request.identity, playerLocations.updateLocation(request));
             return true;
         } else if (req instanceof UpdateNearbyRequest) {
             UpdateNearbyRequest request = (UpdateNearbyRequest) req;
-            BatchProtocolResponse response = playerLocations.updateNearbyGroups(request);
-            sender.accept(null, response);
+            BatchProtocolResponse resp = playerLocations.updateNearbyGroups(request);
+            sender.accept(null, resp);
+            return true;
+        } else if (req instanceof CreateWaypointRequest) {
+            CreateWaypointRequest request = (CreateWaypointRequest) req;
+            waypoints.createWaypoint(request);
+            return true;
+        } else if (req instanceof RemoveWaypointRequest) {
+            RemoveWaypointRequest request = (RemoveWaypointRequest) req;
+            waypoints.removeWaypoint(request);
+            return true;
+        } else if (req instanceof GetWaypointsRequest) {
+            GetWaypointsRequest request = (GetWaypointsRequest) req;
+            List<EncryptedWaypoint> waypoints = this.waypoints.getWaypoints(request);
+            sender.accept(req.identity, new GetWaypointsResponse(serverIdentity, waypoints));
             return true;
         }
         return false;

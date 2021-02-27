@@ -1,25 +1,16 @@
 package team.catgirl.collar.client.api.groups;
 
 import team.catgirl.collar.api.groups.Group;
-import team.catgirl.collar.api.groups.Group.GroupType;
-import team.catgirl.collar.api.groups.Group.Member;
-import team.catgirl.collar.api.location.Location;
-import team.catgirl.collar.api.waypoints.Waypoint;
+import team.catgirl.collar.api.groups.GroupType;
+import team.catgirl.collar.api.groups.Member;
+import team.catgirl.collar.api.groups.MembershipRole;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.api.AbstractApi;
+import team.catgirl.collar.client.sdht.SDHTApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.groups.*;
-import team.catgirl.collar.protocol.location.UpdateLocationRequest;
-import team.catgirl.collar.protocol.waypoints.CreateWaypointRequest;
-import team.catgirl.collar.protocol.waypoints.CreateWaypointResponse;
-import team.catgirl.collar.protocol.waypoints.CreateWaypointResponse.CreateWaypointFailedResponse;
-import team.catgirl.collar.protocol.waypoints.CreateWaypointResponse.CreateWaypointSuccessResponse;
-import team.catgirl.collar.protocol.waypoints.RemoveWaypointRequest;
-import team.catgirl.collar.protocol.waypoints.RemoveWaypointResponse;
-import team.catgirl.collar.protocol.waypoints.RemoveWaypointResponse.RemoveWaypointFailedResponse;
-import team.catgirl.collar.protocol.waypoints.RemoveWaypointResponse.RemoveWaypointSuccessResponse;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -30,9 +21,14 @@ import java.util.stream.Collectors;
 public final class GroupsApi extends AbstractApi<GroupsListener> {
     private final ConcurrentMap<UUID, Group> groups = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, GroupInvitation> invitations = new ConcurrentHashMap<>();
+    private final SDHTApi sdhtApi;
 
-    public GroupsApi(Collar collar, Supplier<ClientIdentityStore> identityStoreSupplier, Consumer<ProtocolRequest> sender) {
+    public GroupsApi(Collar collar,
+                     Supplier<ClientIdentityStore> identityStoreSupplier,
+                     Consumer<ProtocolRequest> sender,
+                     SDHTApi sdhtApi) {
         super(collar, identityStoreSupplier, sender);
+        this.sdhtApi = sdhtApi;
     }
 
     /**
@@ -40,7 +36,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      */
     public List<Group> all() {
         synchronized (this) {
-            return groups.values().stream().filter(group -> group.type == GroupType.PLAYER).collect(Collectors.toList());
+            return groups.values().stream().filter(group -> group.type == GroupType.PARTY).collect(Collectors.toList());
         }
     }
 
@@ -116,31 +112,12 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
 
     /**
      * Remove the member from the group.
-     * Only {@link team.catgirl.collar.api.groups.Group.MembershipRole#OWNER} can perform this action.
+     * Only {@link MembershipRole#OWNER} can perform this action.
      * @param group to remove player from
      * @param member the member to remove
      */
     public void removeMember(Group group, Member member) {
         sender.accept(new EjectGroupMemberRequest(identity(), group.id, member.player.id));
-    }
-
-    /**
-     * Add a shared {@link team.catgirl.collar.api.waypoints.Waypoint} to the group
-     * @param group to add waypoint to
-     * @param name of the waypoint
-     * @param location of the waypoint
-     */
-    public void addWaypoint(Group group, String name, Location location) {
-        sender.accept(new CreateWaypointRequest(identity(), group.id, name, location));
-    }
-
-    /**
-     * Remove a shared {@link Waypoint} from a group
-     * @param group to the waypoint belongs to
-     * @param waypoint the waypoint to remove
-     */
-    public void removeWaypoint(Group group, Waypoint waypoint) {
-        sender.accept(new RemoveWaypointRequest(identity(), group.id, waypoint.id));
     }
 
     @Override
@@ -158,12 +135,13 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
         if (resp instanceof CreateGroupResponse) {
             synchronized (this) {
                 CreateGroupResponse response = (CreateGroupResponse)resp;
-                groups.put(response.group.id, response.group);
+                Group group = response.group;
+                groups.put(response.group.id, group);
                 fireListener("onGroupCreated", groupsListener -> {
-                    groupsListener.onGroupCreated(collar, this, response.group);
+                    groupsListener.onGroupCreated(collar, this, group);
                 });
                 fireListener("onGroupJoined", groupsListener -> {
-                    groupsListener.onGroupJoined(collar, this, response.group, collar.player());
+                    groupsListener.onGroupJoined(collar, this, group, collar.player());
                 });
             }
             return true;
@@ -181,6 +159,9 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
             if (groups.containsKey(response.group.id)) {
                 identityStore().processAcknowledgedGroupJoinedResponse(response);
             }
+            if (response.player.equals(collar.player())) {
+                sdhtApi.table.sync(response.group.id);
+            }
             fireListener("onGroupJoined", groupsListener -> {
                 groupsListener.onGroupJoined(collar, this, response.group, response.player);
             });
@@ -191,6 +172,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                     // Remove myself from the group
                     Group removed = groups.remove(response.groupId);
                     if (removed != null) {
+                        sdhtApi.table.remove(removed.id);
                         fireListener("onGroupLeft", groupsListener -> {
                             groupsListener.onGroupLeft(collar, this, removed, response.player);
                         });
@@ -218,7 +200,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
             synchronized (this) {
                 GroupInviteResponse response = (GroupInviteResponse) resp;
                 GroupInvitation invitation = GroupInvitation.from(response);
-                if (response.groupType == GroupType.PLAYER) {
+                if (response.groupType == GroupType.PARTY) {
                     invitations.put(invitation.groupId, invitation);
                     fireListener("onGroupInvited", groupsListener -> {
                         groupsListener.onGroupInvited(collar, this, invitation);
@@ -229,70 +211,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                 }
             }
             return true;
-        } else if (resp instanceof CreateWaypointResponse) {
-            synchronized (this) {
-                if (resp instanceof CreateWaypointSuccessResponse) {
-                    CreateWaypointSuccessResponse response = (CreateWaypointSuccessResponse)resp;
-                    Group group = groups.get(response.groupId);
-                    if (group != null) {
-                        group = group.addWaypoint(response.waypoint);
-                        groups.put(group.id, group);
-                        Group finalGroup = group;
-                        fireListener("onWaypointCreatedSuccess", groupListener -> {
-                            groupListener.onWaypointCreatedSuccess(collar, this, finalGroup, response.waypoint);
-                        });
-                    }
-                    return true;
-                } else if (resp instanceof CreateWaypointFailedResponse) {
-                    CreateWaypointFailedResponse response = (CreateWaypointFailedResponse)resp;
-                    Group group = groups.get(response.groupId);
-                    if (group != null) {
-                        fireListener("onWaypointCreatedFailed", groupListener -> {
-                            groupListener.onWaypointCreatedFailed(collar, this, group, response.waypointName);
-                        });
-                    }
-                    return true;
-                }
-            }
-        } else if (resp instanceof RemoveWaypointResponse) {
-            synchronized (this) {
-                if (resp instanceof RemoveWaypointSuccessResponse) {
-                    RemoveWaypointSuccessResponse response = (RemoveWaypointSuccessResponse) resp;
-                    Group group = groups.get(response.groupId);
-                    if (group != null) {
-                        Waypoint waypoint = group.waypoints.get(response.waypointId);
-                        if (waypoint != null) {
-                            group = group.removeWaypoint(response.waypointId);
-                            if (group != null) {
-                                Group finalGroup = group;
-                                groups.put(group.id, group);
-                                fireListener("onWaypointRemovedSuccess", groupListener -> {
-                                    groupListener.onWaypointRemovedSuccess(collar, this, finalGroup, waypoint);
-                                });
-                            }
-                        }
-                    }
-                    return true;
-                }
-                if (resp instanceof RemoveWaypointFailedResponse) {
-                    RemoveWaypointFailedResponse response = (RemoveWaypointFailedResponse) resp;
-                    Group group = groups.get(response.groupId);
-                    if (group != null) {
-                        Waypoint waypoint = group.waypoints.get(response.waypointId);
-                        if (waypoint != null) {
-                            fireListener("RemoveWaypointFailedResponse", groupListener -> {
-                                groupListener.onWaypointRemovedFailed(collar, this, group, waypoint);
-                            });
-                        }
-                    }
-                    return true;
-                }
-            }
         }
         return false;
-    }
-
-    private void updatePosition(UpdateLocationRequest req) {
-        sender.accept(req);
     }
 }

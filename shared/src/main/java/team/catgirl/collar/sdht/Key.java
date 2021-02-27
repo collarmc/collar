@@ -1,6 +1,7 @@
 package team.catgirl.collar.sdht;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import team.catgirl.collar.sdht.memory.InMemoryDistributedHashTable;
 
 import java.util.Objects;
 import java.util.UUID;
@@ -31,5 +32,10 @@ public final class Key {
     @Override
     public int hashCode() {
         return Objects.hash(namespace, id);
+    }
+
+    @Override
+    public String toString() {
+        return namespace + ":" + id;
     }
 }

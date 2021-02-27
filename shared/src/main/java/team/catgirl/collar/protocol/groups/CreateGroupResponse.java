@@ -15,7 +15,8 @@ public final class CreateGroupResponse extends ProtocolResponse {
     public final Group group;
 
     @JsonCreator
-    public CreateGroupResponse(@JsonProperty("identity") ServerIdentity identity, @JsonProperty("group") Group group) {
+    public CreateGroupResponse(@JsonProperty("identity") ServerIdentity identity,
+                               @JsonProperty("group") Group group) {
         super(identity);
         this.group = group;
     }

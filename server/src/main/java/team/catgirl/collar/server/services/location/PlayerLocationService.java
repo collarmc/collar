@@ -1,10 +1,10 @@
 package team.catgirl.collar.server.services.location;
 
 import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Sets;
 import team.catgirl.collar.api.groups.Group;
-import team.catgirl.collar.api.groups.Group.Member;
-import team.catgirl.collar.protocol.groups.EjectGroupMemberRequest;
+import team.catgirl.collar.api.groups.Member;
+import team.catgirl.collar.api.groups.MembershipState;
+import team.catgirl.collar.api.waypoints.EncryptedWaypoint;
 import team.catgirl.collar.protocol.location.*;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
@@ -13,8 +13,10 @@ import team.catgirl.collar.server.protocol.BatchProtocolResponse;
 import team.catgirl.collar.server.services.groups.GroupService;
 import team.catgirl.collar.server.session.SessionManager;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -107,7 +109,7 @@ public class PlayerLocationService {
                     continue;
                 }
                 Member member = entry.getValue();
-                if (uniquePlayers.contains(memberPlayer) || member.membershipState != Group.MembershipState.ACCEPTED) {
+                if (uniquePlayers.contains(memberPlayer) || member.membershipState != MembershipState.ACCEPTED) {
                     continue;
                 }
                 uniquePlayers.add(memberPlayer);

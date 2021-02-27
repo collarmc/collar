@@ -1,6 +1,7 @@
 package team.catgirl.collar.sdht;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import team.catgirl.collar.utils.Hex;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -33,5 +34,10 @@ public final class Record {
         int result = Objects.hash(key);
         result = 31 * result + Arrays.hashCode(checksum);
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return key + ":" + Hex.hexString(checksum);
     }
 }

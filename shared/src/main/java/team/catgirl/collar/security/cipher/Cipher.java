@@ -1,14 +1,29 @@
-package team.catgirl.collar.security;
+package team.catgirl.collar.security.cipher;
 
 import team.catgirl.collar.api.groups.Group;
+import team.catgirl.collar.security.Identity;
 
 // TODO: wrap all Throwables into a CypherException to make error handling more consistent where this is used
-public interface Cypher {
+public interface Cipher {
+
+    /**
+     * @param bytes to crypt
+     * @return encrypted bytes
+     */
+    byte[] crypt(byte[] bytes);
+
+    /**
+     * Crypt a message that can only be decrypted by this user
+     * @param bytes to decrypt
+     * @return decrypted bytes
+     */
+    byte[] decrypt(byte[] bytes);
+
     /**
      * Crypt a message to an individual identity
      * @param recipient of the message
      * @param bytes message
-     * @return crypted messaged
+     * @return encrypted messaged
      */
     byte[] crypt(Identity recipient, byte[] bytes);
 
@@ -25,7 +40,7 @@ public interface Cypher {
      * @param sender who is sending the group message
      * @param recipient group of the message
      * @param bytes of the message
-     * @return crypted message
+     * @return encrypted message
      */
     byte[] crypt(Identity sender, Group recipient, byte[] bytes);
 

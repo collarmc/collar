@@ -20,8 +20,12 @@ import team.catgirl.collar.client.api.identity.IdentityApi;
 import team.catgirl.collar.client.api.location.LocationApi;
 import team.catgirl.collar.client.api.messaging.MessagingApi;
 import team.catgirl.collar.client.api.textures.TexturesApi;
+import team.catgirl.collar.client.sdht.cipher.GroupContentCipher;
+import team.catgirl.collar.client.sdht.cipher.ContentCiphers;
 import team.catgirl.collar.client.minecraft.Ticks;
+import team.catgirl.collar.client.sdht.SDHTApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
+import team.catgirl.collar.client.security.PrivateIdentity;
 import team.catgirl.collar.client.security.ProfileState;
 import team.catgirl.collar.client.security.signal.ResettableClientIdentityStore;
 import team.catgirl.collar.client.security.signal.SignalClientIdentityStore;
@@ -58,7 +62,6 @@ import java.util.logging.Logger;
 
 public final class Collar {
     private static final Logger LOGGER = Logger.getLogger(Collar.class.getName());
-
     private static final CollarVersion VERSION = new CollarVersion(0, 1);
 
     public final CollarConfiguration configuration;
@@ -68,6 +71,7 @@ public final class Collar {
     private final FriendsApi friendsApi;
     private final IdentityApi identityApi;
     private final MessagingApi messagingApi;
+    private final SDHTApi sdhtApi;
     private WebSocket webSocket;
     private volatile State state;
     private final List<AbstractApi<? extends ApiListener>> apis;
@@ -75,6 +79,7 @@ public final class Collar {
     private ResettableClientIdentityStore identityStore;
     private final Supplier<ClientIdentityStore> identityStoreSupplier;
     private final Ticks ticks;
+    private final ContentCiphers recordCiphers;
 
     private Collar(CollarConfiguration configuration) {
         this.configuration = configuration;
@@ -82,19 +87,30 @@ public final class Collar {
         this.identityStoreSupplier = () -> identityStore;
         Consumer<ProtocolRequest> sender = request -> this.sender.accept(request);
         this.ticks = configuration.ticks;
+        this.recordCiphers = new ContentCiphers();
         this.apis = new ArrayList<>();
-        this.groupsApi = new GroupsApi(this, identityStoreSupplier, sender);
-        this.locationApi = new LocationApi(this, identityStoreSupplier, sender, this.ticks, groupsApi, configuration.playerLocation, configuration.entitiesSupplier);
+        this.sdhtApi = new SDHTApi(this, identityStoreSupplier, sender, recordCiphers, this.ticks);
+        this.groupsApi = new GroupsApi(this, identityStoreSupplier, sender, sdhtApi);
+        this.recordCiphers.register(new GroupContentCipher(groupsApi, identityStoreSupplier));
+        this.locationApi = new LocationApi(this,
+                identityStoreSupplier,
+                sender,
+                ticks,
+                groupsApi,
+                sdhtApi,
+                configuration.playerLocation,
+                configuration.entitiesSupplier);
         this.texturesApi = new TexturesApi(this, identityStoreSupplier, sender);
         this.identityApi = new IdentityApi(this, identityStoreSupplier, sender);
         this.messagingApi = new MessagingApi(this, identityStoreSupplier, sender);
-        this.friendsApi = new FriendsApi(this, identityStoreSupplier, sender::accept);
+        this.friendsApi = new FriendsApi(this, identityStoreSupplier, sender);
         this.apis.add(groupsApi);
         this.apis.add(locationApi);
         this.apis.add(texturesApi);
         this.apis.add(friendsApi);
         this.apis.add(identityApi);
         this.apis.add(messagingApi);
+        this.apis.add(sdhtApi);
     }
 
     /**

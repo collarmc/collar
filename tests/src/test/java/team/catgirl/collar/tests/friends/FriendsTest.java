@@ -15,7 +15,6 @@ import java.util.concurrent.TimeUnit;
 
 import static team.catgirl.collar.tests.junit.CollarAssert.waitForCondition;
 
-@Ignore
 public class FriendsTest extends CollarTest {
 
     @Test

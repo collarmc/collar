@@ -39,6 +39,7 @@ import team.catgirl.collar.protocol.identity.IdentifyResponse;
 import team.catgirl.collar.protocol.keepalive.KeepAliveResponse;
 import team.catgirl.collar.protocol.session.SessionFailedResponse;
 import team.catgirl.collar.protocol.session.SessionFailedResponse.MojangVerificationFailedResponse;
+import team.catgirl.collar.protocol.session.SessionFailedResponse.PrivateIdentityMismatchResponse;
 import team.catgirl.collar.protocol.session.StartSessionRequest;
 import team.catgirl.collar.protocol.session.StartSessionResponse;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
@@ -351,7 +352,8 @@ public final class Collar {
                 LOGGER.log(Level.INFO, "Existing installation. Loading the store and identifying with server " + serverIdentity);
                 IdentityKey publicKey = store.getIdentityKeyPair().getPublicKey();
                 ClientIdentity clientIdentity = new ClientIdentity(finalOwner, new PublicKey(publicKey.serialize()), null);
-                IdentifyRequest request = new IdentifyRequest(clientIdentity);
+                PrivateIdentity privateIdentity = PrivateIdentity.getOrCreate(configuration.homeDirectory);
+                IdentifyRequest request = new IdentifyRequest(clientIdentity, privateIdentity.token);
                 sendRequest(webSocket, request);
             }));
         }
@@ -408,16 +410,20 @@ public final class Collar {
                 }
                 identityStore.trustIdentity(response.identity, response.preKeyBundle);
                 LOGGER.log(Level.INFO, "PreKeys have been exchanged successfully");
-                sendRequest(webSocket, new IdentifyRequest(identity));
+                sendRequest(webSocket, new IdentifyRequest(identity, identityStore.privateIdentityToken()));
             } else if (resp instanceof StartSessionResponse) {
                 LOGGER.log(Level.INFO, "Session has started. Checking if the client and server are in a trusted relationship");
                 sendRequest(webSocket, new CheckTrustRelationshipRequest(identity));
             } else if (resp instanceof SessionFailedResponse) {
                 LOGGER.log(Level.INFO, "SessionFailedResponse received");
                 if (resp instanceof MojangVerificationFailedResponse) {
-                    MojangVerificationFailedResponse response = (MojangVerificationFailedResponse)resp;
+                    MojangVerificationFailedResponse response = (MojangVerificationFailedResponse) resp;
                     LOGGER.log(Level.INFO, "SessionFailedResponse with mojang session verification failure");
                     configuration.listener.onMinecraftAccountVerificationFailed(collar, response.minecraftSession);
+                } else if (resp instanceof PrivateIdentityMismatchResponse) {
+                    PrivateIdentityMismatchResponse response = (PrivateIdentityMismatchResponse) resp;
+                    LOGGER.log(Level.INFO, "SessionFailedResponse with private identity mismatch");
+                    configuration.listener.onPrivateIdentityMismatch(collar, response.url);
                 } else {
                     LOGGER.log(Level.INFO, "SessionFailedResponse with general server failure");
                 }

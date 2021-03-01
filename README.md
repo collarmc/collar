@@ -8,9 +8,9 @@ Online services for minecraft mods.
 * Server stored friend lists
 * Custom message formats for private, group and nearby messaging (build your own mod!)
 * Messaging and coordinte sharing is end to end encrypted using an implementation of [Signal's](https://signal.org) encryption protocol.
+* Server stored Waypoints
 
 ## Coming soon
-* Server stored Waypoints
 * emotes using the [Emotecraft](https://github.com/KosmX/emotes) format.
 
 ## Discord

@@ -13,6 +13,7 @@ import team.catgirl.collar.protocol.identity.IdentifyResponse;
 import team.catgirl.collar.protocol.keepalive.KeepAliveRequest;
 import team.catgirl.collar.protocol.keepalive.KeepAliveResponse;
 import team.catgirl.collar.protocol.session.SessionFailedResponse.MojangVerificationFailedResponse;
+import team.catgirl.collar.protocol.session.SessionFailedResponse.PrivateIdentityMismatchResponse;
 import team.catgirl.collar.protocol.session.StartSessionRequest;
 import team.catgirl.collar.protocol.session.StartSessionResponse;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
@@ -26,13 +27,17 @@ import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.http.RequestContext;
 import team.catgirl.collar.server.protocol.*;
+import team.catgirl.collar.server.services.profiles.Profile;
+import team.catgirl.collar.server.services.profiles.ProfileService;
 import team.catgirl.collar.server.services.profiles.ProfileService.GetProfileRequest;
+import team.catgirl.collar.server.services.profiles.ProfileService.UpdateProfileRequest;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.logging.Level;
@@ -92,17 +97,21 @@ public class CollarServer {
                 String url = services.urlProvider.deviceVerificationUrl(token);
                 sendPlain(session, new RegisterDeviceResponse(serverIdentity, url, token));
             } else {
-                PublicProfile profile;
+                Profile profile;
                 try {
-                    profile = services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(req.identity.id())).profile.toPublic();
+                    profile = services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(req.identity.id())).profile;
                 } catch (NotFoundException e) {
                     LOGGER.log(Level.SEVERE, "Profile " + request.identity.id() + " does not exist but the client thinks it should.");
                     sendPlain(session, new IsUntrustedRelationshipResponse(serverIdentity));
                     services.sessions.stopSession(session, "Identity " + request.identity.id() + " was not found", null, null);
                     return;
                 }
-                LOGGER.log(Level.INFO, "Profile found for " + req.identity.id());
-                sendPlain(session, new IdentifyResponse(serverIdentity, profile));
+                if (processPrivateIdentityToken(profile, request)) {
+                    LOGGER.log(Level.INFO, "Profile found for " + req.identity.id());
+                    sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic()));
+                } else {
+                    sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
+                }
             }
         } else if (req instanceof SendPreKeysRequest) {
             SendPreKeysRequest request = (SendPreKeysRequest) req;
@@ -138,6 +147,14 @@ public class CollarServer {
                 }
             }
         }
+    }
+
+    private boolean processPrivateIdentityToken(Profile profile, IdentifyRequest req) {
+        if (profile.privateIdentityToken == null || profile.privateIdentityToken.length == 0) {
+            services.profiles.updateProfile(RequestContext.SERVER, UpdateProfileRequest.privateIdentityToken(profile.id, req.privateIdentityToken));
+            return true;
+        }
+        return Arrays.equals(profile.privateIdentityToken, req.privateIdentityToken);
     }
 
     private BiConsumer<ClientIdentity, ProtocolResponse> createSender() {

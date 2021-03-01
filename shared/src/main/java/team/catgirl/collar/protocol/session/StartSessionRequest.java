@@ -11,7 +11,8 @@ public final class StartSessionRequest extends ProtocolRequest {
     public final MinecraftSession session;
 
     @JsonCreator
-    public StartSessionRequest(@JsonProperty("identity") ClientIdentity identity, @JsonProperty("session") MinecraftSession session) {
+    public StartSessionRequest(@JsonProperty("identity") ClientIdentity identity,
+                               @JsonProperty("session") MinecraftSession session) {
         super(identity);
         this.session = session;
     }

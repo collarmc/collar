@@ -8,6 +8,7 @@ import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.friends.*;
+import team.catgirl.collar.security.mojang.MinecraftPlayer;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -32,33 +33,33 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
 
     /**
      * Add a friend by their player id
-     * @param player id
+     * @param player to add
      */
-    public void addFriendByPlayerId(UUID player) {
-        sender.accept(new AddFriendRequest(identity(), player, null));
+    public void addFriend(MinecraftPlayer player) {
+        sender.accept(new AddFriendRequest(identity(), player.id, null));
     }
 
     /**
      * Add a friend by their collar profile id
      * @param profile id
      */
-    public void addFriendByProfileId(UUID profile) {
+    public void addFriend(UUID profile) {
         sender.accept(new AddFriendRequest(identity(), null, profile));
     }
 
     /**
      * Remove a friend by their player id
-     * @param player id
+     * @param player to remove
      */
-    public void removeFriendByPlayerId(UUID player) {
-        sender.accept(new RemoveFriendRequest(identity(), player, null));
+    public void removeFriend(MinecraftPlayer player) {
+        sender.accept(new RemoveFriendRequest(identity(), player.id, null));
     }
 
     /**
      * Remove a friend by their collar profile id
      * @param profile id
      */
-    public void removeFriendByProfileId(UUID profile) {
+    public void removeFriend(UUID profile) {
         sender.accept(new RemoveFriendRequest(identity(), null, profile));
     }
 

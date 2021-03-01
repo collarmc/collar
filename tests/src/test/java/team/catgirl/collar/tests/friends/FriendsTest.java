@@ -1,6 +1,5 @@
 package team.catgirl.collar.tests.friends;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import team.catgirl.collar.api.friends.Friend;
 import team.catgirl.collar.api.friends.Status;
@@ -26,7 +25,7 @@ public class FriendsTest extends CollarTest {
         TestFriendListener aliceListener = new TestFriendListener();
         alicePlayer.collar.friends().subscribe(aliceListener);
 
-        alicePlayer.collar.friends().addFriendByProfileId(bobProfile.get().id);
+        alicePlayer.collar.friends().addFriend(bobProfile.get().id);
         CollarAssert.waitForCondition("Alice is friends with Bob", () -> alicePlayer.collar.friends().list().stream().anyMatch(friend -> friend.friend.equals(bobProfile.get().id)));
 
         CollarAssert.waitForCondition("Alice was told Bob was added", () -> {
@@ -35,7 +34,7 @@ public class FriendsTest extends CollarTest {
             return friend != null && friend.status == Status.ONLINE && friend.friend.equals(bobProfile.get().id);
         });
 
-        alicePlayer.collar.friends().removeFriendByProfileId(bobProfile.get().id);
+        alicePlayer.collar.friends().removeFriend(bobProfile.get().id);
         CollarAssert.waitForCondition("Alice is not friends with Bob", () -> alicePlayer.collar.friends().list().stream().noneMatch(friend -> friend.friend.equals(bobProfile.get().id)));
 
         CollarAssert.waitForCondition("Alice was told Bob was removed", () -> {
@@ -54,7 +53,7 @@ public class FriendsTest extends CollarTest {
         TestFriendListener aliceListener = new TestFriendListener();
         alicePlayer.collar.friends().subscribe(aliceListener);
 
-        alicePlayer.collar.friends().addFriendByPlayerId(bobPlayerId);
+        alicePlayer.collar.friends().addFriend(bobPlayer.collar.player());
         CollarAssert.waitForCondition("Alice is friends with Bob", () -> alicePlayer.collar.friends().list().stream().anyMatch(friend -> friend.friend.equals(bobProfile.get().id)));
 
         CollarAssert.waitForCondition("Alice was told Bob was added", () -> {
@@ -63,7 +62,7 @@ public class FriendsTest extends CollarTest {
             return friend != null && friend.status == Status.ONLINE && friend.friend.equals(bobProfile.get().id);
         });
 
-        alicePlayer.collar.friends().removeFriendByPlayerId(bobPlayerId);
+        alicePlayer.collar.friends().removeFriend(bobPlayer.collar.player());
         CollarAssert.waitForCondition("Alice is not friends with Bob", () -> alicePlayer.collar.friends().list().stream().noneMatch(friend -> friend.friend.equals(bobProfile.get().id)));
 
         CollarAssert.waitForCondition("Alice was told Bob was removed", () -> {
@@ -82,8 +81,8 @@ public class FriendsTest extends CollarTest {
         TestFriendListener aliceListener = new TestFriendListener();
         alicePlayer.collar.friends().subscribe(aliceListener);
 
-        alicePlayer.collar.friends().addFriendByProfileId(bobProfile.get().id);
-        alicePlayer.collar.friends().addFriendByProfileId(eveProfile.get().id);
+        alicePlayer.collar.friends().addFriend(bobProfile.get().id);
+        alicePlayer.collar.friends().addFriend(eveProfile.get().id);
 
         CollarAssert.waitForCondition("Alice is friends with Bob", () -> alicePlayer.collar.friends().list().stream().anyMatch(friend -> friend.friend.equals(bobProfile.get().id)));
         CollarAssert.waitForCondition("Alice is friends with Eve", () -> alicePlayer.collar.friends().list().stream().anyMatch(friend -> friend.friend.equals(eveProfile.get().id)));
@@ -110,8 +109,8 @@ public class FriendsTest extends CollarTest {
         TestFriendListener aliceListener = new TestFriendListener();
         alicePlayer.collar.friends().subscribe(aliceListener);
 
-        alicePlayer.collar.friends().addFriendByProfileId(bobProfile.get().id);
-        alicePlayer.collar.friends().addFriendByProfileId(eveProfile.get().id);
+        alicePlayer.collar.friends().addFriend(bobProfile.get().id);
+        alicePlayer.collar.friends().addFriend(eveProfile.get().id);
 
         CollarAssert.waitForCondition("Alice is friends with Bob", () -> alicePlayer.collar.friends().list().stream().anyMatch(friend -> friend.friend.equals(bobProfile.get().id)));
         CollarAssert.waitForCondition("Alice is friends with Eve", () -> alicePlayer.collar.friends().list().stream().anyMatch(friend -> friend.friend.equals(eveProfile.get().id)));

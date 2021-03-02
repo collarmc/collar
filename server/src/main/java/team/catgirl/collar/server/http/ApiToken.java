@@ -25,7 +25,7 @@ public class ApiToken {
 
     public ApiToken(UUID profileId) {
         this.profileId = profileId;
-        this.expiresAt = new Date().getTime() + TimeUnit.HOURS.toMillis(24);
+        this.expiresAt = new Date().getTime() + TimeUnit.DAYS.toMillis(7);
     }
 
     public boolean isExpired() {

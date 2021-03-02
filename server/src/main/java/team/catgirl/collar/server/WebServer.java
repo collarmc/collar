@@ -21,11 +21,14 @@ import team.catgirl.collar.server.services.authentication.AuthenticationService.
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
 import team.catgirl.collar.server.services.authentication.VerificationToken;
 import team.catgirl.collar.server.services.devices.DeviceService;
+import team.catgirl.collar.server.services.devices.DeviceService.DeleteDeviceRequest;
 import team.catgirl.collar.server.services.devices.DeviceService.TrustDeviceResponse;
 import team.catgirl.collar.server.services.profiles.Profile;
 import team.catgirl.collar.server.services.profiles.ProfileService;
 import team.catgirl.collar.server.services.profiles.ProfileService.GetProfileRequest;
 import team.catgirl.collar.server.services.profiles.ProfileService.UpdateProfileRequest;
+import team.catgirl.collar.server.services.textures.TextureService;
+import team.catgirl.collar.server.services.textures.TextureService.CreateTextureRequest;
 import team.catgirl.collar.server.services.textures.TextureService.GetTextureContentRequest;
 import team.catgirl.collar.utils.Utils;
 
@@ -163,7 +166,12 @@ public class WebServer {
                     delete("/devices/:id", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         String deviceId = request.params("id");
-                        return services.devices.deleteDevice(context, new DeviceService.DeleteDeviceRequest(context.owner, Integer.parseInt(deviceId)));
+                        return services.devices.deleteDevice(context, new DeleteDeviceRequest(context.owner, Integer.parseInt(deviceId)));
+                    });
+                    post("/textures/upload", (request, response) -> {
+                        RequestContext context = RequestContext.from(request);
+                        CreateTextureRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), CreateTextureRequest.class);
+                        return services.textures.createTexture(context, req);
                     });
                 });
 

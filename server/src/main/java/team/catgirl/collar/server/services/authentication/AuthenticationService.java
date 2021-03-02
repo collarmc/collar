@@ -176,7 +176,8 @@ public class AuthenticationService {
         @JsonProperty("token")
         public final String token;
 
-        public CreateAccountResponse(@JsonProperty("profile") PublicProfile profile, @JsonProperty("token") String token) {
+        public CreateAccountResponse(@JsonProperty("profile") PublicProfile profile,
+                                     @JsonProperty("token") String token) {
             this.profile = profile;
             this.token = token;
         }
@@ -188,7 +189,8 @@ public class AuthenticationService {
         @JsonProperty("password")
         public final String password;
 
-        public LoginRequest(@JsonProperty("email") String email, @JsonProperty("password") String password) {
+        public LoginRequest(@JsonProperty("email") String email,
+                            @JsonProperty("password") String password) {
             this.email = email;
             this.password = password;
         }
@@ -200,7 +202,8 @@ public class AuthenticationService {
         @JsonProperty("token")
         public final String token;
 
-        public LoginResponse(@JsonProperty("profile") Profile profile, @JsonProperty("token") String token) {
+        public LoginResponse(@JsonProperty("profile") Profile profile,
+                             @JsonProperty("token") String token) {
             this.profile = profile;
             this.token = token;
         }
@@ -225,9 +228,10 @@ public class AuthenticationService {
     }
 
     public static class RequestPasswordResetRequest {
+        @JsonProperty("email")
         public final String email;
 
-        public RequestPasswordResetRequest(String email) {
+        public RequestPasswordResetRequest(@JsonProperty("email") String email) {
             this.email = email;
         }
     }
@@ -235,11 +239,16 @@ public class AuthenticationService {
     public static class RequestPasswordResponse {}
 
     public static class ResetPasswordRequest {
+        @JsonProperty("token")
         public final String token;
+        @JsonProperty("oldPassword")
         public final String oldPassword;
+        @JsonProperty("newPassword")
         public final String newPassword;
 
-        public ResetPasswordRequest(String token, String oldPassword, String newPassword) {
+        public ResetPasswordRequest(@JsonProperty("token") String token,
+                                    @JsonProperty("oldPassword") String oldPassword,
+                                    @JsonProperty("newPassword") String newPassword) {
             this.token = token;
             this.oldPassword = oldPassword;
             this.newPassword = newPassword;
@@ -248,9 +257,9 @@ public class AuthenticationService {
 
     public static class ResetPasswordResponse {
         @JsonProperty("profile")
-        private final PublicProfile profile;
+        public final PublicProfile profile;
 
-        public ResetPasswordResponse(PublicProfile profile) {
+        public ResetPasswordResponse(@JsonProperty("profile") PublicProfile profile) {
 
             this.profile = profile;
         }

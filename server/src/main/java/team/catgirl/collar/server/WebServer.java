@@ -10,6 +10,7 @@ import team.catgirl.collar.api.http.HttpException.ForbiddenException;
 import team.catgirl.collar.api.http.HttpException.ServerErrorException;
 import team.catgirl.collar.api.http.HttpException.UnauthorisedException;
 import team.catgirl.collar.api.profiles.PublicProfile;
+import team.catgirl.collar.api.textures.TextureType;
 import team.catgirl.collar.server.common.ServerVersion;
 import team.catgirl.collar.server.configuration.Configuration;
 import team.catgirl.collar.server.http.ApiToken;
@@ -172,6 +173,11 @@ public class WebServer {
                     get("/textures", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         return services.textures.findTexture(RequestContext.from(request), new FindTextureRequest(context.owner, null));
+                    });
+                    get("/textures/:type", (request, response) -> {
+                        RequestContext context = RequestContext.from(request);
+                        TextureType textureType = TextureType.valueOf(request.params("type").toUpperCase());
+                        return services.textures.findTexture(RequestContext.from(request), new FindTextureRequest(context.owner, textureType));
                     });
                     post("/textures/upload", (request, response) -> {
                         RequestContext context = RequestContext.from(request);

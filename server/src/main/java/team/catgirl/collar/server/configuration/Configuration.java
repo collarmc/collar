@@ -61,7 +61,6 @@ public class Configuration {
             throw new IllegalStateException("COLLAR_VERIFY_MOJANG_SESSIONS not set");
         }
         boolean useMojang = Boolean.parseBoolean(verifyMojangSessions);
-        String corsOrigin = System.getenv("COLLAR_CORS_ORIGIN");
         boolean enableWeb = Boolean.parseBoolean(System.getenv("COLLAR_ENABLED_WEB"));
         String mailgunDomain = System.getenv("MAILGUN_DOMAIN");
         if (mailgunDomain == null) {
@@ -79,7 +78,7 @@ public class Configuration {
                 new TokenCrypter(crypterPassword),
                 new PasswordHashing(passwordSalt),
                 useMojang ? new MojangMinecraftSessionVerifier() : new NojangMinecraftSessionVerifier(),
-                corsOrigin,
+                appUrlProvider.homeUrl(),
                 enableWeb,
                 httpPort(),
                 new MailGunEmail(appUrlProvider, mailgunDomain, mailgunApiKey)

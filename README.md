@@ -11,6 +11,7 @@ Online services for minecraft mods.
 * Server stored Waypoints
 
 ## Coming soon
+* Faction groups
 * emotes using the [Emotecraft](https://github.com/KosmX/emotes) format.
 
 ## Discord

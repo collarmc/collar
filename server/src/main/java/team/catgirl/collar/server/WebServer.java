@@ -29,6 +29,7 @@ import team.catgirl.collar.server.services.profiles.ProfileService.GetProfileReq
 import team.catgirl.collar.server.services.profiles.ProfileService.UpdateProfileRequest;
 import team.catgirl.collar.server.services.textures.TextureService;
 import team.catgirl.collar.server.services.textures.TextureService.CreateTextureRequest;
+import team.catgirl.collar.server.services.textures.TextureService.FindTextureRequest;
 import team.catgirl.collar.server.services.textures.TextureService.GetTextureContentRequest;
 import team.catgirl.collar.utils.Utils;
 
@@ -167,6 +168,10 @@ public class WebServer {
                         RequestContext context = RequestContext.from(request);
                         String deviceId = request.params("id");
                         return services.devices.deleteDevice(context, new DeleteDeviceRequest(context.owner, Integer.parseInt(deviceId)));
+                    });
+                    get("/textures", (request, response) -> {
+                        RequestContext context = RequestContext.from(request);
+                        return services.textures.findTexture(RequestContext.from(request), new FindTextureRequest(context.owner, null));
                     });
                     post("/textures/upload", (request, response) -> {
                         RequestContext context = RequestContext.from(request);

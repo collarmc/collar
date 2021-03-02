@@ -172,7 +172,7 @@ public class WebServer {
                         RequestContext.from(request).assertAnonymous();
                     });
                     // Login
-                    get("/login", (request, response) -> {
+                    post("/login", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
                         return services.auth.login(RequestContext.from(request), req);
                     });

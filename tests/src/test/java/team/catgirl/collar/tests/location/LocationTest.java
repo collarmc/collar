@@ -3,8 +3,10 @@ package team.catgirl.collar.tests.location;
 import org.junit.Assert;
 import org.junit.Test;
 import team.catgirl.collar.api.groups.Group;
+import team.catgirl.collar.api.groups.GroupType;
 import team.catgirl.collar.api.location.Dimension;
 import team.catgirl.collar.api.location.Location;
+import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.api.waypoints.Waypoint;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.api.groups.GroupInvitation;
@@ -19,7 +21,6 @@ import team.catgirl.collar.tests.junit.CollarTest;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static team.catgirl.collar.tests.junit.CollarAssert.waitForCondition;
@@ -44,10 +45,10 @@ public class LocationTest extends CollarTest {
         evePlayer.collar.location().subscribe(eveLocationListener);
 
         // Put alice and bob in a group
-        alicePlayer.collar.groups().create(List.of(bobPlayerId));
+        alicePlayer.collar.groups().create("cute group", GroupType.PARTY, List.of(bobPlayerId));
 
         // Put eve in her own group
-        evePlayer.collar.groups().create(List.of());
+        evePlayer.collar.groups().create("not cute group", GroupType.PARTY, List.of());
 
         waitForCondition("Alice joined group", () -> aliceGroupListener.group != null);
         waitForCondition("Bob joined group", () -> bobGroupListener.group != null);
@@ -142,7 +143,7 @@ public class LocationTest extends CollarTest {
         evePlayer.collar.location().subscribe(eveWaypointListener);
 
         // Alice creates a new group with bob and eve
-        alicePlayer.collar.groups().create(List.of(bobPlayerId, evePlayerId));
+        alicePlayer.collar.groups().create("cute group", GroupType.PARTY, List.of(bobPlayerId, evePlayerId));
 
         // Check that Eve and Bob received their invitations
         waitForCondition("Eve invite received", () -> eveListener.invitation != null);
@@ -207,7 +208,7 @@ public class LocationTest extends CollarTest {
         evePlayer.collar.location().subscribe(eveWaypointListener);
 
         // Alice creates a new group with bob and eve
-        alicePlayer.collar.groups().create(List.of(bobPlayerId));
+        alicePlayer.collar.groups().create("cute group", GroupType.PARTY, List.of(bobPlayerId));
 
         // Check that Eve and Bob received their invitations
         waitForCondition("Bob invite received", () -> bobListener.invitation != null);
@@ -253,10 +254,10 @@ public class LocationTest extends CollarTest {
     }
 
     public static class Event {
-        public final MinecraftPlayer player;
+        public final Player player;
         public final Location location;
 
-        public Event(MinecraftPlayer player, Location location) {
+        public Event(Player player, Location location) {
             this.player = player;
             this.location = location;
         }
@@ -282,7 +283,7 @@ public class LocationTest extends CollarTest {
         public final LinkedList<Event> events = new LinkedList<>();
 
         @Override
-        public void onLocationUpdated(Collar collar, LocationApi locationApi, MinecraftPlayer player, Location location) {
+        public void onLocationUpdated(Collar collar, LocationApi locationApi, Player player, Location location) {
             events.add(new Event(player, location));
         }
     }
@@ -292,7 +293,7 @@ public class LocationTest extends CollarTest {
         public Group group;
 
         @Override
-        public void onGroupJoined(Collar collar, GroupsApi groupsApi, Group group, MinecraftPlayer player) {
+        public void onGroupJoined(Collar collar, GroupsApi groupsApi, Group group, Player player) {
             this.group = group;
         }
 

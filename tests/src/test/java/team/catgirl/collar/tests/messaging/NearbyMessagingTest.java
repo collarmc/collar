@@ -1,15 +1,11 @@
 package team.catgirl.collar.tests.messaging;
 
-import com.google.common.collect.ImmutableSet;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import team.catgirl.collar.api.entities.Entity;
 import team.catgirl.collar.api.entities.EntityType;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.messaging.TextMessage;
-import team.catgirl.collar.client.Collar;
-import team.catgirl.collar.tests.groups.GroupsTest;
 import team.catgirl.collar.tests.groups.GroupsTest.MessagingListenerImpl;
 import team.catgirl.collar.tests.groups.GroupsTest.TestGroupsListener;
 import team.catgirl.collar.tests.junit.CollarTest;
@@ -42,11 +38,11 @@ public class NearbyMessagingTest extends CollarTest {
         evePlayer.collar.messaging().subscribe(eveMessages);
         evePlayer.collar.groups().subscribe(eveGroups);
 
-        waitForCondition("Alice joined group", () -> !alicePlayer.collar.groups().locationGroups().isEmpty());
-        waitForCondition("Bob joined group", () -> !bobPlayer.collar.groups().locationGroups().isEmpty());
+        waitForCondition("Alice joined nearby group", () -> !alicePlayer.collar.groups().nearbyGroups().isEmpty());
+        waitForCondition("Bob joined nearby group", () -> !bobPlayer.collar.groups().nearbyGroups().isEmpty());
 
-        Group aliceGroup = alicePlayer.collar.groups().locationGroups().get(0);
-        Group bobGroup = bobPlayer.collar.groups().locationGroups().get(0);
+        Group aliceGroup = alicePlayer.collar.groups().nearbyGroups().get(0);
+        Group bobGroup = bobPlayer.collar.groups().nearbyGroups().get(0);
 
         Assert.assertEquals(aliceGroup.id, bobGroup.id);
 

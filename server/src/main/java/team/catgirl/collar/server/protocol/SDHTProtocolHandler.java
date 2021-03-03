@@ -4,6 +4,7 @@ import org.eclipse.jetty.websocket.api.Session;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.groups.Member;
 import team.catgirl.collar.api.groups.MembershipState;
+import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.sdht.SDHTEventRequest;
@@ -11,7 +12,6 @@ import team.catgirl.collar.protocol.sdht.SDHTEventResponse;
 import team.catgirl.collar.sdht.events.*;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
-import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.CollarServer;
 import team.catgirl.collar.server.services.groups.GroupService;
 import team.catgirl.collar.server.session.SessionManager;
@@ -74,12 +74,12 @@ public class SDHTProtocolHandler extends ProtocolHandler {
 
     private Set<ClientIdentity> findListeners(ClientIdentity sender, UUID namespace) {
         Group group = groups.findGroup(namespace).orElseThrow(() -> new IllegalStateException("could not find group " + namespace));
-        MinecraftPlayer sendingPlayer = sessions.findPlayer(sender).orElseThrow(() -> new IllegalStateException("could not find sender " + sender));
+        Player sendingPlayer = sessions.findPlayer(sender).orElseThrow(() -> new IllegalStateException("could not find sender " + sender));
         if (!group.containsPlayer(sendingPlayer)) {
             throw new IllegalStateException("sender is not a member of group " + namespace);
         }
         Set<ClientIdentity> listeners = new HashSet<>();
-        for (Member member : group.members.values()) {
+        for (Member member : group.members) {
             if (member.membershipState != MembershipState.ACCEPTED && sendingPlayer.equals(member.player)) {
                 continue;
             }
@@ -89,5 +89,5 @@ public class SDHTProtocolHandler extends ProtocolHandler {
     }
 
     @Override
-    public void onSessionStopping(ClientIdentity identity, MinecraftPlayer player, BiConsumer<Session, ProtocolResponse> sender) { }
+    public void onSessionStopping(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) { }
 }

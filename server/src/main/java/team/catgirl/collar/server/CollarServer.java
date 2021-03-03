@@ -1,16 +1,12 @@
 package team.catgirl.collar.server;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
-import io.github.bucket4j.Refill;
-import io.github.bucket4j.grid.RecoveryStrategy;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
-import team.catgirl.collar.api.profiles.PublicProfile;
+import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.protocol.PacketIO;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
@@ -35,7 +31,6 @@ import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.http.RequestContext;
 import team.catgirl.collar.server.protocol.*;
 import team.catgirl.collar.server.services.profiles.Profile;
-import team.catgirl.collar.server.services.profiles.ProfileService;
 import team.catgirl.collar.server.services.profiles.ProfileService.GetProfileRequest;
 import team.catgirl.collar.server.services.profiles.ProfileService.UpdateProfileRequest;
 
@@ -58,13 +53,15 @@ public class CollarServer {
     private static final Logger LOGGER = Logger.getLogger(CollarServer.class.getName());
 
     private final List<ProtocolHandler> protocolHandlers;
-    private final BiConsumer<ClientIdentity, MinecraftPlayer> sessionStopped;
+    private final BiConsumer<ClientIdentity, Player> sessionStarted;
+    private final BiConsumer<ClientIdentity, Player> sessionStopped;
     private final ConcurrentMap<Session, Bucket> buckets = new ConcurrentHashMap<>();
     private final Services services;
 
     public CollarServer(Services services) {
         this.services = services;
         this.protocolHandlers = new ArrayList<>();
+        this.sessionStarted = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStarted(identity, player, this::send));
         this.sessionStopped = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStopping(identity, player, this::send));
 
         protocolHandlers.add(new GroupsProtocolHandler(services.groups));
@@ -77,7 +74,7 @@ public class CollarServer {
     }
 
     @OnWebSocketConnect
-    public void connected(Session session) throws IOException {
+    public void connected(Session session) {
         LOGGER.log(Level.INFO, "New socket connected");
         buckets.computeIfAbsent(session, theSession -> Bucket4j.builder()
                 .addLimit(Bandwidth.simple(18000, Duration.ofSeconds(3600)))
@@ -94,7 +91,7 @@ public class CollarServer {
 
     @OnWebSocketError
     public void onError(Session session, Throwable e) {
-        LOGGER.log(Level.SEVERE, "Unrecoverable error", e);
+        LOGGER.log(Level.SEVERE, "Unrecoverable error " + e.getMessage(), e);
         services.sessions.stopSession(session, "Unrecoverable error", null, sessionStopped);
     }
 
@@ -148,8 +145,10 @@ public class CollarServer {
             LOGGER.log(Level.INFO, "Starting session with " + req.identity);
             StartSessionRequest request = (StartSessionRequest)req;
             if (services.minecraftSessionVerifier.verify(request.session)) {
-                services.sessions.identify(session, req.identity, request.session.toPlayer());
+                MinecraftPlayer minecraftPlayer = request.session.toPlayer();
+                services.sessions.identify(session, req.identity, minecraftPlayer);
                 sendPlain(session, new StartSessionResponse(serverIdentity));
+                sessionStarted.accept(req.identity, new Player(req.identity.id(), minecraftPlayer));
             } else {
                 sendPlain(session, new MojangVerificationFailedResponse(serverIdentity, ((StartSessionRequest) req).session));
                 services.sessions.stopSession(session, "Minecraft session invalid", null, sessionStopped);

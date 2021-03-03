@@ -4,19 +4,15 @@ import com.google.common.collect.ArrayListMultimap;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.groups.Member;
 import team.catgirl.collar.api.groups.MembershipState;
-import team.catgirl.collar.api.waypoints.EncryptedWaypoint;
+import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.protocol.location.*;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
-import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.protocol.BatchProtocolResponse;
 import team.catgirl.collar.server.services.groups.GroupService;
 import team.catgirl.collar.server.session.SessionManager;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -30,7 +26,7 @@ public class PlayerLocationService {
     private final ServerIdentity serverIdentity;
     private final NearbyGroups nearbyGroups = new NearbyGroups();
 
-    private final ArrayListMultimap<UUID, MinecraftPlayer> playersSharing = ArrayListMultimap.create();
+    private final ArrayListMultimap<UUID, Player> playersSharing = ArrayListMultimap.create();
 
     public PlayerLocationService(SessionManager sessions, GroupService groups, ServerIdentity serverIdentity) {
         this.sessions = sessions;
@@ -48,11 +44,11 @@ public class PlayerLocationService {
     }
 
     public BatchProtocolResponse stopSharing(StopSharingLocationRequest req) {
-        MinecraftPlayer player = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("could not find player " + req.identity));
+        Player player = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("could not find player " + req.identity));
         return stopSharing(req.groupId, req.identity, player);
     }
 
-    public BatchProtocolResponse stopSharing(MinecraftPlayer player) {
+    public BatchProtocolResponse stopSharing(Player player) {
         ClientIdentity identity = sessions.getIdentity(player).orElseThrow(() -> new IllegalStateException("could not find session for " + player));
         BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
         List<BatchProtocolResponse> allResponses = playersSharing.asMap().entrySet().stream()
@@ -72,11 +68,11 @@ public class PlayerLocationService {
      * @return {@link LocationUpdatedResponse} responses to send to clients
      */
     public BatchProtocolResponse updateLocation(UpdateLocationRequest req) {
-        MinecraftPlayer player = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("could not find player " + req.identity));
+        Player player = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("could not find player " + req.identity));
         return createLocationResponses(player, new LocationUpdatedResponse(serverIdentity, req.identity, req.group, player, req.location));
     }
 
-    private BatchProtocolResponse stopSharing(UUID groupId, ClientIdentity identity, MinecraftPlayer player) {
+    private BatchProtocolResponse stopSharing(UUID groupId, ClientIdentity identity, Player player) {
         LOGGER.log(Level.INFO,"Player " + player + " started sharing location with group " + groupId);
         LocationUpdatedResponse locationUpdatedResponse = new LocationUpdatedResponse(serverIdentity, identity, groupId, player, null);
         BatchProtocolResponse responses = createLocationResponses(player, locationUpdatedResponse);
@@ -87,28 +83,27 @@ public class PlayerLocationService {
     }
 
     public BatchProtocolResponse updateNearbyGroups(UpdateNearbyRequest req) {
-        MinecraftPlayer player = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("could not find player " + req.identity));
+        Player player = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("could not find player " + req.identity));
         NearbyGroups.Result result = this.nearbyGroups.updateNearbyGroups(player, req.nearbyHashes);
         return groups.updateNearbyGroups(result);
     }
 
-    private BatchProtocolResponse createLocationResponses(MinecraftPlayer player, LocationUpdatedResponse resp) {
+    private BatchProtocolResponse createLocationResponses(Player player, LocationUpdatedResponse resp) {
         BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
         // Find all the groups the requesting player is a member of
-        List<UUID> sharingWithGroups = playersSharing.entries().stream().filter(entry -> player.equals(entry.getValue()))
+        Set<UUID> sharingWithGroups = playersSharing.entries().stream().filter(entry -> player.equals(entry.getValue()))
                 .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-        List<Group> memberGroups = groups.findGroups(sharingWithGroups);
+                .collect(Collectors.toSet());
+        Set<Group> memberGroups = groups.findGroups(sharingWithGroups);
         // Keep track of players we have sent to, so we do not send them duplicate messages (e.g. if they share membership of 2 or more groups)
-        HashSet<MinecraftPlayer> uniquePlayers = new HashSet<>();
+        HashSet<Player> uniquePlayers = new HashSet<>();
         for (Group group : memberGroups) {
-            for (Map.Entry<MinecraftPlayer, Member> entry : group.members.entrySet()) {
-                MinecraftPlayer memberPlayer = entry.getKey();
+            for (Member member : group.members) {
+                Player memberPlayer = member.player;
                 // Do not send to self
                 if (memberPlayer.equals(player)) {
                     continue;
                 }
-                Member member = entry.getValue();
                 if (uniquePlayers.contains(memberPlayer) || member.membershipState != MembershipState.ACCEPTED) {
                     continue;
                 }
@@ -120,7 +115,7 @@ public class PlayerLocationService {
         return responses;
     }
 
-    public void removePlayerState(MinecraftPlayer player) {
+    public void removePlayerState(Player player) {
         this.nearbyGroups.removePlayerState(player);
     }
 }

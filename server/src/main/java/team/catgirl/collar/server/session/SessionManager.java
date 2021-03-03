@@ -3,6 +3,7 @@ package team.catgirl.collar.server.session;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
+import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
 import team.catgirl.collar.api.http.HttpException.ServerErrorException;
 import team.catgirl.collar.api.profiles.PublicProfile;
@@ -20,10 +21,7 @@ import team.catgirl.collar.server.services.devices.DeviceService.CreateDeviceRes
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
@@ -81,11 +79,11 @@ public final class SessionManager {
     public void stopSession(Session session,
                             String reason,
                             IOException e,
-                            BiConsumer<ClientIdentity, MinecraftPlayer> callback) {
+                            BiConsumer<ClientIdentity, Player> callback) {
         // Run callback
         SessionState state = sessions.get(session);
         if (state != null && callback != null) {
-            callback.accept(state.identity, state.player);
+            callback.accept(state.identity, state.toPlayer());
         }
         // Start removing state
         LOGGER.log(e == null ? Level.INFO : Level.SEVERE, reason, e);
@@ -93,7 +91,7 @@ public final class SessionManager {
         if (sessionState != null) {
             if (session.isOpen()) {
                 try {
-                    send(session, sessionState.identity, new SessionErrorResponse(store.getIdentity()));
+                    send(session, sessionState.identity, new SessionErrorResponse(store.getIdentity(), reason));
                 } catch (IOException ioException) {
                     throw new IllegalStateException("Couldn't send SessionErrorResponse", e);
                 }
@@ -126,31 +124,41 @@ public final class SessionManager {
         if (player == null) {
             return Optional.empty();
         }
-        return sessions.values().stream().filter(sessionState -> sessionState.player.equals(player))
+        return sessions.values().stream().filter(sessionState -> sessionState.minecraftPlayer.equals(player))
                 .findFirst()
                 .map(sessionState -> sessionState.identity);
     }
 
-    public List<MinecraftPlayer> findPlayers(ClientIdentity identity, @Nonnull List<UUID> players) {
+    public List<Player> findPlayers(ClientIdentity identity, @Nonnull List<UUID> players) {
         if (identity == null) {
             return new ArrayList<>();
         }
-        MinecraftPlayer player = findPlayer(identity).orElseThrow(() -> new IllegalStateException("cannot find player for " + identity));
+        MinecraftPlayer player = findMinecraftPlayer(identity).orElseThrow(() -> new IllegalStateException("cannot find player for " + identity));
         return sessions.values().stream()
-                .filter(sessionState -> sessionState.player.inServerWith(player))
-                .filter(sessionState -> players.contains(sessionState.player.id))
-                .map(sessionState -> sessionState.player)
+                .filter(sessionState -> sessionState.minecraftPlayer.inServerWith(player))
+                .filter(sessionState -> players.contains(sessionState.minecraftPlayer.id))
+                .map(SessionState::toPlayer)
                 .collect(Collectors.toList());
     }
 
-    public Optional<MinecraftPlayer> findPlayer(ClientIdentity identity) {
+    public Optional<MinecraftPlayer> findMinecraftPlayer(ClientIdentity identity) {
         if (identity == null) {
             return Optional.empty();
         }
         return sessions.values().stream()
                 .filter(sessionState -> sessionState.identity.equals(identity))
                 .findFirst()
-                .map(sessionState -> sessionState.player);
+                .map(sessionState -> sessionState.minecraftPlayer);
+    }
+
+    public Optional<Player> findPlayer(ClientIdentity identity) {
+        if (identity == null) {
+            return Optional.empty();
+        }
+        return sessions.values().stream()
+                .filter(sessionState -> sessionState.identity.equals(identity))
+                .findFirst()
+                .map(SessionState::toPlayer);
     }
 
     public Optional<Session> getSession(ClientIdentity identity) {
@@ -163,10 +171,10 @@ public final class SessionManager {
                 .map(sessionState -> sessionState.session);
     }
 
-    public Optional<MinecraftPlayer> findPlayer(ClientIdentity identity, UUID player) {
-        return findPlayer(identity).flatMap(me -> {
+    public Optional<MinecraftPlayer> findMinecraftPlayer(ClientIdentity identity, UUID player) {
+        return findMinecraftPlayer(identity).flatMap(me -> {
             MinecraftPlayer candidate = new MinecraftPlayer(player, me.server);
-            return sessions.values().stream().filter(sessionState -> sessionState.player.equals(candidate)).findFirst().map(sessionState -> sessionState.player);
+            return sessions.values().stream().filter(sessionState -> sessionState.minecraftPlayer.equals(candidate)).findFirst().map(sessionState -> sessionState.minecraftPlayer);
         });
     }
 
@@ -178,25 +186,41 @@ public final class SessionManager {
 
     public Optional<SessionState> getSessionStateByPlayer(UUID player) {
         return sessions.values().stream()
-                .filter(sessionState -> sessionState.player.id.equals(player))
+                .filter(sessionState -> sessionState.minecraftPlayer.id.equals(player))
                 .findFirst();
     }
 
-    public Optional<ClientIdentity> getIdentity(UUID playerId) {
-        return sessions.values().stream().filter(sessionState -> sessionState.player.id.equals(playerId))
+    public Optional<ClientIdentity> getIdentity(Player player) {
+        return sessions.values().stream().filter(sessionState -> sessionState.identity.owner.equals(player.profile))
                 .findAny()
                 .map(sessionState -> sessionState.identity);
+    }
+
+    public Optional<ClientIdentity> getIdentityByMinecraftPlayerId(UUID playerId) {
+        return sessions.values().stream().filter(sessionState -> sessionState.minecraftPlayer.id.equals(playerId))
+                .findAny()
+                .map(sessionState -> sessionState.identity);
+    }
+
+    public Optional<Player> findPlayerByProfile(UUID profile) {
+        return sessions.values().stream().filter(sessionState -> sessionState.identity.owner.equals(profile))
+                .findFirst()
+                .map(SessionState::toPlayer);
     }
 
     public static final class SessionState {
         public final Session session;
         public final ClientIdentity identity;
-        public final MinecraftPlayer player;
+        public final MinecraftPlayer minecraftPlayer;
 
-        public SessionState(Session session, ClientIdentity identity, MinecraftPlayer player) {
+        public SessionState(Session session, ClientIdentity identity, MinecraftPlayer minecraftPlayer) {
             this.session = session;
             this.identity = identity;
-            this.player = player;
+            this.minecraftPlayer = minecraftPlayer;
+        }
+
+        public Player toPlayer() {
+            return new Player(identity.id(), minecraftPlayer);
         }
     }
 }

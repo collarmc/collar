@@ -3,7 +3,7 @@
 Online services for minecraft mods.
 
 ## Features
-* Create groups of players to share coordinates, waypoints and chat.
+* Create long running groups or short lived parties of players to share coordinates, waypoints and chat.
 * Uploading and distributing player textures, such as capes and avatars.
 * Server stored friend lists
 * Custom message formats for private, group and nearby messaging (build your own mod!)
@@ -11,7 +11,6 @@ Online services for minecraft mods.
 * Server stored Waypoints
 
 ## Coming soon
-* Faction groups
 * emotes using the [Emotecraft](https://github.com/KosmX/emotes) format.
 
 ## Discord

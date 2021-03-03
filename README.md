@@ -3,14 +3,15 @@
 Online services for minecraft mods.
 
 ## Features
-* Create long running groups or short lived parties of players to share coordinates, waypoints and chat
+* Create long running groups or short lived parties of players to share coordinates, waypoints and chat securely
 * Encrypted private waypoints
 * Server stored friend lists
 * Uploading and distributing player textures, such as capes and avatars
 * Custom message formats for private, group and nearby messaging (build your own mod!)
-* Security
- * Messaging and coordinte sharing is end to end encrypted using an implementation of [Signal's](https://signal.org) encryption protocol
- * Profile data, such as your private waypoints, is encrypted before sending to the collar server.
+
+## Security
+* Messaging and coordinte sharing is end to end encrypted using an implementation of [Signal's](https://signal.org) encryption protocol
+* Profile data, such as your private waypoints, is encrypted before sending to the collar server.
 
 ## Coming soon
 * emotes using the [Emotecraft](https://github.com/KosmX/emotes) format.

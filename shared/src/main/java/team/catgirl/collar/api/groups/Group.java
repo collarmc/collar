@@ -45,9 +45,9 @@ public final class Group {
     public boolean containsPlayer(Player player) {
         return members.stream().anyMatch(member -> member.player.equals(player));
     }
-
-    public boolean containsPlayer(MinecraftPlayer player) {
-        return members.stream().anyMatch(member -> player.equals(member.player.minecraftPlayer));
+    
+    public Optional<Member> findMember(Player player) {
+        return members.stream().filter(member -> member.player.equals(player)).findFirst();
     }
 
     public Group updatePlayer(Player player) {

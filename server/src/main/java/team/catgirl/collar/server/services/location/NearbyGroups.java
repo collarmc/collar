@@ -1,7 +1,7 @@
 package team.catgirl.collar.server.services.location;
 
 import com.google.common.collect.Sets;
-import team.catgirl.collar.security.mojang.MinecraftPlayer;
+import team.catgirl.collar.api.session.Player;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -13,9 +13,9 @@ import java.util.concurrent.ConcurrentMap;
  */
 public final class NearbyGroups {
 
-    private final ConcurrentMap<MinecraftPlayer, Set<String>> playerHashes = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Player, Set<String>> playerHashes = new ConcurrentHashMap<>();
     private final ConcurrentMap<NearbyGroup, UUID> nearbyGroups = new ConcurrentHashMap<>();
-    private final ConcurrentMap<MinecraftPlayer, Set<NearbyGroup>> playerToGroups = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Player, Set<NearbyGroup>> playerToGroups = new ConcurrentHashMap<>();
 
     /**
      * Calculates any nearby groups for the minecraft player and anyone in the calculated group
@@ -24,11 +24,14 @@ public final class NearbyGroups {
      * @param hashes the players hashes
      * @return result delta
      */
-    public Result updateNearbyGroups(MinecraftPlayer player, Set<String> hashes) {
+    public Result updateNearbyGroups(Player player, Set<String> hashes) {
         playerHashes.compute(player, (thePlayer, strings) -> hashes);
         Map<UUID, NearbyGroup> add = new HashMap<>();
         Map<UUID, NearbyGroup> remove = new HashMap<>();
-        playerHashes.keySet().stream().filter(anotherPlayer -> anotherPlayer.inServerWith(player) && !anotherPlayer.equals(player)).forEach(anotherPlayer -> {
+        playerHashes.keySet().stream()
+                .filter(anotherPlayer -> anotherPlayer.minecraftPlayer.inServerWith(player.minecraftPlayer)
+                        && !anotherPlayer.minecraftPlayer.equals(player.minecraftPlayer)
+                ).forEach(anotherPlayer -> {
             Set<String> otherPlayersHashes = playerHashes.get(anotherPlayer);
             NearbyGroup group = new NearbyGroup(Set.of(player, anotherPlayer));
             if (Sets.difference(hashes, otherPlayersHashes).isEmpty()) {
@@ -39,19 +42,19 @@ public final class NearbyGroups {
                     }
                     return uuid;
                 });
-                playerToGroups.compute(player, (player1, nearbyGroups1) -> {
-                    nearbyGroups1 = nearbyGroups1 == null ? new HashSet<>() : nearbyGroups1;
-                    nearbyGroups1.add(group);
-                    return nearbyGroups1;
+                playerToGroups.compute(player, (thePlayer, playersGroups) -> {
+                    playersGroups = playersGroups == null ? new HashSet<>() : playersGroups;
+                    playersGroups.add(group);
+                    return playersGroups;
                 });
             } else {
-                UUID uuid = nearbyGroups.get(group);
-                if (uuid != null) {
-                    remove.put(uuid, group);
-                    playerToGroups.compute(player, (player1, nearbyGroups1) -> {
-                        nearbyGroups1 = nearbyGroups1 == null ? new HashSet<>() : nearbyGroups1;
-                        nearbyGroups1.remove(group);
-                        return nearbyGroups1;
+                UUID groupId = nearbyGroups.get(group);
+                if (groupId != null) {
+                    remove.put(groupId, group);
+                    playerToGroups.compute(player, (thePlayer, playersGroups) -> {
+                        playersGroups = playersGroups == null ? new HashSet<>() : playersGroups;
+                        playersGroups.remove(group);
+                        return nearbyGroups.isEmpty() ? null : playersGroups;
                     });
                 }
             }
@@ -61,10 +64,9 @@ public final class NearbyGroups {
 
     /**
      * Returns the groups to leave
-     * @param player
-     * @return
+     * @param player to remove
      */
-    public void removePlayerState(MinecraftPlayer player) {
+    public void removePlayerState(Player player) {
         playerHashes.remove(player);
         Set<NearbyGroup> groups = playerToGroups.remove(player);
         if (groups != null) {

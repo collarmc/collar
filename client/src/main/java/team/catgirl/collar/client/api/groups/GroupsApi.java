@@ -1,11 +1,14 @@
 package team.catgirl.collar.client.api.groups;
 
+import team.catgirl.collar.api.friends.Status;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.groups.GroupType;
 import team.catgirl.collar.api.groups.Member;
 import team.catgirl.collar.api.groups.MembershipRole;
+import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.api.AbstractApi;
+import team.catgirl.collar.client.api.textures.Texture;
 import team.catgirl.collar.client.sdht.SDHTApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.protocol.ProtocolRequest;
@@ -43,7 +46,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
     /**
      * @return groups of players the current player is near
      */
-    public List<Group> locationGroups() {
+    public List<Group> nearbyGroups() {
         synchronized (this) {
             return groups.values().stream().filter(group -> group.type == GroupType.NEARBY).collect(Collectors.toList());
         }
@@ -71,8 +74,8 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * Create a group with other players
      * @param players players
      */
-    public void create(List<UUID> players) {
-        sender.accept(new CreateGroupRequest(collar.identity(), UUID.randomUUID(), players));
+    public void create(String name, GroupType type, List<UUID> players) {
+        sender.accept(new CreateGroupRequest(collar.identity(), UUID.randomUUID(), name, type, players));
     }
 
     /**
@@ -117,7 +120,24 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param member the member to remove
      */
     public void removeMember(Group group, Member member) {
-        sender.accept(new EjectGroupMemberRequest(identity(), group.id, member.player.id));
+        sender.accept(new EjectGroupMemberRequest(identity(), group.id, member.player.minecraftPlayer.id));
+    }
+
+    /**
+     * Delete a group
+     * @param group to delete
+     */
+    public void delete(Group group) {
+        sender.accept(new DeleteGroupRequest(identity(), group.id));
+    }
+
+    /**
+     * Transfer ownership of the group to another player
+     * @param group to transfer
+     * @param player to transfer to
+     */
+    public void transferOwnership(Group group, Player player) {
+        sender.accept(new TransferGroupOwnershipRequest(identity(), group.id, player.profile));
     }
 
     @Override
@@ -200,14 +220,45 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
             synchronized (this) {
                 GroupInviteResponse response = (GroupInviteResponse) resp;
                 GroupInvitation invitation = GroupInvitation.from(response);
-                if (response.groupType == GroupType.PARTY) {
-                    invitations.put(invitation.groupId, invitation);
-                    fireListener("onGroupInvited", groupsListener -> {
-                        groupsListener.onGroupInvited(collar, this, invitation);
-                    });
-                } else if (response.groupType == GroupType.NEARBY) {
-                    // Auto-accept invitations from location typed groups
-                    accept(invitation);
+                switch (response.groupType) {
+                    case GROUP:
+                    case PARTY:
+                        invitations.put(invitation.groupId, invitation);
+                        fireListener("onGroupInvited", groupsListener -> {
+                            groupsListener.onGroupInvited(collar, this, invitation);
+                        });
+                        break;
+                    case NEARBY:
+                        // Auto-accept invitations from location typed groups
+                        accept(invitation);
+                        break;
+                    default:
+                        throw new IllegalStateException("unknown group type" + response.groupType);
+                }
+            }
+            return true;
+        } else if (resp instanceof RejoinGroupResponse) {
+            // Rejoin the group
+            sender.accept(identityStore().createJoinGroupRequest(identity(), ((RejoinGroupResponse) resp).group));
+        } else if (resp instanceof UpdateGroupMemberResponse) {
+            synchronized (this) {
+                UpdateGroupMemberResponse response = (UpdateGroupMemberResponse) resp;
+                Group group = groups.get(response.groupId);
+                if (group != null) {
+                    Group updatedGroup;
+                    if (response.status == Status.OFFLINE) {
+                        updatedGroup = group.updatePlayer(response.player);
+                    } else if (response.role != null) {
+                        updatedGroup = group.updateMembershipRole(response.player, response.role);
+                    } else {
+                        updatedGroup = null;
+                    }
+                    if (updatedGroup != null) {
+                        groups.put(updatedGroup.id, updatedGroup);
+                        fireListener("onGroupMemberUpdated", groupsListener -> {
+                            groupsListener.onGroupMemberUpdated(collar, this, updatedGroup, response.player);
+                        });
+                    }
                 }
             }
             return true;

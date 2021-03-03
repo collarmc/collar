@@ -27,7 +27,7 @@ public final class Group {
                  @JsonProperty("type") GroupType type,
                  @JsonProperty("members") Set<Member> members) {
         this.id = id;
-        if (name.length() > 100) {
+        if (name != null && name.length() > 100) {
             throw new IllegalArgumentException("name must be 100 characters or less");
         }
         this.name = name;

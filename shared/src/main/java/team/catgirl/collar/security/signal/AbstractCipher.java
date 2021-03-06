@@ -16,6 +16,7 @@ import org.whispersystems.libsignal.util.guava.Optional;
 import team.catgirl.collar.protocol.PacketIO;
 import team.catgirl.collar.security.Identity;
 import team.catgirl.collar.security.cipher.Cipher;
+import team.catgirl.collar.utils.IO;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -66,7 +67,7 @@ public abstract class AbstractCipher implements Cipher {
             try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
                  ObjectInputStream objectStream = new ObjectInputStream(inputStream)) {
                 int type = objectStream.readInt();
-                byte[] serialized = PacketIO.toByteArray(objectStream);
+                byte[] serialized = IO.toByteArray(objectStream);
                 switch (type) {
                     case 0:
                         return sessionCipher.decrypt(new SignalMessage(serialized));

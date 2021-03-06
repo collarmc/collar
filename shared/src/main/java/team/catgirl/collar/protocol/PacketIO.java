@@ -3,6 +3,7 @@ package team.catgirl.collar.protocol;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import team.catgirl.collar.security.cipher.Cipher;
 import team.catgirl.collar.security.Identity;
+import team.catgirl.collar.utils.IO;
 
 import java.io.*;
 
@@ -26,7 +27,7 @@ public final class PacketIO {
     }
 
     public <T> T decode(Identity sender, InputStream is, Class<T> type) throws IOException {
-        return decode(sender, toByteArray(is), type);
+        return decode(sender, IO.toByteArray(is), type);
     }
 
     public <T> T decode(Identity sender, byte[] bytes, Class<T> type) throws IOException {
@@ -34,7 +35,7 @@ public final class PacketIO {
             int packetType;
             try (DataInputStream objectStream = new DataInputStream(is)) {
                 packetType = objectStream.readInt();
-                byte[] remainingBytes = toByteArray(objectStream);
+                byte[] remainingBytes = IO.toByteArray(objectStream);
                 if (packetType == MODE_PLAIN) {
                     checkPacketSize(remainingBytes);
                     return mapper.readValue(remainingBytes, type);
@@ -79,15 +80,6 @@ public final class PacketIO {
             checkPacketSize(bytes);
             return bytes;
         }
-    }
-
-    public static byte[] toByteArray(InputStream input) throws IOException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        byte[] buf = new byte[1024];
-        for (int n = input.read(buf); n != -1; n = input.read(buf)) {
-            os.write(buf, 0, n);
-        }
-        return os.toByteArray();
     }
 
     private void checkPacketSize(byte[] bytes) {

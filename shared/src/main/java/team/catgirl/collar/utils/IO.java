@@ -2,6 +2,7 @@ package team.catgirl.collar.utils;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.util.UUID;
 
 public final class IO {
     /**
@@ -11,9 +12,9 @@ public final class IO {
      * @throws IOException on error
      */
     public static void writeBytes(DataOutputStream os, byte[] bytes) throws IOException {
-        os.write(bytes.length);
+        os.writeInt(bytes.length);
         for (byte b : bytes) {
-            os.write(b);
+            os.writeInt(b);
         }
     }
 
@@ -24,12 +25,33 @@ public final class IO {
      * @throws IOException on error
      */
     public static byte[] readBytes(DataInputStream is) throws IOException {
-        int length = is.read();
+        int length = is.readInt();
         byte[] bytes = new byte[length];
         for (int i = 0; i < length; i++) {
             bytes[i] = is.readByte();
         }
         return bytes;
+    }
+
+    /**
+     * Write UUID to stream
+     * @param os to write to
+     * @param uuid to write
+     * @throws IOException on error
+     */
+    public static void writeUUID(DataOutputStream os, UUID uuid) throws IOException {
+        os.writeLong(uuid.getMostSignificantBits());
+        os.writeLong(uuid.getLeastSignificantBits());
+    }
+
+    /**
+     * Read UUID from stream
+     * @param is to read
+     * @return uuid
+     * @throws IOException on error
+     */
+    public static UUID readUUID(DataInputStream is) throws IOException {
+        return new UUID(is.readLong(), is.readLong());
     }
 
     /**
@@ -56,6 +78,21 @@ public final class IO {
         } catch (IOException e) {
             throw new IllegalStateException("could not read all bytes from file " + file);
         }
+    }
+
+    /**
+     * Copy stream to byte array
+     * @param input to copy
+     * @return contents
+     * @throws IOException if stream failed to be read
+     */
+    public static byte[] toByteArray(InputStream input) throws IOException {
+        ByteArrayOutputStream os = new ByteArrayOutputStream();
+        byte[] buf = new byte[1024];
+        for (int n = input.read(buf); n != -1; n = input.read(buf)) {
+            os.write(buf, 0, n);
+        }
+        return os.toByteArray();
     }
 
     public IO() {}

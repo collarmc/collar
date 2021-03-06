@@ -14,7 +14,7 @@ public final class IO {
     public static void writeBytes(DataOutputStream os, byte[] bytes) throws IOException {
         os.writeInt(bytes.length);
         for (byte b : bytes) {
-            os.writeInt(b);
+            os.writeByte(b);
         }
     }
 

@@ -6,11 +6,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 public final class Entity {
-    public final UUID id;
+    @JsonProperty("id")
+    public final Integer id;
+    @JsonProperty("playerId")
     public final UUID playerId;
+    @JsonProperty("type")
     public final EntityType type;
 
-    public Entity(@JsonProperty("uuid") UUID id,
+    public Entity(@JsonProperty("id") Integer id,
                   @JsonProperty("playerId") UUID playerId,
                   @JsonProperty("type") EntityType type) {
         this.id = id;

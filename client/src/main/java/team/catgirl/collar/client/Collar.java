@@ -262,15 +262,15 @@ public final class Collar {
         if (!verificationScheme.isPresent()) {
             throw new IllegalStateException("Does not have feature auth:verification_scheme");
         }
-        verificationScheme.ifPresent(collarFeature -> {
-            MinecraftSession minecraftSession = configuration.sessionSupplier.get();
-            LOGGER.log(Level.INFO, "Server supports versions " + versions);
-            if ("mojang".equals(collarFeature.value) && minecraftSession.mode != MinecraftSession.Mode.MOJANG && minecraftSession.accessToken == null) {
-                throw new IllegalStateException("mojang verification scheme s but was provided an invalid MinecraftSession");
-            } else if ("nojang".equals(collarFeature.value) && minecraftSession.mode != MinecraftSession.Mode.NOJANG && minecraftSession.accessToken != null) {
-                throw new IllegalStateException("nojang verification scheme requested but was provided an invalid MinecraftSession");
-            }
-        });
+//        verificationScheme.ifPresent(collarFeature -> {
+//            MinecraftSession minecraftSession = configuration.sessionSupplier.get();
+//            LOGGER.log(Level.INFO, "Server supports versions " + versions);
+//            if ("mojang".equals(collarFeature.value) && minecraftSession.mode != MinecraftSession.Mode.MOJANG && minecraftSession.accessToken == null) {
+//                throw new IllegalStateException("mojang verification scheme s but was provided an invalid MinecraftSession");
+//            } else if ("nojang".equals(collarFeature.value) && minecraftSession.mode != MinecraftSession.Mode.NOJANG && minecraftSession.accessToken != null) {
+//                throw new IllegalStateException("nojang verification scheme requested but was provided an invalid MinecraftSession");
+//            }
+//        });
         findFeature(response, "groups:locations").orElseThrow(() -> new IllegalStateException("Server does not support groups:locations"));
         findFeature(response, "groups:waypoints").orElseThrow(() -> new IllegalStateException("Server does not support groups:waypoints"));
         findFeature(response, "profile:friends").orElseThrow(() -> new IllegalStateException("Server does not support profile:friends"));
@@ -374,6 +374,7 @@ public final class Collar {
         @Override
         public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
             LOGGER.log(Level.SEVERE, "Socket failure", t);
+            t.printStackTrace();
             if (state != State.DISCONNECTED) {
                 collar.changeState(State.DISCONNECTED);
             }

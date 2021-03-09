@@ -9,6 +9,7 @@ import team.catgirl.collar.api.messaging.TextMessage;
 import team.catgirl.collar.tests.groups.GroupsTest.MessagingListenerImpl;
 import team.catgirl.collar.tests.groups.GroupsTest.TestGroupsListener;
 import team.catgirl.collar.tests.junit.CollarTest;
+import team.catgirl.collar.utils.Utils;
 
 import java.util.Set;
 import java.util.UUID;
@@ -17,9 +18,9 @@ import static team.catgirl.collar.tests.junit.CollarAssert.waitForCondition;
 
 public class NearbyMessagingTest extends CollarTest {
 
-    UUID aliceEntityId = UUID.randomUUID();
-    UUID bobEntityId = UUID.randomUUID();
-    UUID eveEntityId = UUID.randomUUID();
+    int aliceEntityId = Utils.secureRandom().nextInt();
+    int bobEntityId = Utils.secureRandom().nextInt();
+    int eveEntityId = Utils.secureRandom().nextInt();
 
     @Test
     public void sendNearbyMessage() {

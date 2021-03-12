@@ -1,6 +1,7 @@
 package team.catgirl.collar.api.messaging;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -19,7 +20,7 @@ public final class TextMessage implements Message {
     /**
      * The message that is printed for the sender immediately after delivery
      */
-    @JsonProperty("content")
+    @JsonIgnore
     public final String consoleMessage;
 
     @JsonCreator

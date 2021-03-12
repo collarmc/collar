@@ -25,14 +25,13 @@ public final class TextMessage implements Message {
 
     @JsonCreator
     public TextMessage(@JsonProperty("content") String content) {
-        if (content.length() > MAX_LENGTH) {
-            throw new IllegalArgumentException("content exceeds " + MAX_LENGTH + " characters");
-        }
+        checkContentLength(content);
         this.content = content;
         this.consoleMessage = null;
     }
 
     public TextMessage(String content, String consoleMessage) {
+        checkContentLength(content);
         this.content = content;
         this.consoleMessage = consoleMessage;
     }
@@ -40,5 +39,11 @@ public final class TextMessage implements Message {
     @Override
     public String toString() {
         return "TextMessage '" + content + "'";
+    }
+
+    private static void checkContentLength(String content) {
+        if (content.length() > MAX_LENGTH) {
+            throw new IllegalArgumentException("content exceeds " + MAX_LENGTH + " characters");
+        }
     }
 }

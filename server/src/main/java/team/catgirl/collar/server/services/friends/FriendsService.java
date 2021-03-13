@@ -94,7 +94,7 @@ public final class FriendsService {
     private Friend mapFriend(Document document) {
         UUID owner = document.get(FIELD_OWNER, UUID.class);
         UUID friend = document.get(FIELD_FRIEND, UUID.class);
-        PublicProfile profile = profiles.getProfile(RequestContext.SERVER, ProfileService.GetProfileRequest.byId(owner)).profile.toPublic();
+        PublicProfile profile = profiles.getProfile(RequestContext.SERVER, ProfileService.GetProfileRequest.byId(friend)).profile.toPublic();
         return sessions.getSessionStateByOwner(friend)
                 .map(sessionState -> new Friend(owner, profile, Status.ONLINE, Set.of(sessionState.minecraftPlayer.id)))
                 .orElse(new Friend(friend, profile, Status.OFFLINE, Set.of()));

@@ -64,6 +64,10 @@ public final class Waypoint {
         }
     }
 
+    public String displayName() {
+        return name + " " + location.displayName();
+    }
+
     @Override
     public String toString() {
         return name + ":" + id + "@" + location.toString();

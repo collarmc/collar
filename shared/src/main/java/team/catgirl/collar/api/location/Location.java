@@ -61,6 +61,10 @@ public final class Location {
         return location == null ? "" : location.toString();
     }
 
+    public String displayName() {
+        return x + "," + y + "," + z + " (" + dimension.name() + ")";
+    }
+
     @Override
     public String toString() {
         return "[" + x + "," + y + "," + z + "," + dimension + "]";

@@ -12,7 +12,6 @@ import team.catgirl.collar.tests.junit.CollarTest;
 import team.catgirl.collar.utils.Utils;
 
 import java.util.Set;
-import java.util.UUID;
 
 import static team.catgirl.collar.tests.junit.CollarAssert.waitForCondition;
 
@@ -39,11 +38,11 @@ public class NearbyMessagingTest extends CollarTest {
         evePlayer.collar.messaging().subscribe(eveMessages);
         evePlayer.collar.groups().subscribe(eveGroups);
 
-        waitForCondition("Alice joined nearby group", () -> !alicePlayer.collar.groups().nearbyGroups().isEmpty());
-        waitForCondition("Bob joined nearby group", () -> !bobPlayer.collar.groups().nearbyGroups().isEmpty());
+        waitForCondition("Alice joined nearby group", () -> !alicePlayer.collar.groups().nearby().isEmpty());
+        waitForCondition("Bob joined nearby group", () -> !bobPlayer.collar.groups().nearby().isEmpty());
 
-        Group aliceGroup = alicePlayer.collar.groups().nearbyGroups().get(0);
-        Group bobGroup = bobPlayer.collar.groups().nearbyGroups().get(0);
+        Group aliceGroup = alicePlayer.collar.groups().nearby().get(0);
+        Group bobGroup = bobPlayer.collar.groups().nearby().get(0);
 
         Assert.assertEquals(aliceGroup.id, bobGroup.id);
 

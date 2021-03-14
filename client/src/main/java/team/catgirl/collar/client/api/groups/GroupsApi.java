@@ -1,5 +1,6 @@
 package team.catgirl.collar.client.api.groups;
 
+import com.google.common.collect.ImmutableList;
 import team.catgirl.collar.api.friends.Status;
 import team.catgirl.collar.api.groups.*;
 import team.catgirl.collar.api.session.Player;
@@ -35,16 +36,34 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      */
     public List<Group> all() {
         synchronized (this) {
-            return groups.values().stream().filter(group -> group.type == GroupType.PARTY).collect(Collectors.toList());
+            return ImmutableList.copyOf(groups.values());
         }
     }
 
     /**
-     * @return groups of players the current player is near
+     * @return all {@link GroupType#GROUP}
      */
-    public List<Group> nearbyGroups() {
+    public List<Group> groups() {
         synchronized (this) {
-            return groups.values().stream().filter(group -> group.type == GroupType.NEARBY).collect(Collectors.toList());
+            return filter(GroupType.GROUP);
+        }
+    }
+
+    /**
+     * @return all {@link GroupType#PARTY}
+     */
+    public List<Group> parties() {
+        synchronized (this) {
+            return filter(GroupType.PARTY);
+        }
+    }
+
+    /**
+     * @return all {@link GroupType#NEARBY}
+     */
+    public List<Group> nearby() {
+        synchronized (this) {
+            return filter(GroupType.NEARBY);
         }
     }
 
@@ -134,6 +153,10 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      */
     public void transferOwnership(Group group, Player player) {
         sender.accept(new TransferGroupOwnershipRequest(identity(), group.id, player.profile));
+    }
+
+    private List<Group> filter(GroupType party) {
+        return groups.values().stream().filter(group -> group.type == party).collect(Collectors.toList());
     }
 
     @Override

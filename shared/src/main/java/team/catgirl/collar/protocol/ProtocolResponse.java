@@ -11,10 +11,7 @@ public abstract class ProtocolResponse {
     public final ServerIdentity identity;
 
     @JsonCreator
-    public ProtocolResponse(ServerIdentity identity) {
-        if (identity == null) {
-            throw new IllegalArgumentException("identity cannot be null");
-        }
+    public ProtocolResponse(@JsonProperty("identity") ServerIdentity identity) {
         this.identity = identity;
     }
 }

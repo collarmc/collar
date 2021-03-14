@@ -148,7 +148,6 @@ public class CollarServer {
                 MinecraftPlayer minecraftPlayer = request.session.toPlayer();
                 services.sessions.identify(session, req.identity, minecraftPlayer);
                 sendPlain(session, new StartSessionResponse(serverIdentity));
-                sessionStarted.accept(req.identity, new Player(req.identity.id(), minecraftPlayer));
             } else {
                 sendPlain(session, new MojangVerificationFailedResponse(serverIdentity, ((StartSessionRequest) req).session));
                 services.sessions.stopSession(session, "Minecraft session invalid", null, sessionStopped);
@@ -156,9 +155,12 @@ public class CollarServer {
         } else if (req instanceof CheckTrustRelationshipRequest) {
             LOGGER.log(Level.INFO, "Checking if client/server have a trusted relationship");
             if (services.identityStore.isTrustedIdentity(req.identity)) {
-                LOGGER.log(Level.INFO, req.identity + " is trusted. Signaling client to start encryption.");
+                LOGGER.log(Level.INFO, req.identity + " is trusted. Signaling client to start encryption. ");
                 CheckTrustRelationshipResponse response = new IsTrustedRelationshipResponse(serverIdentity);
                 sendPlain(session, response);
+                services.sessions.findPlayer(req.identity).ifPresent(player -> {
+                    sessionStarted.accept(req.identity, new Player(req.identity.id(), player.minecraftPlayer));
+                });
             } else {
                 LOGGER.log(Level.INFO, req.identity + " is NOT trusted. Signaling client to restart registration.");
                 CheckTrustRelationshipResponse response = new IsUntrustedRelationshipResponse(serverIdentity);

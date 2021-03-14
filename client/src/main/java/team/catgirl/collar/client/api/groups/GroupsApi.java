@@ -68,6 +68,17 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
     }
 
     /**
+     * @param types to filter by
+     * @return groups matching types
+     */
+    public List<Group> matching(GroupType... types) {
+        List<GroupType> filterTypes = Arrays.asList(types);
+        synchronized (this) {
+            return all().stream().filter(group -> filterTypes.contains(group.type)).collect(Collectors.toList());
+        }
+    }
+
+    /**
      * Find a group by its ID
      * @param groupId of the group to find
      * @return group

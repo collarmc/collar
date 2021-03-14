@@ -6,6 +6,7 @@ import team.catgirl.collar.security.Identity;
 import team.catgirl.collar.utils.IO;
 
 import java.io.*;
+import java.util.logging.Logger;
 
 /**
  * Encodes and decodes packets for/from the wire, handling encryption and different types of signal messages
@@ -54,6 +55,7 @@ public final class PacketIO {
     }
 
     public byte[] encodePlain(Object object) throws IOException {
+        System.out.println("encodePlain " + object.getClass().getSimpleName());
         byte[] rawBytes = mapper.writeValueAsBytes(object);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream objectStream = new DataOutputStream(outputStream)) {
@@ -67,6 +69,7 @@ public final class PacketIO {
     }
 
     public byte[] encodeEncrypted(Identity recipient, Object object) throws IOException {
+        System.out.println("encodeEncrypted " + object.getClass().getSimpleName());
         byte[] rawBytes = mapper.writeValueAsBytes(object);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream objectStream = new DataOutputStream(outputStream)) {

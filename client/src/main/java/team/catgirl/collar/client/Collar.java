@@ -374,6 +374,7 @@ public final class Collar {
         @Override
         public void onFailure(@NotNull WebSocket webSocket, @NotNull Throwable t, @Nullable Response response) {
             LOGGER.log(Level.SEVERE, "Socket failure", t);
+            t.printStackTrace();
             if (state != State.DISCONNECTED) {
                 collar.changeState(State.DISCONNECTED);
             }

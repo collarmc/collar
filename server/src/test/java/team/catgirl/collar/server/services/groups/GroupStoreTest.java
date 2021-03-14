@@ -9,7 +9,6 @@ import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.configuration.Configuration;
 import team.catgirl.collar.server.http.RequestContext;
 import team.catgirl.collar.server.junit.MongoDatabaseTestRule;
-import team.catgirl.collar.server.security.hashing.PasswordHashing;
 import team.catgirl.collar.server.services.profiles.Profile;
 import team.catgirl.collar.server.services.profiles.ProfileService;
 import team.catgirl.collar.server.services.profiles.ProfileService.CreateProfileRequest;

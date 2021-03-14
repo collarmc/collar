@@ -88,7 +88,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
      * @param message to send
      */
     public void sendNearbyMessage(Message message) {
-        collar.groups().nearbyGroups().forEach(group -> sendGroupMessage(group, message));
+        collar.groups().nearby().forEach(group -> sendGroupMessage(group, message));
     }
 
     @Override

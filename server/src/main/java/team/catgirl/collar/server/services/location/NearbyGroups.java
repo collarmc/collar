@@ -30,8 +30,9 @@ public final class NearbyGroups {
         Map<UUID, NearbyGroup> add = new HashMap<>();
         Map<UUID, NearbyGroup> remove = new HashMap<>();
         playerHashes.keySet().stream()
-                .filter(anotherPlayer -> anotherPlayer.player.minecraftPlayer.inServerWith(source.player.minecraftPlayer)
-                        && !anotherPlayer.player.minecraftPlayer.equals(source.player.minecraftPlayer)
+                .filter(anotherPlayer ->
+                        anotherPlayer.player.minecraftPlayer.inServerWith(source.player.minecraftPlayer)
+                        && !anotherPlayer.equals(source)
                 ).forEach(anotherPlayer -> {
             Set<String> otherPlayersHashes = playerHashes.get(anotherPlayer);
             NearbyGroup group = new NearbyGroup(Set.of(source, anotherPlayer));
@@ -68,8 +69,8 @@ public final class NearbyGroups {
      * @param player to remove
      */
     public void removePlayerState(Player player) {
-        playerHashes.remove(player);
-        Set<NearbyGroup> groups = playerToGroups.remove(player);
+        playerHashes.remove(new MemberSource(player, null));
+        Set<NearbyGroup> groups = playerToGroups.remove(new MemberSource(player, null));
         if (groups != null) {
             groups.forEach(nearbyGroups::remove);
         }

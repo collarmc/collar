@@ -15,7 +15,7 @@ public enum GroupType {
     /**
      * A location proximity group
      */
-    NEARBY("nearby", "nearby");
+    NEARBY("nearby", "nearby groups");
 
     public final String name;
     public final String plural;

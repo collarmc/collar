@@ -110,6 +110,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                 updater.start();
             }
         }
+        fireListener("onStartedSharingLocation", listener -> listener.onStartedSharingLocation(collar, this, group));
     }
 
     /**
@@ -121,6 +122,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
             stopSharingForGroup(group);
             sender.accept(new StopSharingLocationRequest(identity(), group.id));
         }
+        fireListener("onStoppedSharingLocation", listener -> listener.onStoppedSharingLocation(collar, this, group));
     }
 
     /**

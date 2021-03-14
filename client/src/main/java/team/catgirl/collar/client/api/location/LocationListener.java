@@ -44,4 +44,20 @@ public interface LocationListener extends ApiListener {
      * @param privateWaypoints received
      */
     default void onPrivateWaypointsReceived(Collar collar, LocationApi locationApi, Set<Waypoint> privateWaypoints) {};
+
+    /**
+     * Fired when the player starts sharing their location
+     * @param collar client
+     * @param locationApi api
+     * @param group location being shared with
+     */
+    default void onStartedSharingLocation(Collar collar, LocationApi locationApi, Group group) {};
+
+    /**
+     * Fired when the player stops sharing their location
+     * @param collar client
+     * @param locationApi api
+     * @param group location being shared with
+     */
+    default void onStoppedSharingLocation(Collar collar, LocationApi locationApi, Group group) {};
 }

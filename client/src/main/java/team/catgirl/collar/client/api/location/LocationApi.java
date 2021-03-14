@@ -186,6 +186,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
         byte[] bytes = waypoint.serialize();
         byte[] encryptedBytes = identityStore().createCypher().crypt(bytes);
         sender.accept(new CreateWaypointRequest(identity(), waypoint.id, encryptedBytes));
+        fireListener("onWaypointCreated", listener -> listener.onWaypointCreated(collar, this, null, waypoint));
     }
 
     /**
@@ -195,6 +196,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
     public void removeWaypoint(Waypoint waypoint) {
         privateWaypoints.remove(waypoint.id);
         sender.accept(new RemoveWaypointRequest(identity(), waypoint.id));
+        fireListener("onWaypointRemoved", listener -> listener.onWaypointRemoved(collar, this, null, waypoint));
     }
 
     private void stopSharingForGroup(Group group) {

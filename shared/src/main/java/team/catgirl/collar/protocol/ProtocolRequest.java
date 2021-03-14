@@ -12,6 +12,9 @@ public abstract class ProtocolRequest {
 
     @JsonCreator
     public ProtocolRequest(@JsonProperty("identity") ClientIdentity identity) {
+        if (identity == null) {
+            throw new IllegalArgumentException("identity cannot be null");
+        }
         this.identity = identity;
     }
 }

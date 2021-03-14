@@ -317,7 +317,7 @@ public final class Collar {
         private final ObjectMapper mapper = Utils.messagePackMapper();
         private final Collar collar;
         private KeepAlive keepAlive;
-        private ServerIdentity serverIdentity;
+        private volatile ServerIdentity serverIdentity;
 
         public CollarWebSocket(Collar collar) {
             this.collar = collar;
@@ -441,6 +441,9 @@ public final class Collar {
                 collar.changeState(State.DISCONNECTED);
             } else if (resp instanceof IsTrustedRelationshipResponse) {
                 LOGGER.log(Level.INFO, "Server has confirmed a trusted relationship with the client");
+                if (resp.identity == null) {
+                    throw new IllegalStateException("sever identity was null");
+                }
                 this.serverIdentity = resp.identity;
                 collar.changeState(State.CONNECTED);
             } else if (resp instanceof IsUntrustedRelationshipResponse) {

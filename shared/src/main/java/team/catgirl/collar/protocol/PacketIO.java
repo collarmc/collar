@@ -55,7 +55,6 @@ public final class PacketIO {
     }
 
     public byte[] encodePlain(Object object) throws IOException {
-        System.out.println("encodePlain " + object.getClass().getSimpleName());
         byte[] rawBytes = mapper.writeValueAsBytes(object);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream objectStream = new DataOutputStream(outputStream)) {
@@ -69,7 +68,6 @@ public final class PacketIO {
     }
 
     public byte[] encodeEncrypted(Identity recipient, Object object) throws IOException {
-        System.out.println("encodeEncrypted " + object.getClass().getSimpleName());
         byte[] rawBytes = mapper.writeValueAsBytes(object);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream objectStream = new DataOutputStream(outputStream)) {

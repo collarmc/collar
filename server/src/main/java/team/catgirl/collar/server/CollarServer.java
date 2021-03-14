@@ -217,6 +217,7 @@ public class CollarServer {
                 });
             });
         } else {
+            LOGGER.log(Level.INFO, "Sending " + resp.getClass().getSimpleName());
             if (session == null) {
                 throw new IllegalStateException("Session cannot be null");
             }

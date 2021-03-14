@@ -27,7 +27,6 @@ final class KeepAlive {
     }
 
     public void start(ClientIdentity identity) {
-        if (identity == null) return;
         scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(() -> {
             try {

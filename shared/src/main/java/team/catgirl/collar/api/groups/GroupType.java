@@ -6,14 +6,22 @@ public enum GroupType {
     /**
      * A persistent group of players
      */
-    GROUP,
+    GROUP("group", "groups"),
     /**
      * A temporary group of players
      */
     @JsonEnumDefaultValue
-    PARTY,
+    PARTY("party", "parties"),
     /**
      * A location proximity group
      */
-    NEARBY;
+    NEARBY("nearby", "nearby");
+
+    public final String name;
+    public final String plural;
+
+    GroupType(String name, String plural) {
+        this.name = name;
+        this.plural = plural;
+    }
 }

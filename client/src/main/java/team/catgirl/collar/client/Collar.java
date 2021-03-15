@@ -55,6 +55,7 @@ import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.security.mojang.MinecraftSession;
 import team.catgirl.collar.security.mojang.ServerAuthentication;
+import team.catgirl.collar.utils.Crypto;
 import team.catgirl.collar.utils.Utils;
 
 import java.io.IOException;
@@ -495,5 +496,11 @@ public final class Collar {
         DISCONNECTED,
         CONNECTING,
         CONNECTED
+    }
+
+    static {
+        if (Crypto.isRestrictedCryptography()) {
+            Crypto.removeCryptographyRestrictions();
+        }
     }
 }

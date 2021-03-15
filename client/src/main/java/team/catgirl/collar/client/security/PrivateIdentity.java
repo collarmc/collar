@@ -39,7 +39,7 @@ public final class PrivateIdentity {
                 this.token = IO.readBytes(dataStream);
             }
         } catch (IOException e) {
-            throw new IllegalStateException("could not read identity.cif");
+            throw new IllegalStateException("could not read identity.cif", e);
         }
     }
 

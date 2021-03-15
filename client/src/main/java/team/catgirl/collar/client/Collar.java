@@ -291,11 +291,11 @@ public final class Collar {
                 byte[] bytes = Objects.requireNonNull(response.body()).bytes();
                 return Utils.jsonMapper().readValue(bytes, aClass);
             } else {
-                throw new ConnectionException("Failed to connect to server");
+                throw new ConnectionException("Failed to connect to server " + url);
             }
         } catch (IOException e) {
             LOGGER.log(Level.SEVERE, "Connection issue", e);
-            throw new ConnectionException("Failed to connect to server");
+            throw new ConnectionException("Failed to connect to server " + url, e);
         }
     }
 

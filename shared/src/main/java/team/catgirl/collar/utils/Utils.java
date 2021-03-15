@@ -16,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.StringTokenizer;
 import java.util.UUID;
 
@@ -43,8 +44,17 @@ public final class Utils {
             throw new IllegalStateException(e);
         }
         final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+        TrustManagerFactory tmf;
+        try {
+            tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("could not load TrustManagerFactory", e);
+        }
+        TrustManager trustManager = Arrays.stream(tmf.getTrustManagers())
+                .filter(candidate -> candidate instanceof X509TrustManager)
+                .findFirst().orElseThrow(() -> new IllegalStateException("could not find X509TrustManager"));
         http = new OkHttpClient.Builder()
-                .sslSocketFactory(sslSocketFactory)
+                .sslSocketFactory(sslSocketFactory, (X509TrustManager) trustManager)
                 .build();
     }
 

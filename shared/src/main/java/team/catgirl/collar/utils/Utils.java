@@ -10,10 +10,7 @@ import team.catgirl.collar.security.mojang.MinecraftPlayer;
 
 import javax.net.ssl.*;
 import java.io.IOException;
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
+import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
@@ -47,7 +44,8 @@ public final class Utils {
         TrustManagerFactory tmf;
         try {
             tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-        } catch (NoSuchAlgorithmException e) {
+            tmf.init((KeyStore) null);
+        } catch (NoSuchAlgorithmException | KeyStoreException e) {
             throw new IllegalStateException("could not load TrustManagerFactory", e);
         }
         TrustManager trustManager = Arrays.stream(tmf.getTrustManagers())

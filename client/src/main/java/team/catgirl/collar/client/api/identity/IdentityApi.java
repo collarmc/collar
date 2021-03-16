@@ -4,6 +4,7 @@ import com.stoyanr.evictor.ConcurrentMapWithTimedEviction;
 import com.stoyanr.evictor.map.ConcurrentHashMapWithTimedEviction;
 import com.stoyanr.evictor.map.EvictibleEntry;
 import com.stoyanr.evictor.scheduler.RegularTaskEvictionScheduler;
+import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.api.AbstractApi;
 import team.catgirl.collar.client.security.ClientIdentityStore;
@@ -16,11 +17,14 @@ import team.catgirl.collar.protocol.identity.GetIdentityResponse;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.Identity;
 import team.catgirl.collar.security.TokenGenerator;
+import team.catgirl.collar.security.mojang.MinecraftPlayer;
 
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
@@ -51,6 +55,20 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
 
     public IdentityApi(Collar collar, Supplier<ClientIdentityStore> identityStoreSupplier, Consumer<ProtocolRequest> sender) {
         super(collar, identityStoreSupplier, sender);
+    }
+
+    /**
+     * Resolve a player by their minecraft player ID
+     * @param playerId of the minecraft player
+     * @return player
+     */
+    public Optional<Player> resolvePlayer(UUID playerId) {
+        try {
+            return identify(playerId).get(200, TimeUnit.MILLISECONDS).map(identity -> new Player(identity.owner, new MinecraftPlayer(playerId, collar.player().minecraftPlayer.server)));
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            LOGGER.log(Level.WARNING, "Could not resolve player " + playerId);
+            return Optional.empty();
+        }
     }
 
     /**

@@ -61,13 +61,16 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
      * @param playerId of the minecraft player
      * @return player
      */
-    public Optional<Player> resolvePlayer(UUID playerId) {
-        try {
-            return identify(playerId).get(200, TimeUnit.MILLISECONDS).map(identity -> new Player(identity.owner, new MinecraftPlayer(playerId, collar.player().minecraftPlayer.server)));
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            LOGGER.log(Level.WARNING, "Could not resolve player " + playerId);
-            return Optional.empty();
-        }
+    public CompletableFuture<Player> resolvePlayer(UUID playerId) {
+        return CompletableFuture.supplyAsync(() -> {
+            Optional<ClientIdentity> identityOptional;
+            try {
+                identityOptional = identify(playerId).get(100, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                identityOptional = Optional.empty();
+            }
+            return identityOptional.map(identity -> new Player(identity.owner, new MinecraftPlayer(playerId, collar.player().minecraftPlayer.server))).orElse(null);
+        });
     }
 
     /**

@@ -273,6 +273,17 @@ public class WebServer {
                         return "";
                     }
                 }, Object::toString);
+                get("/reset", (request, response) -> {
+                    Cookie cookie = Cookie.from(services.tokenCrypter, request);
+                    if (cookie == null) {
+                        return render("login");
+                    } else {
+                        RequestContext context = RequestContext.from(request);
+                        services.profiles.updateProfile(context, UpdateProfileRequest.privateIdentityToken(context.owner, new byte[0]));
+                        response.redirect("/app");
+                        return "";
+                    }
+                }, Object::toString);
                 post("/login", (request, response) -> {
                     String email = request.queryParamsSafe("email");
                     String password = request.queryParamsSafe("password");

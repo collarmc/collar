@@ -58,11 +58,13 @@ public class Crypto {
         }
     }
 
-    public static boolean isRestrictedCryptography() {
-        // This matches Oracle Java 7 and 8, but not Java 9 or OpenJDK.
+    private static boolean isRestrictedCryptography() {
         final String name = System.getProperty("java.runtime.name");
         final String ver = System.getProperty("java.version");
-        return name != null && name.equals("Java(TM) SE Runtime Environment")
-                && ver != null && (ver.startsWith("1.7") || ver.startsWith("1.8"));
+        final String javaVersion = ver.substring(0, ver.indexOf("_"));
+        final int revision = Integer.parseInt(ver.substring(ver.indexOf("_") + 1));
+        return name != null
+                && name.equals("Java(TM) SE Runtime Environment")
+                && javaVersion.equals("1.8.0") && revision < 161;
     }
 }

@@ -497,10 +497,8 @@ public final class Collar {
         CONNECTING,
         CONNECTED
     }
-
+;
     static {
-        if (Crypto.isRestrictedCryptography()) {
-            Crypto.removeCryptographyRestrictions();
-        }
+        Crypto.removeCryptographyRestrictions();
     }
 }

@@ -109,7 +109,8 @@ public class ProfileService {
         } else if (req.hashedPassword != null) {
             result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_HASHED_PASSWORD, req.hashedPassword)));
         } else if (req.privateIdentityToken != null) {
-            result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_PRIVATE_IDENTITY_TOKEN, new Binary(req.privateIdentityToken))));
+            Binary token = req.privateIdentityToken.length == 0 ? null : new Binary(req.privateIdentityToken);
+            result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_PRIVATE_IDENTITY_TOKEN, token)));
         } else {
             throw new BadRequestException("bad request");
         }

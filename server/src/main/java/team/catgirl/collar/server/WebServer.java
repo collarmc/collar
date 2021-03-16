@@ -64,7 +64,6 @@ public class WebServer {
         Services services = new Services(configuration);
 
         // Always serialize objects returned as JSON
-        defaultResponseTransformer(services.jsonMapper::writeValueAsString);
         exception(HttpException.class, (e, request, response) -> {
             response.status(e.code);
             try {
@@ -126,7 +125,7 @@ public class WebServer {
                 });
 
                 // Used to test if API is available
-                get("/", (request, response) -> new ServerStatusResponse("OK"));
+                get("/", (request, response) -> new ServerStatusResponse("OK"), services.jsonMapper::writeValueAsString);
 
                 path("/profile", () -> {
                     before("/*", (request, response) -> {
@@ -136,17 +135,17 @@ public class WebServer {
                     get("/me", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         return services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile;
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     // Get someone elses profile
                     get("/:id", (request, response) -> {
                         String id = request.params("id");
                         UUID uuid = UUID.fromString(id);
                         return services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(uuid)).profile.toPublic();
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     get("/groups", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         return services.groupStore.findGroupsContaining(new Player(context.owner, null)).collect(Collectors.toList());
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     post("/reset", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
                         RequestContext context = RequestContext.from(request);
@@ -157,10 +156,10 @@ public class WebServer {
                         services.profileStorage.delete(context.owner);
                         services.profiles.updateProfile(context, UpdateProfileRequest.privateIdentityToken(loginResp.profile.id, new byte[0]));
                         return new Object();
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     get("/devices", (request, response) -> {
                         return services.devices.findDevices(RequestContext.from(request), services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.FindDevicesRequest.class));
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     post("/devices/trust", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         context.assertNotAnonymous();
@@ -169,7 +168,7 @@ public class WebServer {
                         PublicProfile profile = services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile.toPublic();
                         services.sessions.onDeviceRegistered(services.identityStore.getIdentity(), profile, req.token, device);
                         return new TrustDeviceResponse();
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     delete("/devices/:id", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         String deviceId = request.params("id");
@@ -178,12 +177,12 @@ public class WebServer {
                     get("/textures", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         return services.textures.findTexture(RequestContext.from(request), new FindTextureRequest(context.owner, null, null));
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     get("/textures/:type", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         TextureType textureType = TextureType.valueOf(request.params("type").toUpperCase());
                         return services.textures.findTexture(RequestContext.from(request), new FindTextureRequest(context.owner, null, textureType));
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     post("/textures/upload", (request, response) -> {
                         RequestContext context = RequestContext.from(request);
                         CreateTextureRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), CreateTextureRequest.class);
@@ -194,7 +193,7 @@ public class WebServer {
                             }
                         }
                         return services.textures.createTexture(context, req);
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                 });
 
                 path("/auth", () -> {
@@ -205,20 +204,20 @@ public class WebServer {
                     post("/login", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
                         return services.auth.login(RequestContext.from(request), req);
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     // Create an account
                     post("/create", (request, response) -> {
                         CreateAccountRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), CreateAccountRequest.class);
                         return services.auth.createAccount(RequestContext.from(request), req);
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     post("/verify", (request, response) -> {
                         VerifyAccountRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), VerifyAccountRequest.class);
                         return services.auth.verify(RequestContext.from(request), req);
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     post("/reset/request", (request, response) -> {
                         RequestPasswordResetRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), RequestPasswordResetRequest.class);
                         return services.auth.requestPasswordReset(RequestContext.from(request), req);
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                     post("/reset/perform", (request, response) -> {
                         ResetPasswordRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ResetPasswordRequest.class);
                         return services.auth.resetPassword(RequestContext.from(request), req);
@@ -234,7 +233,7 @@ public class WebServer {
                         outputStream.write(bytes);
                     }
                     return "";
-                });
+                }, services.jsonMapper::writeValueAsString);
             });
         });
 
@@ -272,7 +271,7 @@ public class WebServer {
                         response.redirect("/app");
                         return "";
                     }
-                }, Object::toString);
+                });
                 get("/reset", (request, response) -> {
                     Cookie cookie = Cookie.from(services.tokenCrypter, request);
                     if (cookie == null) {
@@ -283,7 +282,7 @@ public class WebServer {
                         response.redirect("/app");
                         return "";
                     }
-                }, Object::toString);
+                });
                 post("/login", (request, response) -> {
                     String email = request.queryParamsSafe("email");
                     String password = request.queryParamsSafe("password");
@@ -294,13 +293,13 @@ public class WebServer {
                     setLoginCookie(services, response, profile);
                     response.redirect("/app");
                     return "";
-                }, Object::toString);
+                });
                 get("/logout", (request, response) -> {
                     Cookie.remove(response);
                     response.redirect("/app/login");
                     return "";
                 }, Object::toString);
-                get("/signup", (request, response) -> render("signup"), Object::toString);
+                get("/signup", (request, response) -> render("signup"));
                 post("/signup", (request, response) -> {
                     String name = request.queryParamsSafe("name");
                     String email = request.queryParamsSafe("email");
@@ -311,7 +310,7 @@ public class WebServer {
                     cookie.set(services.tokenCrypter, response);
                     response.redirect("/app");
                     return "";
-                }, Object::toString);
+                });
                 get("", (request, response) -> {
                     Cookie cookie = Cookie.from(services.tokenCrypter, request);
                     if (cookie == null) {
@@ -323,7 +322,7 @@ public class WebServer {
                         ctx.put("name", profile.name);
                         return render(ctx, "home");
                     }
-                }, Object::toString);
+                });
 
                 get("/verify/", (request, response) -> {
                     String token = request.queryParams("token");
@@ -338,7 +337,7 @@ public class WebServer {
                         response.redirect(redirect);
                     });
                     return "";
-                }, Objects::toString);
+                });
 
                 path("/devices", () -> {
                     get("/trust/:token", (request, response) -> {
@@ -351,7 +350,7 @@ public class WebServer {
                             ctx.put("token", request.params("token"));
                             return render(ctx, "trust");
                         }
-                    }, Object::toString);
+                    });
                     post("/trust/:id", (request, response) -> {
                         Cookie cookie = Cookie.from(services.tokenCrypter, request);
                         if (cookie == null) {
@@ -367,7 +366,7 @@ public class WebServer {
                             response.redirect("/app");
                             return "";
                         }
-                    }, Object::toString);
+                    });
                 });
             });
         }

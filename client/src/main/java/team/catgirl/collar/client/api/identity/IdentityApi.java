@@ -31,8 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Semi-public API for identity setup. If you are using this, expect that the interface may break.
- * This API is not for the feint of heart.
+ * Identity API used for resolving Collar identities from minecraft player IDs
  */
 public class IdentityApi extends AbstractApi<IdentityListener> {
 

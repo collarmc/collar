@@ -21,6 +21,7 @@ import team.catgirl.collar.tests.junit.CollarTest;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -53,10 +54,10 @@ public class TexturesTest extends CollarTest {
         alicePlayer.collar.textures().requestPlayerTexture(new Player(aliceProfile.get().id, null), TextureType.AVATAR);
         CollarAssert.waitForCondition("Receive the requested texture", () -> theTexture.get() != null);
 
-        AtomicReference<BufferedImage> imageRef = new AtomicReference<>();
+        AtomicReference<Optional<BufferedImage>> imageRef = new AtomicReference<>();
         theTexture.get().loadImage(imageRef::set);
 
-        CollarAssert.waitForCondition("Loaded the texture", () -> imageRef.get() != null);
+        CollarAssert.waitForCondition("Loaded the texture", () -> imageRef.get().isPresent());
     }
 
     @Test
@@ -69,9 +70,9 @@ public class TexturesTest extends CollarTest {
         alicePlayer.collar.textures().requestGroupTexture(group, TextureType.AVATAR);
         CollarAssert.waitForCondition("Receive the requested texture", () -> theTexture.get() != null);
 
-        AtomicReference<BufferedImage> imageRef = new AtomicReference<>();
+        AtomicReference<Optional<BufferedImage>> imageRef = new AtomicReference<>();
         theTexture.get().loadImage(imageRef::set);
 
-        CollarAssert.waitForCondition("Loaded the texture", () -> imageRef.get() != null);
+        CollarAssert.waitForCondition("Loaded the texture", () -> imageRef.get().isPresent());
     }
 }

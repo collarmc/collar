@@ -12,6 +12,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -40,7 +41,7 @@ public final class Texture {
      * Async loads the remote texture as a {@link BufferedImage}
      * @param onLoad accepts null if error or image if successful
      */
-    public void loadImage(Consumer<BufferedImage> onLoad) {
+    public void loadImage(Consumer<Optional<BufferedImage>> onLoad) {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
@@ -49,7 +50,7 @@ public final class Texture {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 LOGGER.log(Level.SEVERE, "Failed to load texture from " + url, e);
-                onLoad.accept(null);
+                onLoad.accept(Optional.empty());
             }
 
             @Override
@@ -62,7 +63,7 @@ public final class Texture {
                     }
                     InputStream is = responseBody.byteStream();
                     BufferedImage image = ImageIO.read(is);
-                    onLoad.accept(image);
+                    onLoad.accept(Optional.of(image));
                 }
             }
         });

@@ -73,7 +73,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
      */
     public CompletableFuture<Optional<Texture>> playerTextureFuture(Player player, TextureType type) {
         CompletableFuture<Optional<Texture>> future = new CompletableFuture<>();
-        textureFutures.put(new TextureKey(player.profile, type), future);
+        textureFutures.put(new TextureKey(player.minecraftPlayer.id, type), future);
         requestPlayerTexture(player, type);
         return future;
     }

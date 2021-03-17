@@ -39,7 +39,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
         if (req instanceof GetTextureRequest) {
             GetTextureRequest request = (GetTextureRequest) req;
             if (request.player != null) {
-                sessions.getSessionStateByOwner(request.player).ifPresent(sessionState -> {
+                sessions.getSessionStateByPlayer(request.player).ifPresent(sessionState -> {
                     try {
                         Texture texture = textures.findTexture(RequestContext.ANON, new FindTextureRequest(sessionState.identity.owner, request.group, request.type)).texture;
                         sender.accept(request.identity, new GetTextureResponse(serverIdentity, texture.id, null, sessionState.toPlayer(), texture.url, texture.type));

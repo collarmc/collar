@@ -28,6 +28,7 @@ public class TextureService {
 
     public static final String FIELD_TEXTURE_ID = "textureId";
     public static final String FIELD_TEXTURE_GROUP = "groupId";
+    public static final String FIELD_ID = "_id";
     public static final String FIELD_BYTES = "bytes";
     public static final String FIELD_TYPE = "type";
     public static final String FIELD_OWNER = "owner";
@@ -35,7 +36,7 @@ public class TextureService {
 
     public TextureService(MongoDatabase db) {
         this.docs = db.getCollection("textures");
-        Map<String, Object> index = Map.of("owner", 1, "type", 1);
+        Map<String, Object> index = Map.of(FIELD_OWNER, 1, FIELD_TYPE, 1);
         this.docs.createIndex(new Document(index));
     }
 
@@ -59,7 +60,7 @@ public class TextureService {
         InsertOneResult insertOneResult = docs.insertOne(new Document(state));
         if (insertOneResult.wasAcknowledged()) {
             BsonObjectId id = Objects.requireNonNull(insertOneResult.getInsertedId()).asObjectId();
-            MongoCursor<Document> cursor = docs.find(eq("_id", id.getValue())).iterator();
+            MongoCursor<Document> cursor = docs.find(eq(FIELD_ID, id.getValue())).iterator();
             if (cursor.hasNext()) {
                 return new CreateTextureResponse(map(cursor.next()));
             } else {

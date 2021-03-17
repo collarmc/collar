@@ -16,6 +16,7 @@ import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.textures.GetTextureRequest;
 import team.catgirl.collar.protocol.textures.GetTextureResponse;
 
+import java.net.URL;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,7 +45,6 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
     public boolean handleResponse(ProtocolResponse resp) {
         if (resp instanceof GetTextureResponse) {
             GetTextureResponse response = (GetTextureResponse) resp;
-            Texture texture = response.texturePath == null ? null : new Texture(response.player, response.group, response.type, UrlBuilder.fromUrl(collar.configuration.collarServerURL).withPath(response.texturePath).toUrl());
             TextureKey textureKey;
             if (response.player != null) {
                 textureKey = new TextureKey(response.player.profile, response.type);
@@ -53,6 +53,8 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
             } else {
                 throw new IllegalStateException("neither group or player texture was returned");
             }
+            URL textureUrl = UrlBuilder.fromUrl(collar.configuration.collarServerURL).withPath(response.texturePath).toUrl();
+            Texture texture = response.texturePath == null ? null : new Texture(response.player, response.group, response.type, textureUrl);
             CompletableFuture<Optional<Texture>> removed = textureFutures.remove(textureKey);
             if (removed != null) {
                 Optional<Texture> optionalTexture = texture == null ? Optional.empty() : Optional.of(texture);

@@ -40,20 +40,26 @@ public class TexturesProtocolHandler extends ProtocolHandler {
             GetTextureRequest request = (GetTextureRequest) req;
             if (request.player != null) {
                 sessions.getSessionStateByPlayer(request.player).ifPresent(sessionState -> {
+                    GetTextureResponse response;
                     try {
                         Texture texture = textures.findTexture(RequestContext.ANON, new FindTextureRequest(sessionState.identity.owner, request.group, request.type)).texture;
-                        sender.accept(request.identity, new GetTextureResponse(serverIdentity, texture.id, null, sessionState.toPlayer(), texture.url, texture.type));
+                        response = new GetTextureResponse(serverIdentity, texture.id, null, sessionState.toPlayer(), texture.url, texture.type);
                     } catch (NotFoundException ignored) {
                         LOGGER.log(Level.INFO, "Could not find texture " + request.type + " for player " + request.player);
+                        response = new GetTextureResponse(serverIdentity, null, null, sessionState.toPlayer(), null, request.type);
                     }
+                    sender.accept(request.identity, response);
                 });
             } else if (request.group != null) {
+                GetTextureResponse response;
                 try {
                     Texture texture = textures.findTexture(RequestContext.ANON, new FindTextureRequest(null, request.group, request.type)).texture;
-                    sender.accept(request.identity, new GetTextureResponse(serverIdentity, texture.id, texture.group, null, texture.url, texture.type));
+                    response = new GetTextureResponse(serverIdentity, texture.id, texture.group, null, texture.url, texture.type);
                 } catch (NotFoundException ignored) {
                     LOGGER.log(Level.INFO, "Could not find texture " + request.type + " for group " + request.group);
+                    response = new GetTextureResponse(serverIdentity, null, request.group, null, null, request.type);
                 }
+                sender.accept(request.identity, response);
             }
             return true;
         }

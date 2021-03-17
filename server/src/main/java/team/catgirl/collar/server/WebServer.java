@@ -278,6 +278,7 @@ public class WebServer {
                         return render("login");
                     } else {
                         RequestContext context = new RequestContext(cookie.profileId);
+                        services.profileStorage.delete(context.owner);
                         services.profiles.updateProfile(context, UpdateProfileRequest.privateIdentityToken(context.owner, new byte[0]));
                         response.redirect("/app");
                         return "";

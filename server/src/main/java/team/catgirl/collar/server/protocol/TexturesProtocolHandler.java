@@ -9,6 +9,7 @@ import team.catgirl.collar.protocol.textures.GetTextureRequest;
 import team.catgirl.collar.protocol.textures.GetTextureResponse;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
+import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.CollarServer;
 import team.catgirl.collar.server.http.RequestContext;
 import team.catgirl.collar.server.services.textures.TextureService;
@@ -39,7 +40,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
         if (req instanceof GetTextureRequest) {
             GetTextureRequest request = (GetTextureRequest) req;
             if (request.player != null) {
-                sessions.getSessionStateByPlayer(request.player).ifPresent(sessionState -> {
+                sessions.getSessionStateByPlayer(request.player).ifPresentOrElse(sessionState -> {
                     GetTextureResponse response;
                     try {
                         Texture texture = textures.findTexture(RequestContext.ANON, new FindTextureRequest(sessionState.identity.owner, request.group, request.type)).texture;
@@ -49,6 +50,12 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                         response = new GetTextureResponse(serverIdentity, null, null, sessionState.toPlayer(), null, request.type);
                     }
                     sender.accept(request.identity, response);
+                }, () -> {
+                    Player player = sessions.findPlayer(req.identity).orElseThrow(() -> new IllegalStateException("could not find the callers player"));
+                    Player requestedPlayer = new Player(null, new MinecraftPlayer(request.player, player.minecraftPlayer.server));
+                    // Send this back to complete any futures on the client
+                    sender.accept(req.identity, new GetTextureResponse(serverIdentity, null, null, requestedPlayer, null, request.type));
+                    LOGGER.log(Level.INFO, "Could not find player " + request.player + " when fetching texture " + request.type);
                 });
             } else if (request.group != null) {
                 GetTextureResponse response;

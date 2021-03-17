@@ -44,7 +44,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
     public boolean handleResponse(ProtocolResponse resp) {
         if (resp instanceof GetTextureResponse) {
             GetTextureResponse response = (GetTextureResponse) resp;
-            Texture texture = new Texture(response.player, response.group, response.type, UrlBuilder.fromUrl(collar.configuration.collarServerURL).withPath(response.texturePath).toUrl());
+            Texture texture = response.texturePath == null ? null : new Texture(response.player, response.group, response.type, UrlBuilder.fromUrl(collar.configuration.collarServerURL).withPath(response.texturePath).toUrl());
             TextureKey textureKey;
             if (response.player != null) {
                 textureKey = new TextureKey(response.player.profile, response.type);
@@ -54,12 +54,15 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
                 throw new IllegalStateException("neither group or player texture was returned");
             }
             CompletableFuture<Optional<Texture>> removed = textureFutures.remove(textureKey);
+            Optional<Texture> optionalTexture = texture == null ? Optional.empty() : Optional.of(texture);
             if (removed != null) {
-                removed.complete(Optional.of(texture));
+                removed.complete(optionalTexture);
             }
-            fireListener("onTextureReceived", texturesListener -> {
-                texturesListener.onTextureReceived(collar, this, texture);
-            });
+            if (texture != null) {
+                fireListener("onTextureReceived", texturesListener -> {
+                    texturesListener.onTextureReceived(collar, this, texture);
+                });
+            }
             return true;
         }
         return false;
@@ -84,7 +87,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
      * @param type the type of texture
      */
     public void requestPlayerTexture(Player player, TextureType type) {
-        sender.accept(new GetTextureRequest(identity(), player.profile, null, type));
+        sender.accept(new GetTextureRequest(identity(), player.minecraftPlayer.id, null, type));
     }
 
     /**

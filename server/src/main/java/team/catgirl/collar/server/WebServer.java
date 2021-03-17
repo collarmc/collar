@@ -239,7 +239,7 @@ public class WebServer {
 
         // Reports server version
         // This contract is forever, please change with care!
-        get("/api/version", (request, response) -> ServerVersion.version());
+        get("/api/version", (request, response) -> ServerVersion.version(), services.jsonMapper::writeValueAsString);
         // Query this route to discover what version of the APIs are supported and how the server is configured
         get("/api/discover", (request, response) -> {
             List<CollarVersion> versions = new ArrayList<>();
@@ -250,7 +250,7 @@ public class WebServer {
             features.add(new CollarFeature("groups:waypoints", true));
             features.add(new CollarFeature("profile:friends", true));
             return new DiscoverResponse(versions, features);
-        });
+        }, services.jsonMapper::writeValueAsString);
 
         // Basic web interface. Not for production use.
         if (configuration.enableWeb) {

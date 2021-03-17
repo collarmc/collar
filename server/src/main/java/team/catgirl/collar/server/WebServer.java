@@ -277,7 +277,7 @@ public class WebServer {
                     if (cookie == null) {
                         return render("login");
                     } else {
-                        RequestContext context = RequestContext.from(request);
+                        RequestContext context = new RequestContext(cookie.profileId);
                         services.profiles.updateProfile(context, UpdateProfileRequest.privateIdentityToken(context.owner, new byte[0]));
                         response.redirect("/app");
                         return "";

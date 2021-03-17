@@ -272,7 +272,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         }
         File file;
         try {
-            file = new File(homeDirectory.security(), "identityStore.json");
+            file = new File(homeDirectory.security(), "identityStore");
         } catch (IOException e) {
             throw new IllegalStateException("Could not create identity store", e);
         }

@@ -54,8 +54,8 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
                 throw new IllegalStateException("neither group or player texture was returned");
             }
             CompletableFuture<Optional<Texture>> removed = textureFutures.remove(textureKey);
-            Optional<Texture> optionalTexture = texture == null ? Optional.empty() : Optional.of(texture);
             if (removed != null) {
+                Optional<Texture> optionalTexture = texture == null ? Optional.empty() : Optional.of(texture);
                 removed.complete(optionalTexture);
             }
             if (texture != null) {

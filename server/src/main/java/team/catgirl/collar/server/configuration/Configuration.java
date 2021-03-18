@@ -117,6 +117,6 @@ public class Configuration {
 
     private static int httpPort() {
         String portValue = System.getenv("PORT");
-        return portValue != null ? Integer.parseInt(portValue) : 3000;
+        return portValue != null ? Integer.parseInt(portValue) : 4000;
     }
 }

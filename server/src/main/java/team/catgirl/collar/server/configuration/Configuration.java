@@ -70,8 +70,7 @@ public class Configuration {
         if (mailgunApiKey == null) {
             throw new IllegalStateException("MAILGUN_API_KEY not set");
         }
-        boolean production = Boolean.parseBoolean(System.getenv("COLLAR_SERVER_PRODUCTION"));
-        AppUrlProvider appUrlProvider = production ? new CollarWebAppUrlProvider("https://www.collarmc.com/") : new DefaultAppUrlProvider("https://dev.api.collarmc.com");
+        AppUrlProvider appUrlProvider = new CollarWebAppUrlProvider(baseUrl);
         return new Configuration(
                 Mongo.database(),
                 appUrlProvider,
@@ -82,7 +81,7 @@ public class Configuration {
                 enableWeb,
                 httpPort(),
                 new MailGunEmail(appUrlProvider, mailgunDomain, mailgunApiKey)
-                );
+        );
     }
 
     public static Configuration defaultConfiguration() {

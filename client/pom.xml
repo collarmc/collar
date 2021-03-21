@@ -18,10 +18,6 @@
             <artifactId>okhttp</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.mikael</groupId>
-            <artifactId>urlbuilder</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.stoyanr</groupId>
             <artifactId>evictor</artifactId>
         </dependency>

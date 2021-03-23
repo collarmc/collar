@@ -5,7 +5,7 @@
     <groupId>team.catgirl.collar</groupId>
     <artifactId>parent</artifactId>
     <packaging>pom</packaging>
-    <version>0.0.3</version>
+    <version>1.0-SNAPSHOT</version>
     <modules>
         <module>server</module>
         <module>client</module>
@@ -17,7 +17,7 @@
 
     <scm>
         <connection>scm:git:git@github.com:team-catgirl/collar.git</connection>
-      <tag>0.0.3</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <properties>

@@ -46,22 +46,22 @@ public final class MinecraftSession {
     /**
      * @param id of the minecraft user
      * @param username of minecraft user
-     * @param serverIP of the minecraft server the client is connected to
+     * @param address of the minecraft server the client is connected to
      * @return minecraft session info
      */
-    public static MinecraftSession noJang(UUID id, String username, String serverIP) {
-        return new MinecraftSession(id, username, serverIP, Mode.NOJANG, null);
+    public static MinecraftSession noJang(UUID id, String username, String address) {
+        return new MinecraftSession(id, username, address, Mode.NOJANG, null);
     }
 
     /**
      * @param id of the minecraft user
      * @param username of minecraft user
-     * @param serverIP of the minecraft server the client is connected to
+     * @param address of the minecraft server the client is connected to
      * @param accessToken of the minecraft session
      * @return minecraft session info
      */
-    public static MinecraftSession mojang(UUID id, String username, String serverIP, String accessToken) {
-        return new MinecraftSession(id, username, serverIP, Mode.MOJANG, accessToken);
+    public static MinecraftSession mojang(UUID id, String username, String address, String accessToken) {
+        return new MinecraftSession(id, username, address, Mode.MOJANG, accessToken);
     }
 
     public enum Mode {

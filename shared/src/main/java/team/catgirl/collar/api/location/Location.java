@@ -65,6 +65,10 @@ public final class Location {
         return x + "," + y + "," + z + " (" + dimension.name() + ")";
     }
 
+    public Point toPoint() {
+        return new Point(x.intValue(), y.intValue());
+    }
+
     @Override
     public String toString() {
         return "[" + x + "," + y + "," + z + "," + dimension + "]";

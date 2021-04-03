@@ -3,24 +3,26 @@ package team.catgirl.collar.sdht;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;
+import com.google.common.io.Files;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import team.catgirl.collar.sdht.cipher.ContentCipher;
 import team.catgirl.collar.sdht.events.AbstractSDHTEvent;
 import team.catgirl.collar.sdht.events.Publisher;
-import team.catgirl.collar.sdht.memory.InMemoryDistributedHashTable;
+import team.catgirl.collar.sdht.impl.DHTNamespaceState;
+import team.catgirl.collar.sdht.impl.DefaultDistributedHashTable;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.TokenGenerator;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.Optional;
 import java.util.UUID;
 
 public class DistributedHashTableTest {
     private DistributedHashTable table;
-    private PublisherImpl publisher;
-    private DistributedHashTableListenerImpl dhtListener;
-    private ContentCipher cipher = new ContentCipher() {
+    private final ContentCipher cipher = new ContentCipher() {
         @Override
         public byte[] crypt(ClientIdentity identity, UUID namespace, Content content) {
             return content.serialize();
@@ -39,9 +41,10 @@ public class DistributedHashTableTest {
 
     @Before
     public void setup() {
-        publisher = new PublisherImpl();
-        dhtListener = new DistributedHashTableListenerImpl();
-        table = new InMemoryDistributedHashTable(publisher, () -> new ClientIdentity(UUID.randomUUID(), null, 1), cipher, dhtListener);
+        PublisherImpl publisher = new PublisherImpl();
+        DistributedHashTableListenerImpl dhtListener = new DistributedHashTableListenerImpl();
+        DHTNamespaceState state = new DHTNamespaceState(Files.createTempDir());
+        table = new DefaultDistributedHashTable(publisher, () -> new ClientIdentity(UUID.randomUUID(), null, 1), cipher, state, dhtListener);
     }
 
     @Test
@@ -65,11 +68,9 @@ public class DistributedHashTableTest {
         Assert.assertEquals("has record in namespace", ImmutableSet.of(record), table.records(namespace));
         Assert.assertEquals("does not have a record in random namespace", ImmutableSet.of(), table.records(UUID.randomUUID()));
 
-        Content removedContent = table.delete(record.key).orElse(null);
-        Assert.assertEquals("Content can be removed", removedContent, content);
-        Assert.assertFalse("content was removed", table.delete(record.key).isPresent());
-        Assert.assertEquals("no records in hash table", ImmutableSet.of(), table.records());
-        Assert.assertEquals("no records in namespace", ImmutableSet.of(), table.records(namespace));
+        Optional<Content> delete = table.delete(record.key);
+        Content removedContent = delete.orElseThrow(() -> new IllegalStateException("not found"));
+        Assert.assertEquals("content was removed", removedContent.state, State.DELETED);
     }
 
     @Test
@@ -77,7 +78,7 @@ public class DistributedHashTableTest {
         String value = "hello world";
         byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
         HashCode hashCode = Hashing.sha256().hashBytes(bytes);
-        Content content = new Content(hashCode.asBytes(), bytes, String.class);
+        Content content = new Content(hashCode.asBytes(), bytes, String.class, new Date().getTime(), State.EXTANT);
         byte[] serialized = content.serialize();
         Content deserializedContent = new Content(serialized);
 

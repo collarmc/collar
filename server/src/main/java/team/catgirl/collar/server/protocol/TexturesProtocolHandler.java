@@ -14,6 +14,7 @@ import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.server.CollarServer;
 import team.catgirl.collar.api.http.RequestContext;
 import team.catgirl.collar.api.profiles.ProfileService;
+import team.catgirl.collar.server.services.profiles.ProfileCache;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.services.textures.TextureService;
 import team.catgirl.collar.server.services.textures.TextureService.GetTextureRequest;
@@ -29,11 +30,11 @@ public class TexturesProtocolHandler extends ProtocolHandler {
     private static final Logger LOGGER = Logger.getLogger(TexturesProtocolHandler.class.getName());
 
     private final ServerIdentity serverIdentity;
-    private final ProfileService profiles;
+    private final ProfileCache profiles;
     private final SessionManager sessions;
     private final TextureService textures;
 
-    public TexturesProtocolHandler(ServerIdentity serverIdentity, ProfileService profiles, SessionManager sessions, TextureService textures) {
+    public TexturesProtocolHandler(ServerIdentity serverIdentity, ProfileCache profiles, SessionManager sessions, TextureService textures) {
         this.serverIdentity = serverIdentity;
         this.profiles = profiles;
         this.sessions = sessions;
@@ -88,7 +89,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
 
     private Texture findDefaultCape(team.catgirl.collar.protocol.textures.GetTextureRequest request, SessionManager.SessionState sessionState) {
         Texture texture;
-        PublicProfile playerProfile = profiles.getProfile(RequestContext.SERVER, ProfileServiceServer.GetProfileRequest.byId(sessionState.identity.owner)).profile.toPublic();
+        PublicProfile playerProfile = profiles.getById(sessionState.identity.owner).orElseThrow(() -> new IllegalStateException("could not find profile " + sessionState.identity.owner)).toPublic();
         if (playerProfile.cape != null) {
             try {
                 texture = textures.getTexture(RequestContext.ANON, new GetTextureRequest(playerProfile.cape.texture, null, null, null)).texture;

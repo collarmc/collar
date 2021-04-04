@@ -13,6 +13,7 @@ import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.api.http.RequestContext;
 import team.catgirl.collar.api.profiles.ProfileService;
+import team.catgirl.collar.server.services.profiles.ProfileCache;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.session.SessionManager;
 
@@ -34,11 +35,11 @@ public final class GroupStore {
     private static final String FIELD_MEMBER_STATE = "state";
     private static final String FIELD_MEMBER_PROFILE_ID = "profileId";
 
-    private final ProfileService profiles;
+    private final ProfileCache profiles;
     private final SessionManager sessions;
     private final MongoCollection<Document> docs;
 
-    public GroupStore(ProfileService profiles, SessionManager sessions, MongoDatabase database) {
+    public GroupStore(ProfileCache profiles, SessionManager sessions, MongoDatabase database) {
         this.profiles = profiles;
         this.sessions = sessions;
         this.docs = database.getCollection("groups");
@@ -163,7 +164,7 @@ public final class GroupStore {
         Player player = sessions.findPlayerByProfile(profileId).orElse(new Player(profileId, null));
         MembershipRole role = MembershipRole.valueOf(document.getString(FIELD_MEMBER_ROLE));
         MembershipState state = MembershipState.valueOf(document.getString(FIELD_MEMBER_STATE));
-        PublicProfile profile = profiles.getProfile(RequestContext.SERVER, ProfileServiceServer.GetProfileRequest.byId(profileId)).profile.toPublic();
+        PublicProfile profile = profiles.getById(profileId).orElseThrow(() -> new IllegalStateException("could not find profile " + profileId)).toPublic();
         return new Member(player, profile, role, state);
     }
 

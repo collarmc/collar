@@ -32,6 +32,7 @@ public final class PacketIO {
     }
 
     public <T> T decode(Identity sender, byte[] bytes, Class<T> type) throws IOException {
+        T decoded;
         try (ByteArrayInputStream is = new ByteArrayInputStream(bytes)) {
             int packetType;
             try (DataInputStream objectStream = new DataInputStream(is)) {
@@ -39,19 +40,20 @@ public final class PacketIO {
                 byte[] remainingBytes = IO.toByteArray(objectStream);
                 if (packetType == MODE_PLAIN) {
                     checkPacketSize(remainingBytes);
-                    return mapper.readValue(remainingBytes, type);
+                    decoded = mapper.readValue(remainingBytes, type);
                 } else if (packetType == MODE_ENCRYPTED) {
                     if (sender == null) {
                         throw new IllegalStateException("Cannot read encrypted packets with no sender");
                     }
                     remainingBytes = cipher.decrypt(sender, remainingBytes);
                     checkPacketSize(remainingBytes);
-                    return mapper.readValue(remainingBytes, type);
+                    decoded = mapper.readValue(remainingBytes, type);
                 } else {
                     throw new IllegalStateException("unknown packet type " + packetType);
                 }
             }
         }
+        return decoded;
     }
 
     public byte[] encodePlain(Object object) throws IOException {

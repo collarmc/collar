@@ -6,6 +6,7 @@ import io.github.bucket4j.Bucket4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
+import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.protocol.PacketIO;
 import team.catgirl.collar.protocol.ProtocolRequest;
@@ -33,6 +34,7 @@ import team.catgirl.collar.server.protocol.*;
 import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.api.profiles.ProfileService.GetProfileRequest;
 import team.catgirl.collar.api.profiles.ProfileService.UpdateProfileRequest;
+import team.catgirl.collar.server.services.profiles.ProfileCache;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -42,6 +44,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
@@ -57,20 +60,22 @@ public class CollarServer {
     private final BiConsumer<ClientIdentity, Player> sessionStopped;
     private final ConcurrentMap<Session, Bucket> buckets = new ConcurrentHashMap<>();
     private final Services services;
+    private final ProfileCache profileCache;
 
     public CollarServer(Services services) {
         this.services = services;
+        this.profileCache = services.profileCache;
         this.protocolHandlers = new ArrayList<>();
         this.sessionStarted = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStarted(identity, player, this::send));
         this.sessionStopped = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStopping(identity, player, this::send));
 
         protocolHandlers.add(new GroupsProtocolHandler(services.groups));
         protocolHandlers.add(new LocationProtocolHandler(services.playerLocations, services.waypoints, services.identityStore.getIdentity()));
-        protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.getIdentity(), services.profiles, services.sessions, services.textures));
+        protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.getIdentity(), services.profileCache, services.sessions, services.textures));
         protocolHandlers.add(new IdentityProtocolHandler(services.sessions, services.identityStore.getIdentity()));
         protocolHandlers.add(new MessagingProtocolHandler(services.sessions, services.groups, services.identityStore.getIdentity()));
         protocolHandlers.add(new SDHTProtocolHandler(services.groups, services.sessions, services.identityStore.getIdentity()));
-        protocolHandlers.add(new FriendsProtocolHandler(services.identityStore.getIdentity(), services.profiles, services.friends, services.sessions));
+        protocolHandlers.add(new FriendsProtocolHandler(services.identityStore.getIdentity(), services.profileCache, services.friends, services.sessions));
     }
 
     @OnWebSocketConnect
@@ -121,21 +126,18 @@ public class CollarServer {
                 String url = services.urlProvider.deviceVerificationUrl(token);
                 sendPlain(session, new RegisterDeviceResponse(serverIdentity, url, token));
             } else {
-                Profile profile;
-                try {
-                    profile = services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(req.identity.id())).profile;
-                } catch (NotFoundException e) {
+                profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
+                    if (processPrivateIdentityToken(profile, request)) {
+                        LOGGER.log(Level.INFO, "Profile found for " + req.identity.id());
+                        sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic()));
+                    } else {
+                        sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
+                    }
+                }, () -> {
                     LOGGER.log(Level.SEVERE, "Profile " + request.identity.id() + " does not exist but the client thinks it should.");
                     sendPlain(session, new IsUntrustedRelationshipResponse(serverIdentity));
                     services.sessions.stopSession(session, "Identity " + request.identity.id() + " was not found", null, null);
-                    return;
-                }
-                if (processPrivateIdentityToken(profile, request)) {
-                    LOGGER.log(Level.INFO, "Profile found for " + req.identity.id());
-                    sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic()));
-                } else {
-                    sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
-                }
+                });
             }
         } else if (req instanceof SendPreKeysRequest) {
             SendPreKeysRequest request = (SendPreKeysRequest) req;

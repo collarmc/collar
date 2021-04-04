@@ -17,6 +17,7 @@ import team.catgirl.collar.api.http.HttpException.ServerErrorException;
 import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.api.http.RequestContext;
 import team.catgirl.collar.api.profiles.ProfileService;
+import team.catgirl.collar.server.services.profiles.ProfileCache;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.session.SessionManager;
 
@@ -33,10 +34,10 @@ public final class FriendsService {
     public static final String FIELD_FRIEND = "friend";
 
     private final MongoCollection<Document> docs;
-    private final ProfileService profiles;
+    private final ProfileCache profiles;
     private final SessionManager sessions;
 
-    public FriendsService(MongoDatabase db, ProfileService profiles, SessionManager sessions) {
+    public FriendsService(MongoDatabase db, ProfileCache profiles, SessionManager sessions) {
         this.docs = db.getCollection("friends");
         this.profiles = profiles;
         Map<String, Object> index = Map.of(
@@ -100,7 +101,7 @@ public final class FriendsService {
     private Friend mapFriend(Document document) {
         UUID owner = document.get(FIELD_OWNER, UUID.class);
         UUID friend = document.get(FIELD_FRIEND, UUID.class);
-        PublicProfile profile = profiles.getProfile(RequestContext.SERVER, ProfileServiceServer.GetProfileRequest.byId(friend)).profile.toPublic();
+        PublicProfile profile = profiles.getById(friend).orElseThrow(() -> new IllegalStateException("could not find profile " + friend)).toPublic();
         return sessions.getSessionStateByOwner(friend)
                 .map(sessionState -> new Friend(owner, profile, Status.ONLINE, Set.of(sessionState.minecraftPlayer.id)))
                 .orElse(new Friend(friend, profile, Status.OFFLINE, Set.of()));

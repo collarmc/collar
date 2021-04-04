@@ -3,6 +3,7 @@ package team.catgirl.collar.server.protocol;
 import org.eclipse.jetty.websocket.api.Session;
 import team.catgirl.collar.api.friends.Friend;
 import team.catgirl.collar.api.friends.Status;
+import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.protocol.ProtocolRequest;
@@ -17,6 +18,7 @@ import team.catgirl.collar.server.services.friends.FriendsService.CreateFriendRe
 import team.catgirl.collar.server.services.friends.FriendsService.DeleteFriendRequest;
 import team.catgirl.collar.server.services.friends.FriendsService.GetFriendsRequest;
 import team.catgirl.collar.api.profiles.ProfileService;
+import team.catgirl.collar.server.services.profiles.ProfileCache;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.session.SessionManager;
 
@@ -33,11 +35,11 @@ public class FriendsProtocolHandler extends ProtocolHandler {
     private static final Logger LOGGER = Logger.getLogger(FriendsProtocolHandler.class.getName());
 
     private final ServerIdentity serverIdentity;
-    private final ProfileService profiles;
+    private final ProfileCache profiles;
     private final FriendsService friends;
     private final SessionManager sessions;
 
-    public FriendsProtocolHandler(ServerIdentity serverIdentity, ProfileService profiles, FriendsService friends, SessionManager sessions) {
+    public FriendsProtocolHandler(ServerIdentity serverIdentity, ProfileCache profiles, FriendsService friends, SessionManager sessions) {
         this.serverIdentity = serverIdentity;
         this.profiles = profiles;
         this.friends = friends;
@@ -89,7 +91,7 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         // Broadcast to the players friends that the player is now offline
         friends.getFriends(RequestContext.from(identity), new GetFriendsRequest(null, identity.owner)).friends.forEach(friend -> {
             sessions.getSessionStateByOwner(friend.owner).ifPresentOrElse(sessionState -> {
-                PublicProfile profile = profiles.getProfile(RequestContext.SERVER, ProfileServiceServer.GetProfileRequest.byId(identity.owner)).profile.toPublic();
+                PublicProfile profile = profiles.getById(identity.owner).orElseThrow(() -> new IllegalStateException("could not find profile " + identity.owner)).toPublic();
                 Friend offline = new Friend(sessionState.identity.owner, profile, Status.OFFLINE, Set.of());
                 LOGGER.log(Level.INFO, "Notifying " + sessionState.identity + " that player " + identity + " is OFFLINE");
                 sender.accept(sessionState.session, new FriendChangedResponse(serverIdentity, offline));

@@ -17,6 +17,7 @@ import team.catgirl.collar.server.services.groups.GroupStore;
 import team.catgirl.collar.server.services.location.PlayerLocationService;
 import team.catgirl.collar.server.services.location.WaypointService;
 import team.catgirl.collar.api.profiles.ProfileService;
+import team.catgirl.collar.server.services.profiles.ProfileCache;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.services.profiles.storage.ProfileStorage;
 import team.catgirl.collar.server.services.textures.TextureService;
@@ -44,6 +45,7 @@ public final class Services {
     public final FriendsService friends;
     public final WaypointService waypoints;
     public final DeviceRegistrationService deviceRegistration;
+    public final ProfileCache profileCache;
 
     public Services(Configuration configuration) {
         this.jsonMapper = Utils.jsonMapper();
@@ -54,16 +56,17 @@ public final class Services {
         this.deviceRegistration = new DeviceRegistrationService(sessions);
         this.passwordHashing = configuration.passwordHashing;
         this.profiles = new ProfileServiceServer(configuration.database, passwordHashing);
+        this.profileCache = new ProfileCache(profiles);
         this.profileStorage = new ProfileStorage(configuration.database);
         this.devices = new DeviceService(configuration.database);
         this.tokenCrypter = configuration.tokenCrypter;
         this.auth = new ServerAuthenticationService(profiles, passwordHashing, tokenCrypter, configuration.email, urlProvider);
         this.minecraftSessionVerifier = configuration.minecraftSessionVerifier;
-        this.groupStore = new GroupStore(profiles, sessions, configuration.database);
-        this.groups = new GroupService(groupStore, identityStore.getIdentity(), profiles, sessions);
-        this.playerLocations = new PlayerLocationService(sessions, profiles, groups, identityStore.getIdentity());
+        this.groupStore = new GroupStore(profileCache, sessions, configuration.database);
+        this.groups = new GroupService(groupStore, identityStore.getIdentity(), profileCache, sessions);
+        this.playerLocations = new PlayerLocationService(sessions, profileCache, groups, identityStore.getIdentity());
         this.textures = new TextureService(configuration.database);
-        this.friends = new FriendsService(configuration.database, profiles, sessions);
+        this.friends = new FriendsService(configuration.database, profileCache, sessions);
         this.waypoints = new WaypointService(profileStorage);
     }
 }

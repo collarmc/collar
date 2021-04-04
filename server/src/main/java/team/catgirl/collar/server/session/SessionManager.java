@@ -48,7 +48,12 @@ public final class SessionManager {
 
     public void identify(Session session, ClientIdentity identity, MinecraftPlayer player) {
         SessionState state = new SessionState(session, identity, player);
-        sessions.put(session, state);
+        sessions.compute(session, (theSession, sessionState) -> {
+            if (sessionState != null) {
+                throw new IllegalStateException("session cannot be identified more than once");
+            }
+            return state;
+        });
     }
 
     public String createDeviceRegistrationToken(@Nonnull Session session) {

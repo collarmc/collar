@@ -86,6 +86,7 @@ public class CollarServer {
     public void closed(Session session, int statusCode, String reason) {
         LOGGER.log(Level.INFO, "Session closed " + statusCode + " " + reason);
         services.sessions.stopSession(session, reason, null, sessionStopped);
+        services.deviceRegistration.onSessionClosed(session);
         buckets.remove(session);
     }
 
@@ -116,7 +117,7 @@ public class CollarServer {
             IdentifyRequest request = (IdentifyRequest)req;
             if (request.identity == null) {
                 LOGGER.log(Level.INFO, "Signaling client to register");
-                String token = services.sessions.createDeviceRegistrationToken(session);
+                String token = services.deviceRegistration.createDeviceRegistrationToken(session);
                 String url = services.urlProvider.deviceVerificationUrl(token);
                 sendPlain(session, new RegisterDeviceResponse(serverIdentity, url, token));
             } else {

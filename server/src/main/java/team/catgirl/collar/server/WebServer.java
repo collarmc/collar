@@ -169,7 +169,7 @@ public class WebServer {
                         DeviceService.TrustDeviceRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.TrustDeviceRequest.class);
                         DeviceService.CreateDeviceResponse device = services.devices.createDevice(context, new DeviceService.CreateDeviceRequest(context.owner, req.deviceName));
                         PublicProfile profile = services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile.toPublic();
-                        services.sessions.onDeviceRegistered(services.identityStore.getIdentity(), profile, req.token, device);
+                        services.deviceRegistration.onDeviceRegistered(services.identityStore.getIdentity(), profile, req.token, device);
                         return new TrustDeviceResponse();
                     }, services.jsonMapper::writeValueAsString);
                     delete("/devices/:id", (request, response) -> {

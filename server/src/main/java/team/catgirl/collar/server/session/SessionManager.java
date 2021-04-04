@@ -35,9 +35,6 @@ public final class SessionManager {
 
     private final ConcurrentMap<Session, SessionState> sessions = new ConcurrentHashMap<>();
 
-    // TODO: move all this to device service records
-    private final ConcurrentMap<String, Session> devicesWaitingToRegister = new ConcurrentHashMap<>();
-
     private final ObjectMapper messagePack;
     private final ServerIdentityStore store;
 
@@ -54,27 +51,6 @@ public final class SessionManager {
             }
             return state;
         });
-    }
-
-    public String createDeviceRegistrationToken(@Nonnull Session session) {
-        String token = TokenGenerator.urlToken();
-        devicesWaitingToRegister.put(token, session);
-        return token;
-    }
-
-    public void onDeviceRegistered(@Nonnull ServerIdentity identity,
-                                   @Nonnull PublicProfile profile,
-                                   @Nonnull String token,
-                                   @Nonnull CreateDeviceResponse resp) {
-        Session session = devicesWaitingToRegister.get(token);
-        if (session == null) {
-            throw new NotFoundException("session does not exist");
-        }
-        try {
-            send(session, null, new DeviceRegisteredResponse(identity, profile, resp.device.deviceId));
-        } catch (IOException e) {
-            throw new ServerErrorException("could not send DeviceRegisteredResponse", e);
-        }
     }
 
     public boolean isIdentified(Session session) {

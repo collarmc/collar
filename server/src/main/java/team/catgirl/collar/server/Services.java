@@ -20,6 +20,7 @@ import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.services.profiles.storage.ProfileStorage;
 import team.catgirl.collar.server.services.textures.TextureService;
+import team.catgirl.collar.server.session.DeviceRegistrationService;
 import team.catgirl.collar.server.session.SessionManager;
 import team.catgirl.collar.utils.Utils;
 
@@ -42,6 +43,7 @@ public final class Services {
     public final TextureService textures;
     public final FriendsService friends;
     public final WaypointService waypoints;
+    public final DeviceRegistrationService deviceRegistration;
 
     public Services(Configuration configuration) {
         this.jsonMapper = Utils.jsonMapper();
@@ -49,6 +51,7 @@ public final class Services {
         this.urlProvider = configuration.appUrlProvider;
         this.identityStore = new SignalServerIdentityStore(configuration.database);
         this.sessions = new SessionManager(packetMapper, identityStore);
+        this.deviceRegistration = new DeviceRegistrationService(sessions);
         this.passwordHashing = configuration.passwordHashing;
         this.profiles = new ProfileServiceServer(configuration.database, passwordHashing);
         this.profileStorage = new ProfileStorage(configuration.database);

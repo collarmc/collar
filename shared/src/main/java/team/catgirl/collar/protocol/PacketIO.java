@@ -6,16 +6,15 @@ import team.catgirl.collar.security.Identity;
 import team.catgirl.collar.utils.IO;
 
 import java.io.*;
-import java.util.logging.Logger;
 
 /**
  * Encodes and decodes packets for/from the wire, handling encryption and different types of signal messages
- * Packet format is int(ENCRYPTEDMODE)+int(SIGNAL_MESSAGE_TYPE)+CiphertextMessage()
- * TODO: stabilize packet format before 1.0
- * TODO: limit the size of packets so people don't do scuffed things
+ * Packet format is int(0x22)+int(version)+int(ENCRYPTEDMODE)+int(SIGNAL_MESSAGE_TYPE)+CiphertextMessage()
  */
 public final class PacketIO {
-
+    /** UwU **/
+    private static final int PACKET_MARKER = 0x22;
+    private static final int VERSION = 1;
     private static final int MODE_PLAIN = 0xc001;
     private static final int MODE_ENCRYPTED = 0xba5ed;
 
@@ -36,6 +35,14 @@ public final class PacketIO {
         try (ByteArrayInputStream is = new ByteArrayInputStream(bytes)) {
             int packetType;
             try (DataInputStream objectStream = new DataInputStream(is)) {
+                int packetMarker = objectStream.readInt();
+                if (packetMarker != PACKET_MARKER) {
+                    throw new IllegalStateException("not a collar packet");
+                }
+                int version = objectStream.readInt();
+                if (version != VERSION) {
+                    throw new IllegalStateException("unknown packet version " + version);
+                }
                 packetType = objectStream.readInt();
                 byte[] remainingBytes = IO.toByteArray(objectStream);
                 if (packetType == MODE_PLAIN) {
@@ -60,6 +67,8 @@ public final class PacketIO {
         byte[] rawBytes = mapper.writeValueAsBytes(object);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream objectStream = new DataOutputStream(outputStream)) {
+                objectStream.writeInt(PACKET_MARKER);
+                objectStream.writeInt(VERSION);
                 objectStream.writeInt(MODE_PLAIN);
                 objectStream.write(rawBytes);
             }
@@ -73,6 +82,8 @@ public final class PacketIO {
         byte[] rawBytes = mapper.writeValueAsBytes(object);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream objectStream = new DataOutputStream(outputStream)) {
+                objectStream.writeInt(PACKET_MARKER);
+                objectStream.writeInt(VERSION);
                 objectStream.writeInt(MODE_ENCRYPTED);
                 if (recipient == null) {
                     throw new IllegalArgumentException("recipient cannot be null when sending MODE_ENCRYPTED packets");

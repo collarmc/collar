@@ -151,11 +151,11 @@
                 <artifactId>jackson-dataformat-msgpack</artifactId>
                 <version>0.8.22</version>
             </dependency>
-            <!-- likewise I am not using some brain dead http library -->
             <dependency>
-                <groupId>com.squareup.okhttp3</groupId>
-                <artifactId>okhttp</artifactId>
-                <version>4.9.1</version>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>4.1.9.Final</version>
+                <scope>provided</scope>
             </dependency>
             <!-- signal stuff -->
             <dependency>

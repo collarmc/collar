@@ -1,13 +1,13 @@
 package team.catgirl.collar.tools;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.OkHttpClient;
-import org.jetbrains.annotations.NotNull;
 import team.catgirl.collar.api.authentication.AuthenticationService;
 import team.catgirl.collar.api.authentication.AuthenticationService.LoginRequest;
 import team.catgirl.collar.api.authentication.AuthenticationService.LoginResponse;
 import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.api.profiles.ProfileService;
+import team.catgirl.collar.api.profiles.ProfileService.GetProfileRequest;
+import team.catgirl.collar.http.HttpClient;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,13 +21,11 @@ import java.util.stream.Collectors;
 
 public final class AdminTool {
 
-    private final OkHttpClient http;
-    private final ObjectMapper mapper;
+    private final HttpClient http;
     private CollarApi client;
     private String configName;
 
-    public AdminTool(ObjectMapper mapper, OkHttpClient http) {
-        this.mapper = mapper;
+    public AdminTool(HttpClient http) {
         this.http = http;
     }
 
@@ -37,7 +35,7 @@ public final class AdminTool {
             return -1;
         }
         this.configName = configName;
-        client = new CollarApi(config.get("apiUrl") + "/api/1/", mapper, http);
+        client = new CollarApi(config.get("apiUrl") + "/api/1/", http);
         LoginResponse response = client.login(new LoginRequest(config.get("email"), config.get("password")));
         client.setToken(response.token);
         System.out.println("logged in as " + response.profile.name);
@@ -54,7 +52,7 @@ public final class AdminTool {
     }
 
     public void resetIdentity(String email) {
-        Profile profile = client.getProfile(ProfileService.GetProfileRequest.byEmail(email)).profile;
+        Profile profile = client.getProfile(GetProfileRequest.byEmail(email)).profile;
         client.updateProfile(ProfileService.UpdateProfileRequest.privateIdentityToken(profile.id, new byte[0]));
         System.out.println("Reset identity for " + email);
     }
@@ -130,7 +128,6 @@ public final class AdminTool {
         return properties;
     }
 
-    @NotNull
     private static File getFile() {
         String home = System.getenv("HOME");
         if (home == null) {

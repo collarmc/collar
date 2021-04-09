@@ -1,46 +1,33 @@
 package team.catgirl.collar.client.utils;
 
-import okhttp3.OkHttpClient;
+import io.netty.handler.ssl.SslContextBuilder;
+import team.catgirl.collar.http.HttpClient;
 
-import javax.net.ssl.*;
-import java.security.KeyStore;
+import java.io.IOException;
+import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
+import java.security.cert.CertificateException;
 
 public final class Http {
 
-    private static final OkHttpClient http;
-    private static final OkHttpClient external = new OkHttpClient();
+    private static final HttpClient collar;
+    private static final HttpClient external;
 
     static {
-        SSLContext sslContext;
         try {
-            sslContext = Certificates.load();
-        } catch (Throwable e) {
-            throw new IllegalStateException(e);
+            collar = new HttpClient(SslContextBuilder.forClient().trustManager(Certificates.load()).build());
+        } catch (NoSuchAlgorithmException | KeyStoreException | IOException | CertificateException | KeyManagementException e) {
+            throw new RuntimeException(e);
         }
-        final SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-        TrustManagerFactory tmf;
-        try {
-            tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            tmf.init((KeyStore) null);
-        } catch (NoSuchAlgorithmException | KeyStoreException e) {
-            throw new IllegalStateException("could not load TrustManagerFactory", e);
-        }
-        TrustManager trustManager = Arrays.stream(tmf.getTrustManagers())
-                .filter(candidate -> candidate instanceof X509TrustManager)
-                .findFirst().orElseThrow(() -> new IllegalStateException("could not find X509TrustManager"));
-        http = new OkHttpClient.Builder()
-                .sslSocketFactory(sslSocketFactory, (X509TrustManager) trustManager)
-                .build();
+        external = new HttpClient();
     }
 
-    public static OkHttpClient collar() {
-        return http;
+    public static HttpClient collar() {
+        return collar;
     }
 
-    public static OkHttpClient external() {
+    public static HttpClient external() {
         return external;
     }
 

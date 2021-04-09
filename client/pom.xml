@@ -14,12 +14,12 @@
             <artifactId>shared</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.stoyanr</groupId>
             <artifactId>evictor</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -87,6 +87,18 @@
                         <relocation>
                             <pattern>com.fasterxml</pattern>
                             <shadedPattern>team.catgirl.collar.libs.org.fasterxml</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>edu.umd.cs.findbugs</pattern>
+                            <shadedPattern>team.catgirl.collar.libs.edu.umd.cs.findbugs</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>net.jcip.annotations</pattern>
+                            <shadedPattern>team.catgirl.collar.libs.net.jcip.annotations</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>javax.annotation</pattern>
+                            <shadedPattern>team.catgirl.collar.libs.javax.annotation</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>name.neuhalfen.projects</pattern>

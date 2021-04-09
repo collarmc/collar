@@ -1,20 +1,20 @@
 package team.catgirl.collar.client.api.textures;
 
-import okhttp3.*;
-import org.jetbrains.annotations.NotNull;
+import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.api.textures.TextureType;
 import team.catgirl.collar.client.utils.Http;
-import team.catgirl.collar.security.mojang.MinecraftPlayer;
-import team.catgirl.collar.utils.Utils;
+import team.catgirl.collar.http.Request;
+import team.catgirl.collar.http.Response;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -43,29 +43,14 @@ public final class Texture {
      * @param onLoad accepts null if error or image if successful
      */
     public void loadImage(Consumer<Optional<BufferedImage>> onLoad) {
-        Request request = new Request.Builder()
-                .url(url)
-                .build();
-
-        Http.collar().newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+        ForkJoinPool.commonPool().submit(() -> {
+            try {
+                byte[] bytes = Http.collar().execute(Request.url(url).get(), Response.bytes());
+                BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
+                onLoad.accept(Optional.of(image));
+            } catch (Throwable e) {
                 LOGGER.log(Level.SEVERE, "Failed to load texture from " + url, e);
                 onLoad.accept(Optional.empty());
-            }
-
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                try (ResponseBody responseBody = response.body()) {
-                    if (responseBody == null || !response.isSuccessful()) {
-                        LOGGER.log(Level.SEVERE, "Failed to load texture from " + url);
-                        onLoad.accept(null);
-                        return;
-                    }
-                    InputStream is = responseBody.byteStream();
-                    BufferedImage image = ImageIO.read(is);
-                    onLoad.accept(Optional.of(image));
-                }
             }
         });
     }

@@ -28,8 +28,9 @@
             <artifactId>brigadier</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.squareup.okhttp3</groupId>
-            <artifactId>okhttp</artifactId>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 

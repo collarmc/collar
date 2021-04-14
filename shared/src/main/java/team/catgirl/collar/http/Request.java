@@ -18,15 +18,37 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * HTTP request
+ */
 public final class Request {
 
+    /**
+     * Method of the request
+     */
     public final HttpMethod method;
+
+    /**
+     * URI of the request
+     */
     public final URI uri;
+
+    /**
+     * Content to post as JSON body
+     */
     public final Object content;
+
+    /**
+     * Request headers
+     */
     public final Map<String, String> headers;
+
+    /**
+     * Content to post as form body
+     */
     public final Map<String, String> form;
 
-    public Request(HttpMethod method, URI uri, Object content, Map<String, String> headers, Map<String, String> form) {
+    private Request(HttpMethod method, URI uri, Object content, Map<String, String> headers, Map<String, String> form) {
         this.method = method;
         this.uri = uri;
         this.content = content;

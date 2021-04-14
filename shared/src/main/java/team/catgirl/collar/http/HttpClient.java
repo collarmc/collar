@@ -23,6 +23,8 @@ import java.util.concurrent.TimeUnit;
  */
 public final class HttpClient implements Closeable {
 
+    private static final int PORT_HTTP = 80;
+    private static final int PORT_HTTPS = 443;
     private final EventLoopGroup group;
     private final SslContext sslContext;
 
@@ -180,9 +182,9 @@ public final class HttpClient implements Closeable {
         int port = request.uri.getPort();
         if (port == -1) {
             if (request.isSecure()) {
-                port = 444;
+                port = PORT_HTTPS;
             } else {
-                port = 80;
+                port = PORT_HTTP;
             }
         }
         return port;

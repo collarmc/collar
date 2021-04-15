@@ -300,6 +300,7 @@ public final class Collar {
      * @return player
      */
     public Player player() {
+        assertConnected();
         return new Player(identity().id(), configuration.sessionSupplier.get().toPlayer());
     }
 

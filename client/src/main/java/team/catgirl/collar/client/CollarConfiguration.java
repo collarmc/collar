@@ -28,6 +28,7 @@ public final class CollarConfiguration {
     public final CollarListener listener;
     public final Ticks ticks;
     public final String yggdrasilBaseUrl;
+    public final boolean debugMode;
 
     private CollarConfiguration(Supplier<Location> playerLocation,
                                 Supplier<MinecraftSession> sessionSupplier,
@@ -44,6 +45,7 @@ public final class CollarConfiguration {
         this.listener = listener;
         this.ticks = ticks;
         this.yggdrasilBaseUrl = yggdrasilBaseUrl;
+        this.debugMode = homeDirectory.debugFile().exists();
     }
 
     public final static class Builder {

@@ -61,6 +61,10 @@ public class WebServer {
         // Services
         Services services = new Services(configuration);
 
+        // Setup WebSockets
+        webSocketIdleTimeoutMillis((int) TimeUnit.SECONDS.toMillis(60));
+        webSocket("/api/1/listen", new CollarServer(services));
+
         // Always serialize objects returned as JSON
         exception(HttpException.class, (e, request, response) -> {
             response.status(e.code);
@@ -82,15 +86,6 @@ public class WebServer {
             LOGGER.log(Level.SEVERE, request.pathInfo(), e);
         });
 
-        // TODO: all routes should go into their own class/package
-        // Setup WebSockets
-        webSocketIdleTimeoutMillis((int) TimeUnit.SECONDS.toMillis(60));
-
-        // TODO: all routes should go into their own class/package
-        // Setup WebSockets
-        webSocketIdleTimeoutMillis((int) TimeUnit.SECONDS.toMillis(60));
-        webSocket("/api/1/listen", new CollarServer(services));
-
         staticFiles.location("/public");
 
         // Setup CORS
@@ -108,6 +103,7 @@ public class WebServer {
         }, Object::toString);
 
         before((request, response) -> {
+            response.header("Server", "Collar");
             response.header("Access-Control-Allow-Origin", "*");
             response.header("Access-Control-Allow-Credentials", "true");
         });
@@ -292,23 +288,6 @@ public class WebServer {
         if (!request.requestMethod().equals("OPTIONS")) {
             from(request).assertNotAnonymous();
         }
-    }
-
-    private void setLoginCookie(Services services, Response response, Profile profile) throws IOException {
-        Cookie cookie = new Cookie(profile.id, new Date().getTime() + TimeUnit.DAYS.toMillis(1));
-        cookie.set(services.tokenCrypter, response);
-    }
-
-    private void setErrorResponse(Exception e, Response response) {
-        try {
-            response.body(Utils.jsonMapper().writeValueAsString(new ErrorResponse(e.getMessage())));
-        } catch (JsonProcessingException jsonProcessingException) {
-            LOGGER.log(Level.SEVERE, "Could not create error response ", e);
-        }
-    }
-
-    private static String render(Map<String, Object> context, String templatePath) {
-        return TEMPLATE_ENGINE.render(new ModelAndView(context, templatePath));
     }
 
     /**

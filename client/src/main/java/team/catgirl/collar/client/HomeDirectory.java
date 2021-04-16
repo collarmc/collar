@@ -19,12 +19,28 @@ public final class HomeDirectory {
         return createDirectory("security");
     }
 
+    /**
+     * @return directory containing collar profile information
+     * @throws IOException if directories could not be created
+     */
     public File profile() throws IOException {
         return createDirectory("profile");
     }
 
+    /**
+     * @return directory containing collar profile information
+     * @throws IOException if directories could not be created
+     */
     public File dhtState() throws IOException {
         return createDirectory("dht");
+    }
+
+    /**
+     * If this file exists, it enables development features that are used for debugging
+     * @return the debug file
+     */
+    public File debugFile() {
+        return new File(collarHome, "debug");
     }
 
     private File createDirectory(String dht) throws IOException {

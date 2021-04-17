@@ -64,16 +64,20 @@ public class ServerAuthenticationService implements AuthenticationService {
             throw new HttpException.ConflictException("user already exists");
         } catch (NotFoundException e) {
             Profile profile = profiles.createProfile(context, new CreateProfileRequest(req.email.toLowerCase(), req.password, req.name)).profile;
-            VerificationToken apiToken = new VerificationToken(profile.id, new Date().getTime() + TimeUnit.HOURS.toMillis(24));
-            String url;
-            try {
-                url = urlProvider.emailVerificationUrl(apiToken.serialize(tokenCrypter));
-            } catch (IOException ioException) {
-                throw new ServerErrorException("token could not be serialized", e);
-            }
-            email.send(profile, "Verify your new Collar account", "verify-account", Map.of("verificationUrl", url));
+            sendVerificationEmail(profile);
             return new CreateAccountResponse(profile.toPublic(), tokenFrom(profile));
         }
+    }
+
+    private void sendVerificationEmail(Profile profile) {
+        VerificationToken apiToken = new VerificationToken(profile.id, new Date().getTime() + TimeUnit.HOURS.toMillis(24));
+        String url;
+        try {
+            url = urlProvider.emailVerificationUrl(apiToken.serialize(tokenCrypter));
+        } catch (IOException ioException) {
+            throw new ServerErrorException("token could not be serialized", e);
+        }
+        email.send(profile, "Verify your new Collar account", "verify-account", Map.of("verificationUrl", url));
     }
 
     @Override
@@ -93,6 +97,9 @@ public class ServerAuthenticationService implements AuthenticationService {
             throw new UnauthorisedException("login failed");
         }
         if (passwordHashing.verify(req.password.toCharArray(), Objects.requireNonNull(profile.hashedPassword).toCharArray())) {
+            if (!profile.emailVerified) {
+                sendVerificationEmail(profile);
+            }
             return new LoginResponse(profile, tokenFrom(profile));
         } else {
             throw new UnauthorisedException("login failed");
@@ -123,7 +130,7 @@ public class ServerAuthenticationService implements AuthenticationService {
         } catch (IOException e) {
             throw new ServerErrorException("token could not be serialized", e);
         }
-        email.send(profile, "Verify your new Collar account", "verify-account", Map.of("resetPasswordUrl", url));
+        email.send(profile, "Reset your Collar Password", "reset-password", Map.of("resetPasswordUrl", url));
         return new RequestPasswordResetResponse();
     }
 

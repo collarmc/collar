@@ -74,7 +74,7 @@ public class ServerAuthenticationService implements AuthenticationService {
         String url;
         try {
             url = urlProvider.emailVerificationUrl(apiToken.serialize(tokenCrypter));
-        } catch (IOException ioException) {
+        } catch (IOException e) {
             throw new ServerErrorException("token could not be serialized", e);
         }
         email.send(profile, "Verify your new Collar account", "verify-account", Map.of("verificationUrl", url));

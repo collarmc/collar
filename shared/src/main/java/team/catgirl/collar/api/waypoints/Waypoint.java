@@ -1,6 +1,7 @@
 package team.catgirl.collar.api.waypoints;
 
 import team.catgirl.collar.api.location.Location;
+import team.catgirl.collar.utils.IO;
 
 import java.io.*;
 import java.util.Objects;
@@ -30,14 +31,9 @@ public final class Waypoint {
                 int serializedVersion = dataStream.readInt();
                 switch (serializedVersion) {
                     case 1:
-                        id = UUID.fromString(dataStream.readUTF());
+                        id = IO.readUUID(dataStream);
                         name = dataStream.readUTF();
-                        int locSize = dataStream.readInt();
-                        byte[] locationBytes = new byte[locSize];
-                        for (int i = 0; i < locSize; i++) {
-                            locationBytes[i] = dataStream.readByte();
-                        }
-                        location = new Location(locationBytes);
+                        location = new Location(IO.readBytes(dataStream));
                         server = dataStream.readUTF();
                         break;
                     default:
@@ -54,12 +50,9 @@ public final class Waypoint {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream dataStream = new DataOutputStream(outputStream)) {
                 dataStream.writeInt(VERSION);
-                dataStream.writeUTF(id.toString());
+                IO.writeUUID(dataStream, id);
                 dataStream.writeUTF(name);
-                dataStream.writeInt(locationBytes.length);
-                for (byte locationByte : locationBytes) {
-                    dataStream.writeByte(locationByte);
-                }
+                IO.writeBytes(dataStream, locationBytes);
                 dataStream.writeUTF(server);
             }
             return outputStream.toByteArray();

@@ -148,13 +148,11 @@ public final class GroupService {
             MembershipState state = req.state;
             MembershipRole role = group.getRole(sendingPlayer);
             group = store.updateMember(group.id, sendingPlayer.profile, role, state).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
-            // Send a response back to the player accepting membership, with the distribution keys
-            response.add(req.identity, new JoinGroupResponse(serverIdentity, group.id, req.identity, sendingPlayer, req.keys));
-            // Let everyone else in the group know that this identity has accepted
+            // Let everyone in the group (including sender) know that they have accepted
             Group finalGroup = group;
             BatchProtocolResponse updates = createMemberMessages(
                     group,
-                    member -> member.membershipState.equals(MembershipState.ACCEPTED) && !member.player.equals(sendingPlayer),
+                    member -> member.membershipState.equals(MembershipState.ACCEPTED),
                     ((identity, player, updatedMember) -> new JoinGroupResponse(serverIdentity, finalGroup.id, req.identity, player, req.keys)));
             response.concat(updates);
             updateState(group);

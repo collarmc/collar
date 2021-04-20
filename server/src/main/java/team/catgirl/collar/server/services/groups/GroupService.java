@@ -154,7 +154,7 @@ public final class GroupService {
             Group finalGroup = group;
             BatchProtocolResponse updates = createMemberMessages(
                     group,
-                    member -> member.membershipState.equals(MembershipState.ACCEPTED),
+                    member -> member.membershipState.equals(MembershipState.ACCEPTED) && !member.player.equals(sendingPlayer),
                     ((identity, player, updatedMember) -> new JoinGroupResponse(serverIdentity, finalGroup.id, req.identity, player, req.keys)));
             response.concat(updates);
             updateState(group);

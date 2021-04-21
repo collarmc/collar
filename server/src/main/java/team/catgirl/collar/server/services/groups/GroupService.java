@@ -97,7 +97,7 @@ public final class GroupService {
     }
 
     /**
-     * Set the player as online
+     * Sends responses to rejoin any groups and re-issue invitations
      * @param identity of the joining player
      * @param player the joining player
      * @return responses to send
@@ -105,7 +105,12 @@ public final class GroupService {
     public ProtocolResponse playerIsOnline(ClientIdentity identity, Player player) {
         BatchProtocolResponse response = new BatchProtocolResponse(serverIdentity);
         store.findGroupsContaining(player).forEach(group -> {
-            response.add(identity, new RejoinGroupResponse(serverIdentity, group.id));
+            group.findMember(player).ifPresent(member -> {
+                switch (member.membershipState) {
+                    case PENDING -> response.add(identity, new GroupInviteResponse(serverIdentity, group.id, group.name, group.type, null));
+                    case ACCEPTED -> response.add(identity, new RejoinGroupResponse(serverIdentity, group.id));
+                }
+            });
         });
         return response;
     }

@@ -1,5 +1,6 @@
 package team.catgirl.collar.tests.groups;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import team.catgirl.collar.api.groups.Group;
@@ -129,6 +130,36 @@ public class GroupsTest extends CollarTest {
             Member bobMember = group.members.stream().filter(member -> member.player.profile.equals(bobProfile.get().id)).findFirst().orElseThrow();
             return bobMember.player.minecraftPlayer == null;
         });
+    }
+
+    @Test
+    public void pendingInvitationsResentWhenComingOnline() {
+        // Alice creates a new group with bob and eve
+        alicePlayer.collar.groups().create("cute group", GroupType.PARTY, List.of(bobPlayerId));
+
+        // Check that Eve and Bob received their invitations
+        waitForCondition("Bob invite received", () -> bobListener.invitation != null);
+        Group theGroup = alicePlayer.collar.groups().all().get(0);
+        Assert.assertEquals(theGroup.id, bobListener.invitation.group);
+
+        bobPlayer.collar.disconnect();
+
+        waitForCondition("disconnected", () -> bobPlayer.collar.getState() == Collar.State.DISCONNECTED);
+
+        waitForCondition("bob should not have minecraft player", () -> {
+            Group group = alicePlayer.collar.groups().findGroupById(theGroup.id).orElse(null);
+            if (group == null) return false;
+            Member bobMember = group.members.stream().filter(member -> member.player.profile.equals(bobProfile.get().id)).findFirst().orElseThrow();
+            return bobMember.player.minecraftPlayer == null;
+        });
+
+        bobPlayer.collar.connect();
+
+        waitForCondition("bob connected", () -> bobPlayer.collar.getState() == Collar.State.CONNECTED, 30, TimeUnit.SECONDS);
+
+        // Check that Eve and Bob received their invitations
+        waitForCondition("Bob invite received", () -> bobListener.invitation != null);
+        Assert.assertEquals(theGroup.id, bobListener.invitation.group);
     }
 
     @Test

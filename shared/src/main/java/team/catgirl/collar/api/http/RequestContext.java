@@ -2,7 +2,6 @@ package team.catgirl.collar.api.http;
 
 import com.google.common.collect.ImmutableSet;
 import team.catgirl.collar.api.http.HttpException.UnauthorisedException;
-import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.api.profiles.Role;
 import team.catgirl.collar.security.ClientIdentity;
 

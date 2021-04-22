@@ -13,7 +13,6 @@ import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SignalProtocolStore;
 import org.whispersystems.libsignal.util.guava.Optional;
-import team.catgirl.collar.protocol.PacketIO;
 import team.catgirl.collar.security.Identity;
 import team.catgirl.collar.security.cipher.Cipher;
 import team.catgirl.collar.utils.IO;

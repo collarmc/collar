@@ -1,13 +1,14 @@
 package team.catgirl.collar.server;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import team.catgirl.collar.api.authentication.AuthenticationService;
+import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.server.configuration.Configuration;
 import team.catgirl.collar.server.http.AppUrlProvider;
 import team.catgirl.collar.server.security.ServerIdentityStore;
 import team.catgirl.collar.server.security.hashing.PasswordHashing;
 import team.catgirl.collar.server.security.mojang.MinecraftSessionVerifier;
 import team.catgirl.collar.server.security.signal.SignalServerIdentityStore;
-import team.catgirl.collar.api.authentication.AuthenticationService;
 import team.catgirl.collar.server.services.authentication.ServerAuthenticationService;
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
 import team.catgirl.collar.server.services.devices.DeviceService;
@@ -16,7 +17,6 @@ import team.catgirl.collar.server.services.groups.GroupService;
 import team.catgirl.collar.server.services.groups.GroupStore;
 import team.catgirl.collar.server.services.location.PlayerLocationService;
 import team.catgirl.collar.server.services.location.WaypointService;
-import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.server.services.profiles.ProfileCache;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.services.profiles.storage.ProfileStorage;

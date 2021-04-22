@@ -5,11 +5,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import team.catgirl.collar.api.http.RequestContext;
+import team.catgirl.collar.api.profiles.Profile;
+import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.server.junit.MongoDatabaseTestRule;
 import team.catgirl.collar.server.security.hashing.PasswordHashing;
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
-import team.catgirl.collar.api.profiles.Profile;
-import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 
 import java.util.Date;

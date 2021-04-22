@@ -1,7 +1,6 @@
 package team.catgirl.collar.api.waypoints;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import team.catgirl.collar.security.ClientIdentity;
 
 import java.util.UUID;
 

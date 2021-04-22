@@ -10,7 +10,9 @@ import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.protocol.friends.*;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;

@@ -1,11 +1,9 @@
 package team.catgirl.collar.server.services.location;
 
 import team.catgirl.collar.api.waypoints.EncryptedWaypoint;
-import team.catgirl.collar.api.waypoints.Waypoint;
 import team.catgirl.collar.protocol.waypoints.CreateWaypointRequest;
 import team.catgirl.collar.protocol.waypoints.GetWaypointsRequest;
 import team.catgirl.collar.protocol.waypoints.RemoveWaypointRequest;
-import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.server.services.profiles.storage.ProfileStorage;
 import team.catgirl.collar.server.services.profiles.storage.ProfileStorage.Blob;
 

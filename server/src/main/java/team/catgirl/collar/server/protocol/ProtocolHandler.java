@@ -28,7 +28,7 @@ public abstract class ProtocolHandler {
      * @param player for which the session was started
      * @param sender to send responses to clients
      */
-    public void onSessionStarted(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) {};
+    public void onSessionStarted(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) {}
 
     /**
      * Fired before the session is stopped and all session state information is removed from {@link team.catgirl.collar.server.session.SessionManager}
@@ -36,5 +36,5 @@ public abstract class ProtocolHandler {
      * @param player for which the sesssion is being stopped
      * @param sender to send responses to clients
      */
-    public void onSessionStopping(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) {};
+    public void onSessionStopping(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) {}
 }

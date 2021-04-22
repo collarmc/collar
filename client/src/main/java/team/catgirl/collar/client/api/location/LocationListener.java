@@ -17,7 +17,7 @@ public interface LocationListener extends ApiListener {
      * @param player that is sharing their location
      * @param location of the player
      */
-    default void onLocationUpdated(Collar collar, LocationApi locationApi, Player player, Location location) {};
+    default void onLocationUpdated(Collar collar, LocationApi locationApi, Player player, Location location) {}
 
     /**
      * Fired when a waypoint was created
@@ -26,7 +26,7 @@ public interface LocationListener extends ApiListener {
      * @param group the waypoint belong to or null if private waypoint
      * @param waypoint that was removed
      */
-    default void onWaypointCreated(Collar collar, LocationApi locationApi, Group group, Waypoint waypoint) {};
+    default void onWaypointCreated(Collar collar, LocationApi locationApi, Group group, Waypoint waypoint) {}
 
     /**
      * Fired when a waypoint was removed
@@ -35,7 +35,7 @@ public interface LocationListener extends ApiListener {
      * @param group the waypoint belong to or null if private waypoint
      * @param waypoint that was removed
      */
-    default void onWaypointRemoved(Collar collar, LocationApi locationApi, Group group, Waypoint waypoint) {};
+    default void onWaypointRemoved(Collar collar, LocationApi locationApi, Group group, Waypoint waypoint) {}
 
     /**
      * Fired when private waypoints are received from the server.
@@ -43,7 +43,7 @@ public interface LocationListener extends ApiListener {
      * @param locationApi api
      * @param privateWaypoints received
      */
-    default void onPrivateWaypointsReceived(Collar collar, LocationApi locationApi, Set<Waypoint> privateWaypoints) {};
+    default void onPrivateWaypointsReceived(Collar collar, LocationApi locationApi, Set<Waypoint> privateWaypoints) {}
 
     /**
      * Fired when the player starts sharing their location
@@ -51,7 +51,7 @@ public interface LocationListener extends ApiListener {
      * @param locationApi api
      * @param group location being shared with
      */
-    default void onStartedSharingLocation(Collar collar, LocationApi locationApi, Group group) {};
+    default void onStartedSharingLocation(Collar collar, LocationApi locationApi, Group group) {}
 
     /**
      * Fired when the player stops sharing their location
@@ -59,5 +59,5 @@ public interface LocationListener extends ApiListener {
      * @param locationApi api
      * @param group location being shared with
      */
-    default void onStoppedSharingLocation(Collar collar, LocationApi locationApi, Group group) {};
+    default void onStoppedSharingLocation(Collar collar, LocationApi locationApi, Group group) {}
 }

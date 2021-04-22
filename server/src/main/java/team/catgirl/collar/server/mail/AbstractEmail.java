@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class AbstractEmail implements Email {
-    private HandlebarsTemplateEngine handlebars = new HandlebarsTemplateEngine("/emails");
+    private final HandlebarsTemplateEngine handlebars = new HandlebarsTemplateEngine("/emails");
     private final AppUrlProvider urlProvider;
 
     public AbstractEmail(AppUrlProvider urlProvider) {

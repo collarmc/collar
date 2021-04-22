@@ -61,7 +61,7 @@ public final class Request {
      * @return secure
      */
     public boolean isSecure() {
-        return "https".equals(uri.getScheme().toLowerCase());
+        return "https".equalsIgnoreCase(uri.getScheme());
     }
 
     HttpRequest create() {

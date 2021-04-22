@@ -501,7 +501,7 @@ public final class Collar {
         CONNECTING,
         CONNECTED
     }
-;
+
     static {
         Crypto.removeCryptographyRestrictions();
     }

@@ -13,5 +13,5 @@ public interface IdentityListener extends ApiListener {
      * @param identityStore identity store for the client
      * @param identity trusted
      */
-    default void onIdentityTrusted(Collar collar, IdentityApi api, ClientIdentityStore identityStore, ClientIdentity identity) {};
+    default void onIdentityTrusted(Collar collar, IdentityApi api, ClientIdentityStore identityStore, ClientIdentity identity) {}
 }

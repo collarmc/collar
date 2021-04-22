@@ -11,7 +11,7 @@ public interface FriendsListener extends ApiListener {
      * @param friendsApi friends
      * @param friend changed
      */
-    default void onFriendChanged(Collar collar, FriendsApi friendsApi, Friend friend) {};
+    default void onFriendChanged(Collar collar, FriendsApi friendsApi, Friend friend) {}
 
     /**
      * Fired when a friend was added
@@ -19,7 +19,7 @@ public interface FriendsListener extends ApiListener {
      * @param friendsApi friends
      * @param added added
      */
-    default void onFriendAdded(Collar collar, FriendsApi friendsApi, Friend added) {};
+    default void onFriendAdded(Collar collar, FriendsApi friendsApi, Friend added) {}
 
     /**
      * Fired when a friend was removed
@@ -27,5 +27,5 @@ public interface FriendsListener extends ApiListener {
      * @param friendsApi friends
      * @param removed added
      */
-    default void onFriendRemoved(Collar collar, FriendsApi friendsApi, Friend removed) {};
+    default void onFriendRemoved(Collar collar, FriendsApi friendsApi, Friend removed) {}
 }

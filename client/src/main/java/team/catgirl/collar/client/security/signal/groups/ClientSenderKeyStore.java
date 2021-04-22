@@ -2,11 +2,9 @@ package team.catgirl.collar.client.security.signal.groups;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.whispersystems.libsignal.IdentityKeyPair;
 import org.whispersystems.libsignal.groups.SenderKeyName;
 import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
 import org.whispersystems.libsignal.groups.state.SenderKeyStore;
-import org.whispersystems.libsignal.util.KeyHelper;
 import team.catgirl.collar.client.HomeDirectory;
 
 import java.io.File;

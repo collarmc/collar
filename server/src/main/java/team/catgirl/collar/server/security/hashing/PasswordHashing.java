@@ -2,7 +2,6 @@ package team.catgirl.collar.server.security.hashing;
 
 import at.favre.lib.crypto.bcrypt.BCrypt;
 
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 public class PasswordHashing {

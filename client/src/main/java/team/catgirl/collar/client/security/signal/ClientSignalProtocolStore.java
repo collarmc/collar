@@ -19,7 +19,6 @@ import team.catgirl.collar.client.security.signal.groups.ClientSenderKeyStore;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.utils.Utils;
 
-import java.awt.event.AdjustmentEvent;
 import java.io.IOException;
 import java.util.List;
 import java.util.StringTokenizer;

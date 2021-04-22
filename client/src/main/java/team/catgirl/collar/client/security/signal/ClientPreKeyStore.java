@@ -6,7 +6,6 @@ import org.whispersystems.libsignal.InvalidKeyIdException;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.PreKeyStore;
 import team.catgirl.collar.client.HomeDirectory;
-import team.catgirl.collar.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;

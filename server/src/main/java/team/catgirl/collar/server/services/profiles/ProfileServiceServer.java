@@ -14,12 +14,12 @@ import team.catgirl.collar.api.http.HttpException.BadRequestException;
 import team.catgirl.collar.api.http.HttpException.ConflictException;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
 import team.catgirl.collar.api.http.HttpException.ServerErrorException;
+import team.catgirl.collar.api.http.RequestContext;
 import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.api.profiles.Role;
 import team.catgirl.collar.api.profiles.TexturePreference;
 import team.catgirl.collar.server.security.hashing.PasswordHashing;
-import team.catgirl.collar.api.http.RequestContext;
 
 import java.util.*;
 import java.util.stream.Collectors;

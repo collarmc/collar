@@ -1,9 +1,9 @@
 package team.catgirl.collar.server.services.location;
 
 import team.catgirl.collar.api.groups.MemberSource;
-import team.catgirl.collar.api.session.Player;
 
-import java.util.*;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Represents players that appear in each others entity lists that should be placed in a group together

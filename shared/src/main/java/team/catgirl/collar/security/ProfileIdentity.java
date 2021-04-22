@@ -1,7 +1,7 @@
 package team.catgirl.collar.security;
 
-import java.security.*;
 import java.security.PublicKey;
+import java.security.*;
 import java.util.UUID;
 
 public class ProfileIdentity {

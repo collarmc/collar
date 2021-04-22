@@ -8,11 +8,11 @@ import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.api.http.HttpException.ConflictException;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
 import team.catgirl.collar.api.http.RequestContext;
-import team.catgirl.collar.server.junit.MongoDatabaseTestRule;
-import team.catgirl.collar.server.security.hashing.PasswordHashing;
 import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.api.profiles.ProfileService.GetProfileRequest;
+import team.catgirl.collar.server.junit.MongoDatabaseTestRule;
+import team.catgirl.collar.server.security.hashing.PasswordHashing;
 import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 
 import static org.junit.Assert.fail;

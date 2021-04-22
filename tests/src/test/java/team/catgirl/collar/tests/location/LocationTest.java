@@ -14,7 +14,6 @@ import team.catgirl.collar.client.api.groups.GroupsApi;
 import team.catgirl.collar.client.api.groups.GroupsListener;
 import team.catgirl.collar.client.api.location.LocationApi;
 import team.catgirl.collar.client.api.location.LocationListener;
-import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.tests.groups.GroupsTest;
 import team.catgirl.collar.tests.junit.CollarTest;
 

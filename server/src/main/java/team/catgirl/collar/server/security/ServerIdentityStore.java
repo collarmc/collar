@@ -3,8 +3,8 @@ package team.catgirl.collar.server.security;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysResponse;
 import team.catgirl.collar.security.ClientIdentity;
-import team.catgirl.collar.security.cipher.Cipher;
 import team.catgirl.collar.security.ServerIdentity;
+import team.catgirl.collar.security.cipher.Cipher;
 
 import java.util.UUID;
 

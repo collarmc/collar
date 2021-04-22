@@ -1,12 +1,10 @@
 package team.catgirl.collar.protocol.location;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import team.catgirl.collar.api.location.Location;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
-import team.catgirl.collar.security.mojang.MinecraftPlayer;
 
 import java.util.UUID;
 

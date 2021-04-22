@@ -10,7 +10,6 @@ import team.catgirl.collar.client.minecraft.Ticks;
 import team.catgirl.collar.security.mojang.MinecraftSession;
 
 import java.util.UUID;
-import java.util.function.Supplier;
 
 public final class CollarClientRule implements TestRule {
 

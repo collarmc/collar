@@ -6,7 +6,6 @@ import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.state.SessionRecord;
 import org.whispersystems.libsignal.state.SessionStore;
 import team.catgirl.collar.client.HomeDirectory;
-import team.catgirl.collar.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;

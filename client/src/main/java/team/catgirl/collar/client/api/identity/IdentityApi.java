@@ -15,7 +15,6 @@ import team.catgirl.collar.protocol.identity.CreateTrustResponse;
 import team.catgirl.collar.protocol.identity.GetIdentityRequest;
 import team.catgirl.collar.protocol.identity.GetIdentityResponse;
 import team.catgirl.collar.security.ClientIdentity;
-import team.catgirl.collar.security.Identity;
 import team.catgirl.collar.security.TokenGenerator;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 

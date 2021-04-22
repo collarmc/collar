@@ -11,10 +11,7 @@ import org.bson.Document;
 import team.catgirl.collar.api.groups.*;
 import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.api.session.Player;
-import team.catgirl.collar.api.http.RequestContext;
-import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.server.services.profiles.ProfileCache;
-import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.session.SessionManager;
 
 import java.util.*;

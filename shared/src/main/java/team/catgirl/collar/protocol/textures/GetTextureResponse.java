@@ -5,7 +5,6 @@ import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.api.textures.TextureType;
 import team.catgirl.collar.protocol.ProtocolResponse;
 import team.catgirl.collar.security.ServerIdentity;
-import team.catgirl.collar.security.mojang.MinecraftPlayer;
 
 import java.util.UUID;
 

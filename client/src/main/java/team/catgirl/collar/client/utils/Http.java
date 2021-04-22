@@ -6,7 +6,10 @@ import team.catgirl.collar.http.HttpClient;
 
 import javax.net.ssl.KeyManagerFactory;
 import java.io.IOException;
-import java.security.*;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
 public final class Http {

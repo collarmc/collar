@@ -6,7 +6,6 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import spark.Spark;
 import team.catgirl.collar.api.http.HttpException;
-import team.catgirl.collar.client.utils.Http;
 import team.catgirl.collar.http.HttpClient;
 import team.catgirl.collar.http.Request;
 import team.catgirl.collar.http.Response;
@@ -15,7 +14,6 @@ import team.catgirl.collar.server.WebServer;
 import team.catgirl.collar.server.configuration.Configuration;
 import team.catgirl.collar.server.mongo.Mongo;
 
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 

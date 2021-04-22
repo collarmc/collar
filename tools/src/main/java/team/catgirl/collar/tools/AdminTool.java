@@ -1,6 +1,5 @@
 package team.catgirl.collar.tools;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import team.catgirl.collar.api.authentication.AuthenticationService;
 import team.catgirl.collar.api.authentication.AuthenticationService.LoginRequest;
 import team.catgirl.collar.api.authentication.AuthenticationService.LoginResponse;

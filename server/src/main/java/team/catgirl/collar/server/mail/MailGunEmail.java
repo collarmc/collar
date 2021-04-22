@@ -2,11 +2,11 @@ package team.catgirl.collar.server.mail;
 
 import com.google.common.io.BaseEncoding;
 import team.catgirl.collar.api.http.HttpException;
+import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.http.HttpClient;
 import team.catgirl.collar.http.Request;
 import team.catgirl.collar.http.Response;
 import team.catgirl.collar.server.http.AppUrlProvider;
-import team.catgirl.collar.api.profiles.Profile;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;

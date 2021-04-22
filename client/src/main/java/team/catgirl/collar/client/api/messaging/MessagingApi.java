@@ -75,7 +75,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
         } catch (Throwable e) {
             // If the client cant send a message to the group, something is seriously wrong
             throw new IllegalStateException(collar.identity() + " could not encrypt group message sent to " + group.id, e);
-        };
+        }
         sender.accept(new SendMessageRequest(collar.identity(), null, group.id, messageBytes));
         LOGGER.log(Level.INFO, identity() + " sent message to group " + group.id);
         fireListener("onGroupMessageSent", listener -> {

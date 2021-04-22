@@ -26,14 +26,14 @@ public interface CollarListener {
      * @param collar client
      * @param store identity store to be reset
      */
-    default void onClientUntrusted(Collar collar, ClientIdentityStore store) {};
+    default void onClientUntrusted(Collar collar, ClientIdentityStore store) {}
 
     /**
      * Fired when the server could not validate the minecraft session
      * @param collar client
      * @param session of minecraft client
      */
-    default void onMinecraftAccountVerificationFailed(Collar collar, MinecraftSession session) {};
+    default void onMinecraftAccountVerificationFailed(Collar collar, MinecraftSession session) {}
 
     /**
      * Fired when the server detects a mismatch between the stored private identity and the one provided by the session
@@ -42,5 +42,5 @@ public interface CollarListener {
      * @param collar client
      * @param url to visit
      */
-    default void onPrivateIdentityMismatch(Collar collar, String url) {};
+    default void onPrivateIdentityMismatch(Collar collar, String url) {}
 }

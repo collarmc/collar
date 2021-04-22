@@ -104,6 +104,9 @@ public final class GroupService {
         BatchProtocolResponse response = new BatchProtocolResponse(serverIdentity);
         store.findGroupsContaining(player).forEach(group -> {
             group.findMember(player).ifPresent(member -> {
+                if (!member.player.equals(player)) {
+                    return;
+                }
                 switch (member.membershipState) {
                     case DECLINED, PENDING -> response.add(identity, new GroupInviteResponse(serverIdentity, group.id, group.name, group.type, null));
                     case ACCEPTED -> response.add(identity, new RejoinGroupResponse(serverIdentity, group.id));

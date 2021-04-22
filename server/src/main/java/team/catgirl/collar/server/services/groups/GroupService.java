@@ -1,6 +1,7 @@
 package team.catgirl.collar.server.services.groups;
 
 import com.google.common.collect.ImmutableList;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import team.catgirl.collar.api.friends.Status;
 import team.catgirl.collar.api.groups.*;
 import team.catgirl.collar.api.profiles.PublicProfile;
@@ -104,8 +105,9 @@ public final class GroupService {
         store.findGroupsContaining(player).forEach(group -> {
             group.findMember(player).ifPresent(member -> {
                 switch (member.membershipState) {
-                    case PENDING -> response.add(identity, new GroupInviteResponse(serverIdentity, group.id, group.name, group.type, null));
+                    case DECLINED, PENDING -> response.add(identity, new GroupInviteResponse(serverIdentity, group.id, group.name, group.type, null));
                     case ACCEPTED -> response.add(identity, new RejoinGroupResponse(serverIdentity, group.id));
+                    default -> throw new IllegalStateException("Unexpected value: " + member.membershipState);
                 }
             });
         });

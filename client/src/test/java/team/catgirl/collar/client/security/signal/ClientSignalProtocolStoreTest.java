@@ -10,7 +10,6 @@ import org.whispersystems.libsignal.InvalidKeyIdException;
 import org.whispersystems.libsignal.SignalProtocolAddress;
 import org.whispersystems.libsignal.groups.GroupSessionBuilder;
 import org.whispersystems.libsignal.groups.SenderKeyName;
-import org.whispersystems.libsignal.groups.state.SenderKeyRecord;
 import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
 import org.whispersystems.libsignal.state.PreKeyRecord;
 import org.whispersystems.libsignal.state.SessionRecord;

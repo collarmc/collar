@@ -1,6 +1,5 @@
 package team.catgirl.collar.http;
 
-import com.google.common.io.BaseEncoding;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -14,11 +13,9 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.api.http.HttpException.*;
-import team.catgirl.collar.security.TokenGenerator;
 
 import javax.net.ssl.SSLException;
 import java.io.Closeable;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;

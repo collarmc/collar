@@ -3,7 +3,6 @@ package team.catgirl.collar.security;
 import com.google.common.io.BaseEncoding;
 import team.catgirl.collar.utils.Utils;
 
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
 public final class TokenGenerator {

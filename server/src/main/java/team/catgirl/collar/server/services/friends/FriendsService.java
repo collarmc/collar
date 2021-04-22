@@ -14,14 +14,15 @@ import team.catgirl.collar.api.friends.Status;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.api.http.HttpException.BadRequestException;
 import team.catgirl.collar.api.http.HttpException.ServerErrorException;
-import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.api.http.RequestContext;
-import team.catgirl.collar.api.profiles.ProfileService;
+import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.server.services.profiles.ProfileCache;
-import team.catgirl.collar.server.services.profiles.ProfileServiceServer;
 import team.catgirl.collar.server.session.SessionManager;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 

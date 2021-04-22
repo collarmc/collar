@@ -1,7 +1,6 @@
 package team.catgirl.collar.sdht.events;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import team.catgirl.collar.sdht.Content;
 import team.catgirl.collar.sdht.Record;
 import team.catgirl.collar.security.ClientIdentity;
 

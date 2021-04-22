@@ -7,7 +7,6 @@ import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import team.catgirl.collar.client.utils.Http;
 
-
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 import java.util.Set;

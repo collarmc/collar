@@ -1,6 +1,5 @@
 package team.catgirl.collar.tools;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mikael.urlbuilder.UrlBuilder;
 import team.catgirl.collar.api.authentication.AuthenticationService.LoginRequest;
 import team.catgirl.collar.api.authentication.AuthenticationService.LoginResponse;
@@ -9,8 +8,8 @@ import team.catgirl.collar.api.profiles.ProfileService;
 import team.catgirl.collar.api.profiles.ProfileService.GetProfileRequest;
 import team.catgirl.collar.api.profiles.ProfileService.GetProfileResponse;
 import team.catgirl.collar.http.HttpClient;
-import team.catgirl.collar.http.Response;
 import team.catgirl.collar.http.Request;
+import team.catgirl.collar.http.Response;
 
 public final class CollarApi {
 

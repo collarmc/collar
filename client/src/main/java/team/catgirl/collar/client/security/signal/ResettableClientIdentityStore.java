@@ -6,8 +6,8 @@ import team.catgirl.collar.protocol.groups.*;
 import team.catgirl.collar.protocol.identity.CreateTrustRequest;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.security.ClientIdentity;
-import team.catgirl.collar.security.cipher.Cipher;
 import team.catgirl.collar.security.Identity;
+import team.catgirl.collar.security.cipher.Cipher;
 
 import java.io.IOException;
 import java.util.UUID;

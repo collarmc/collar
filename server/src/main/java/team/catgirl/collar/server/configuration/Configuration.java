@@ -14,7 +14,6 @@ import team.catgirl.collar.server.security.mojang.MinecraftSessionVerifier;
 import team.catgirl.collar.server.security.mojang.MojangMinecraftSessionVerifier;
 import team.catgirl.collar.server.security.mojang.NojangMinecraftSessionVerifier;
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
-import team.catgirl.collar.utils.Utils;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;

@@ -17,16 +17,21 @@ import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public final class ServerAuthentication {
+public final class Mojang {
 
-    private static final Logger LOGGER = Logger.getLogger(ServerAuthentication.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(Mojang.class.getName());
 
     private final HttpClient http;
     private final String baseUrl;
 
-    public ServerAuthentication(HttpClient http, String baseUrl) {
+    public Mojang(HttpClient http, String baseUrl) {
         this.http = http;
         this.baseUrl = baseUrl;
+    }
+
+    public PlayerProfile getProfile(UUID id) {
+        String profileId = id.toString().replace("-", "");
+        return http.execute(Request.url(baseUrl + "session/minecraft/profile/" + profileId).get(), Response.json(PlayerProfile.class));
     }
 
     public boolean joinServer(MinecraftSession session) {
@@ -44,13 +49,26 @@ public final class ServerAuthentication {
         try {
             UrlBuilder builder = UrlBuilder.fromString(baseUrl + "session/minecraft/hasJoined")
                     .addParameter("username", session.username)
-                    .addParameter("serverId", ServerAuthentication.genServerIDHash());
+                    .addParameter("serverId", Mojang.genServerIDHash());
             HasJoinedResponse hasJoinedResponse = http.execute(Request.url(builder).get(), Response.json(HasJoinedResponse.class));
             return hasJoinedResponse.id.equals(toProfileId(session.id));
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
             LOGGER.log(Level.SEVERE, "Couldn't verify " + session.username,e);
             return false;
+        }
+    }
+
+    public static final class PlayerProfile {
+        @JsonProperty("id")
+        public final String id;
+        @JsonProperty("name")
+        public final String name;
+
+        public PlayerProfile(@JsonProperty("id") String id,
+                             @JsonProperty("name") String name) {
+            this.id = id;
+            this.name = name;
         }
     }
 

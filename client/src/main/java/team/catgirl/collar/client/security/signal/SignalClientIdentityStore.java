@@ -25,6 +25,7 @@ import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.Identity;
 import team.catgirl.collar.security.PublicKey;
+import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.cipher.Cipher;
 import team.catgirl.collar.security.signal.PreKeys;
 import team.catgirl.collar.utils.Utils;
@@ -135,6 +136,16 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
             throw new RuntimeException(e);
         } finally {
             readLock.unlock();
+        }
+    }
+
+    @Override
+    public SendPreKeysRequest createPreKeyRequest(ServerIdentity identity) {
+        PreKeyBundle bundle = PreKeys.generate(new SignalProtocolAddress(identity.id().toString(), 1), store);
+        try {
+            return new SendPreKeysRequest(currentIdentity(), PreKeys.preKeyBundleToBytes(bundle));
+        } catch (IOException e) {
+            throw new IllegalStateException("could not generate PreKeyBundle");
         }
     }
 

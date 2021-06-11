@@ -507,7 +507,7 @@ public final class Collar {
                 if (identityStore == null) {
                     throw new IllegalStateException("Could not recover from cipher error", e);
                 }
-                sender.accept(identityStore.createSendPreKeysRequest(identity(), identityStore.getDeviceId()));
+                sender.accept(identityStore.createPreKeyRequest(serverIdentity));
             } catch (IOException e) {
                 throw new IllegalStateException("Read error ", e);
             }

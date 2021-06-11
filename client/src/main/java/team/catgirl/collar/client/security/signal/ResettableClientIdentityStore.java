@@ -8,6 +8,7 @@ import team.catgirl.collar.protocol.signal.ResendPreKeysResponse;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.Identity;
+import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.cipher.Cipher;
 
 import java.io.IOException;
@@ -61,6 +62,11 @@ public class ResettableClientIdentityStore implements ClientIdentityStore {
     @Override
     public SendPreKeysRequest createSendPreKeysRequest(DeviceRegisteredResponse response) {
         return currentIdentityStore.createSendPreKeysRequest(response);
+    }
+
+    @Override
+    public SendPreKeysRequest createPreKeyRequest(ServerIdentity identity) {
+        return currentIdentityStore.createPreKeyRequest(identity);
     }
 
     @Override

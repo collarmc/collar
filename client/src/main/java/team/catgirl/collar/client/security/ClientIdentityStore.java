@@ -7,6 +7,7 @@ import team.catgirl.collar.protocol.signal.ResendPreKeysResponse;
 import team.catgirl.collar.protocol.signal.SendPreKeysRequest;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.Identity;
+import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.cipher.Cipher;
 
 import java.io.IOException;
@@ -61,6 +62,12 @@ public interface ClientIdentityStore {
      * @return SendPreKeyRequest to send to the server
      */
     SendPreKeysRequest createSendPreKeysRequest(DeviceRegisteredResponse response);
+
+    /**
+     * @param identity of the server
+     * @return SendPreKeyRequest to send to the server
+     */
+    SendPreKeysRequest createPreKeyRequest(ServerIdentity identity);
 
     /**
      * @param response of the resend request

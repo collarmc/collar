@@ -2,7 +2,6 @@ package team.catgirl.collar.client.api.identity;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.LoadingCache;
 import com.stoyanr.evictor.ConcurrentMapWithTimedEviction;
 import com.stoyanr.evictor.map.ConcurrentHashMapWithTimedEviction;
 import com.stoyanr.evictor.map.EvictibleEntry;
@@ -128,7 +127,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
         if (clientIdentity == null || identityStore().isTrustedIdentity(clientIdentity)) {
             return CompletableFuture.completedFuture(identity);
         } else {
-            CreateTrustRequest request = identityStore().createSendPreKeysRequest(clientIdentity, TokenGenerator.longToken());
+            CreateTrustRequest request = identityStore().createPreKeyRequest(clientIdentity, TokenGenerator.longToken());
             CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
             LOGGER.log(Level.INFO, "Creating trust future with " + identity + " and id " + request.id);
             identifyFutures.put(request.id, future);
@@ -161,7 +160,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             CompletableFuture<Optional<ClientIdentity>> removed = identifyFutures.remove(response.id);
             if (removed == null) {
                 LOGGER.log(Level.INFO, "Sending back a CreateTrustRequest to " + response.sender + " and id " + response.id);
-                sender.accept(identityStore().createSendPreKeysRequest(response.sender, response.id));
+                sender.accept(identityStore().createPreKeyRequest(response.sender, response.id));
             } else {
                 LOGGER.log(Level.INFO, "Finished creating trust with " + response.sender + " and id " + response.id);
                 removed.complete(response.sender == null ? Optional.empty() : Optional.of(response.sender));

@@ -60,8 +60,8 @@ public class ResettableClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public SendPreKeysRequest createSendPreKeysRequest(DeviceRegisteredResponse response) {
-        return currentIdentityStore.createSendPreKeysRequest(response);
+    public SendPreKeysRequest createPreKeyRequest(DeviceRegisteredResponse response) {
+        return currentIdentityStore.createPreKeyRequest(response);
     }
 
     @Override
@@ -70,13 +70,13 @@ public class ResettableClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public CreateTrustRequest createSendPreKeysRequest(ClientIdentity identity, long id) {
-        return currentIdentityStore.createSendPreKeysRequest(identity, id);
+    public CreateTrustRequest createPreKeyRequest(ClientIdentity identity, long id) {
+        return currentIdentityStore.createPreKeyRequest(identity, id);
     }
 
     @Override
-    public SendPreKeysRequest createSendPreKeysRequest(ResendPreKeysResponse response) {
-        return currentIdentityStore.createSendPreKeysRequest(response);
+    public SendPreKeysRequest createPreKeyRequest(ResendPreKeysResponse response) {
+        return currentIdentityStore.createPreKeyRequest(response);
     }
 
     @Override

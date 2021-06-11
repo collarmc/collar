@@ -150,7 +150,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public SendPreKeysRequest createSendPreKeysRequest(DeviceRegisteredResponse response) {
+    public SendPreKeysRequest createPreKeyRequest(DeviceRegisteredResponse response) {
         int deviceId = getDeviceId();
         if (deviceId < 1) {
             throw new IllegalStateException("deviceId has not been negotiated");
@@ -164,7 +164,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public SendPreKeysRequest createSendPreKeysRequest(ResendPreKeysResponse response) {
+    public SendPreKeysRequest createPreKeyRequest(ResendPreKeysResponse response) {
         int deviceId = getDeviceId();
         if (deviceId < 1) {
             throw new IllegalStateException("deviceId has not been negotiated");
@@ -185,7 +185,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
     }
 
     @Override
-    public CreateTrustRequest createSendPreKeysRequest(ClientIdentity recipient, long id) {
+    public CreateTrustRequest createPreKeyRequest(ClientIdentity recipient, long id) {
         PreKeyBundle bundle = PreKeys.generate(new SignalProtocolAddress(currentIdentity().id().toString(), getDeviceId()), store);
         try {
             return new CreateTrustRequest(currentIdentity(), id, recipient, PreKeys.preKeyBundleToBytes(bundle));

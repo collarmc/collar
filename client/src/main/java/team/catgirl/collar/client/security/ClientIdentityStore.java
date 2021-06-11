@@ -61,7 +61,7 @@ public interface ClientIdentityStore {
      * @param response of the device registration
      * @return SendPreKeyRequest to send to the server
      */
-    SendPreKeysRequest createSendPreKeysRequest(DeviceRegisteredResponse response);
+    SendPreKeysRequest createPreKeyRequest(DeviceRegisteredResponse response);
 
     /**
      * @param identity of the server
@@ -73,7 +73,7 @@ public interface ClientIdentityStore {
      * @param response of the resend request
      * @return SendPreKeyRequest to send to the server
      */
-    SendPreKeysRequest createSendPreKeysRequest(ResendPreKeysResponse response);
+    SendPreKeysRequest createPreKeyRequest(ResendPreKeysResponse response);
 
     /**
      * @param identity joining group
@@ -87,7 +87,7 @@ public interface ClientIdentityStore {
      * @param id unique for this request
      * @return SendPreKeyRequest to send to the provided client identity
      */
-    CreateTrustRequest createSendPreKeysRequest(ClientIdentity identity, long id);
+    CreateTrustRequest createPreKeyRequest(ClientIdentity identity, long id);
 
     /**
      * Used to distribute keys back to the client who joined

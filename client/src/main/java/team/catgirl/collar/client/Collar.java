@@ -447,7 +447,7 @@ public final class Collar {
                     identityStore = getOrCreateIdentityKeyStore(webSocket, response.profile.id);
                     identityStore.processDeviceRegisteredResponse(response);
                     LOGGER.log(Level.INFO, "Ready to exchange keys for device " + response.deviceId);
-                    SendPreKeysRequest request = identityStore.createSendPreKeysRequest(response);
+                    SendPreKeysRequest request = identityStore.createPreKeyRequest(response);
                     sendRequest(webSocket, request);
                 } else if (resp instanceof SendPreKeysResponse) {
                     SendPreKeysResponse response = (SendPreKeysResponse) resp;
@@ -459,7 +459,7 @@ public final class Collar {
                     sendRequest(webSocket, new IdentifyRequest(identity, identityStore.privateIdentityToken()));
                 } else if (resp instanceof ResendPreKeysResponse) {
                     ResendPreKeysResponse response = (ResendPreKeysResponse) resp;
-                    SendPreKeysRequest request = identityStore.createSendPreKeysRequest(response);
+                    SendPreKeysRequest request = identityStore.createPreKeyRequest(response);
                     sendRequest(webSocket, request);
                 } else if (resp instanceof StartSessionResponse) {
                     LOGGER.log(Level.INFO, "Session has started. Checking if the client and server are in a trusted relationship");

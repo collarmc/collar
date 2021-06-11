@@ -113,7 +113,7 @@ public class ClientSenderKeyStore implements SenderKeyStore {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {
-            writeLock.lock();
+            writeLock.unlock();
         }
     }
 
@@ -126,7 +126,7 @@ public class ClientSenderKeyStore implements SenderKeyStore {
         } catch (InterruptedException | IOException e) {
             throw new RuntimeException(e);
         } finally {
-            writeLock.lock();
+            writeLock.unlock();
         }
     }
 

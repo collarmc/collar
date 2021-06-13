@@ -312,7 +312,7 @@ public final class Collar {
             MinecraftSession minecraftSession = configuration.sessionSupplier.get();
             LOGGER.log(Level.INFO, "Server supports versions " + versions);
             if ("mojang".equals(collarFeature.value) && minecraftSession.mode != MinecraftSession.Mode.MOJANG && minecraftSession.accessToken == null) {
-                throw new IllegalStateException("mojang verification scheme s but was provided an invalid MinecraftSession");
+                throw new IllegalStateException("mojang verification scheme requested but was provided an invalid MinecraftSession");
             } else if ("nojang".equals(collarFeature.value) && minecraftSession.mode != MinecraftSession.Mode.NOJANG && minecraftSession.accessToken != null) {
                 throw new IllegalStateException("nojang verification scheme requested but was provided an invalid MinecraftSession");
             }

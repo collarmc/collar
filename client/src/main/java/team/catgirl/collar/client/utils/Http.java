@@ -1,15 +1,14 @@
 package team.catgirl.collar.client.utils;
 
-import com.google.common.io.Resources;
 import io.netty.handler.ssl.SslContextBuilder;
 import team.catgirl.collar.http.HttpClient;
 
-import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 
 public final class Http {
@@ -18,12 +17,14 @@ public final class Http {
 
     static {
         try {
-            KeyStore keyStore = KeyStore.getInstance("JKS");
-            keyStore.load(Resources.getResource("cacerts").openStream(), "changeit".toCharArray());
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance("SunX509");
-            kmf.init(keyStore, "changeit".toCharArray());
-            client = new HttpClient(SslContextBuilder.forClient().keyManager(kmf).build());
-        } catch (NoSuchAlgorithmException | KeyStoreException | IOException | CertificateException | UnrecoverableKeyException e) {
+            KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            try (InputStream is = Http.class.getResourceAsStream("/cacerts")) {
+                keyStore.load(is, "changeit".toCharArray());
+            }
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(keyStore);
+            client = new HttpClient(SslContextBuilder.forClient().trustManager(trustManagerFactory).build());
+        } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
             throw new RuntimeException(e);
         }
     }

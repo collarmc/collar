@@ -41,6 +41,7 @@ public class MailGunEmail extends AbstractEmail {
         try {
             Request request = Request.url(String.format("https://api.mailgun.net/v3/%s/messages", domain))
                     .basicAuth("api", apiKey)
+                    .addHeader("Accept", "application/json")
                     .postForm(formBody);
             http.execute(request, Response.noContent());
             LOGGER.log(Level.INFO, "Sent " + templateName + " email to " + profile.email);

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -70,14 +71,16 @@ public class ServerAuthenticationService implements AuthenticationService {
     }
 
     private void sendVerificationEmail(Profile profile) {
-        VerificationToken apiToken = new VerificationToken(profile.id, new Date().getTime() + TimeUnit.HOURS.toMillis(24));
-        String url;
-        try {
-            url = urlProvider.emailVerificationUrl(apiToken.serialize(tokenCrypter));
-        } catch (IOException e) {
-            throw new ServerErrorException("token could not be serialized", e);
-        }
-        email.send(profile, "Verify your new Collar account", "verify-account", Map.of("verificationUrl", url));
+        ForkJoinPool.commonPool().submit(() -> {
+            VerificationToken apiToken = new VerificationToken(profile.id, new Date().getTime() + TimeUnit.HOURS.toMillis(24));
+            String url;
+            try {
+                url = urlProvider.emailVerificationUrl(apiToken.serialize(tokenCrypter));
+            } catch (IOException e) {
+                throw new ServerErrorException("token could not be serialized", e);
+            }
+            email.send(profile, "Verify your new Collar account", "verify-account", Map.of("verificationUrl", url));
+        });
     }
 
     @Override

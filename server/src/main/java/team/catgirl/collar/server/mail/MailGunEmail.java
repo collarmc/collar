@@ -8,6 +8,11 @@ import team.catgirl.collar.http.Request;
 import team.catgirl.collar.http.Response;
 import team.catgirl.collar.server.http.AppUrlProvider;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,23 +37,41 @@ public class MailGunEmail extends AbstractEmail {
     @Override
     public void send(Profile profile, String subject, String templateName, Map<String, Object> variables) {
         variables = prepareVariables(profile, variables);
-        Map<String, String> formBody = new HashMap<>();
+        Map<Object, Object> formBody = new HashMap<>();
         formBody.put("from", "noreply@collarmc.com");
         formBody.put("to", profile.email);
         formBody.put("subject", subject);
         formBody.put("html", renderHtml(templateName, variables));
         formBody.put("text", renderText(templateName, variables));
+
+        java.net.http.HttpClient client = java.net.http.HttpClient.newBuilder()
+                .version(java.net.http.HttpClient.Version.HTTP_2)
+                .build();
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .header("Authorization", "Basic " + BaseEncoding.base64().encode(("api" + ":" + apiKey).getBytes(StandardCharsets.UTF_8)))
+                .POST(ofFormData(formBody))
+                .uri(URI.create(String.format("https://api.mailgun.net/v3/%s/messages", domain)))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .build();
+
         try {
-            Request request = Request.url(String.format("https://api.mailgun.net/v3/%s/messages", domain))
-                    .basicAuth("api", apiKey)
-                    .addHeader("Accept", "application/json")
-                    .postForm(formBody);
-            http.execute(request, Response.noContent());
-            LOGGER.log(Level.INFO, "Sent " + templateName + " email to " + profile.email);
-        } catch (HttpException.BadRequestException e) {
-            LOGGER.log(Level.SEVERE, "Connection issue " + e.body, e);
-        } catch (HttpException e) {
+            client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException | InterruptedException e) {
             LOGGER.log(Level.SEVERE, "Connection issue", e);
         }
+    }
+
+    private static HttpRequest.BodyPublisher ofFormData(Map<Object, Object> data) {
+        var builder = new StringBuilder();
+        for (Map.Entry<Object, Object> entry : data.entrySet()) {
+            if (builder.length() > 0) {
+                builder.append("&");
+            }
+            builder.append(URLEncoder.encode(entry.getKey().toString(), StandardCharsets.UTF_8));
+            builder.append("=");
+            builder.append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
+        }
+        return HttpRequest.BodyPublishers.ofString(builder.toString());
     }
 }

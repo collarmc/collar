@@ -2,6 +2,7 @@ package team.catgirl.collar.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.io.BaseEncoding;
+import com.google.common.io.CharSink;
 import io.mikael.urlbuilder.UrlBuilder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -79,7 +80,6 @@ public final class Request {
         HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, uri.toString(), byteBuf);
         headers.forEach((name, value) -> request.headers().add(name, value));
         if (form != null) {
-            request.headers().add("Content-Type", "application/x-www-form-urlencoded");
             HttpPostRequestEncoder encoder;
             try {
                 encoder = new HttpPostRequestEncoder(request, false);

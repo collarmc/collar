@@ -85,7 +85,7 @@ public final class Request {
         if (form != null) {
             HttpPostRequestEncoder encoder;
             try {
-                encoder = new HttpPostRequestEncoder(request, false);
+                encoder = new HttpPostRequestEncoder(request, true);
             } catch (ErrorDataEncoderException e) {
                 throw new IllegalStateException(e);
             }

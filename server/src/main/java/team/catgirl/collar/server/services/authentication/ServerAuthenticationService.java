@@ -79,7 +79,11 @@ public class ServerAuthenticationService implements AuthenticationService {
             } catch (IOException e) {
                 throw new ServerErrorException("token could not be serialized", e);
             }
-            email.send(profile, "Verify your new Collar account", "verify-account", Map.of("verificationUrl", url));
+            try {
+                email.send(profile, "Verify your new Collar account", "verify-account", Map.of("verificationUrl", url));
+            } catch (Throwable e) {
+                LOGGER.log(Level.INFO, "could not send verification email", e);
+            }
         });
     }
 

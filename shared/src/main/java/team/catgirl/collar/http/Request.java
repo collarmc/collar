@@ -77,6 +77,7 @@ public final class Request {
         HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, uri.toString(), byteBuf);
         headers.forEach((name, value) -> request.headers().add(name, value));
         if (form != null) {
+            request.headers().add("Content-Type", "application/x-www-form-urlencoded");
             HttpPostRequestEncoder encoder;
             try {
                 encoder = new HttpPostRequestEncoder(request, false);

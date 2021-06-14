@@ -6,10 +6,7 @@ import com.google.common.io.CharSink;
 import io.mikael.urlbuilder.UrlBuilder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.HttpVersion;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.multipart.HttpPostRequestEncoder;
 import io.netty.handler.codec.http.multipart.HttpPostRequestEncoder.ErrorDataEncoderException;
 import team.catgirl.collar.utils.Utils;
@@ -83,6 +80,7 @@ public final class Request {
         HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, uri.toString(), byteBuf);
         headers.forEach((name, value) -> request.headers().add(name, value));
         if (form != null) {
+            request.headers().add("Content-Type","application/x-www-form-urlencoded");
             HttpPostRequestEncoder encoder;
             try {
                 encoder = new HttpPostRequestEncoder(request, true);

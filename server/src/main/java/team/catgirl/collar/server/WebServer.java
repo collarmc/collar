@@ -23,6 +23,7 @@ import team.catgirl.collar.server.http.ApiToken;
 import team.catgirl.collar.server.http.HandlebarsTemplateEngine;
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
 import team.catgirl.collar.server.services.devices.DeviceService;
+import team.catgirl.collar.server.services.devices.DeviceService.CreateDeviceRequest;
 import team.catgirl.collar.server.services.devices.DeviceService.DeleteDeviceRequest;
 import team.catgirl.collar.server.services.devices.DeviceService.TrustDeviceResponse;
 import team.catgirl.collar.server.services.textures.TextureService;
@@ -163,9 +164,8 @@ public class WebServer {
                     }, services.jsonMapper::writeValueAsString);
                     post("/devices/trust", (request, response) -> {
                         RequestContext context = from(request);
-                        context.assertNotAnonymous();
                         DeviceService.TrustDeviceRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.TrustDeviceRequest.class);
-                        DeviceService.CreateDeviceResponse device = services.devices.createDevice(context, new DeviceService.CreateDeviceRequest(context.owner, req.deviceName));
+                        DeviceService.CreateDeviceResponse device = services.devices.createDevice(context, new CreateDeviceRequest(context.owner, req.deviceName));
                         PublicProfile profile = services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile.toPublic();
                         services.deviceRegistration.onDeviceRegistered(services.identityStore.getIdentity(), profile, req.token, device);
                         return new TrustDeviceResponse();

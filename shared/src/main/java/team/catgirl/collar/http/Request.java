@@ -77,6 +77,9 @@ public final class Request {
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
+        if (content != null) {
+            headers.put("Content-Type", "application/json");
+        }
         HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, uri.toString(), byteBuf);
         headers.forEach((name, value) -> request.headers().add(name, value));
         if (form != null) {

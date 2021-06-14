@@ -59,7 +59,11 @@ public class MailGunEmail extends AbstractEmail {
         public final String html;
         public final String text;
 
-        public Message(String from, String to, String subject, String html, String text) {
+        public Message(String from,
+                       String to,
+                       String subject,
+                       String html,
+                       String text) {
             this.from = from;
             this.to = to;
             this.subject = subject;

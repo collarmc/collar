@@ -32,8 +32,8 @@ public class MailGunEmail extends AbstractEmail {
     @Override
     public void send(Profile profile, String subject, String templateName, Map<String, Object> variables) {
         variables = prepareVariables(profile, variables);
-        Map<String, Object> formBody = new HashMap<>();
-        formBody.put("from", "mailgun@" + domain);
+        Map<String, String> formBody = new HashMap<>();
+        formBody.put("from", "noreply@collarmc.com");
         formBody.put("to", profile.email);
         formBody.put("subject", subject);
         formBody.put("html", renderHtml(templateName, variables));
@@ -42,7 +42,7 @@ public class MailGunEmail extends AbstractEmail {
         try {
             Request request = Request.url("https://api.mailgun.net/v3/" + domain + " /messages")
                     .addHeader("Authorization", "Basic " + auth)
-                    .post(formBody);
+                    .postForm(formBody);
             http.execute(request, Response.noContent());
             LOGGER.log(Level.INFO, "Sent " + templateName + " email to " + profile.email);
         } catch (HttpException.BadRequestException e) {

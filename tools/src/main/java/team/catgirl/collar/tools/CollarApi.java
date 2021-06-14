@@ -27,7 +27,7 @@ public final class CollarApi {
         if (token != null) {
             url = url.addHeader("Authorization", "Bearer " + token);
         }
-        return http.execute(url.post(req), Response.json(LoginResponse.class));
+        return http.execute(url.postJson(req), Response.json(LoginResponse.class));
     }
 
     public void resetPassword(RequestPasswordResetRequest req) {
@@ -35,7 +35,7 @@ public final class CollarApi {
         if (token != null) {
             url = url.addHeader("Authorization", "Bearer " + token);
         }
-        http.execute(url.post(req), Response.noContent());
+        http.execute(url.postJson(req), Response.noContent());
     }
 
     public void updateProfile(ProfileService.UpdateProfileRequest req) {
@@ -43,7 +43,7 @@ public final class CollarApi {
         if (token != null) {
             url = url.addHeader("Authorization", "Bearer " + token);
         }
-        http.execute(url.post(req), Response.noContent());
+        http.execute(url.postJson(req), Response.noContent());
     }
 
     public GetProfileResponse getProfile(GetProfileRequest req) {

@@ -10,7 +10,6 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.multipart.HttpPostRequestEncoder;
 import io.netty.handler.codec.http.multipart.HttpPostRequestEncoder.ErrorDataEncoderException;
-import sun.rmi.runtime.Log;
 import team.catgirl.collar.utils.Utils;
 
 import java.net.URI;
@@ -18,15 +17,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * HTTP request
  */
 public final class Request {
-
-    private static final Logger LOGGER = Logger.getLogger(Request.class.getName());
 
     /**
      * Method of the request
@@ -92,7 +87,6 @@ public final class Request {
             form.forEach((name, value) -> {
                 try {
                     encoder.addBodyAttribute(name, value);
-                    LOGGER.log(Level.INFO, String.format("Form param %s:%s", name, value));
                 } catch (ErrorDataEncoderException e) {
                     throw new IllegalArgumentException(e);
                 }
@@ -169,7 +163,7 @@ public final class Request {
          * @param form data
          * @return request
          */
-        public Request post(Map<String, String> form) {
+        public Request postForm(Map<String, String> form) {
             return new Request(HttpMethod.POST, uri, null, headers, form);
         }
 
@@ -178,7 +172,7 @@ public final class Request {
          * @param content to map to json
          * @return request
          */
-        public Request post(Object content) {
+        public Request postJson(Object content) {
             return new Request(HttpMethod.POST, uri, content, headers, null);
         }
 

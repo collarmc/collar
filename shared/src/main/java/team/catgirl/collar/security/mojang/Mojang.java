@@ -44,7 +44,7 @@ public final class Mojang {
     public boolean joinServer(MinecraftSession session) {
         try {
             JoinRequest joinReq = new JoinRequest(session.accessToken, toProfileId(session.id), session.server);
-            http.execute(Request.url(baseUrl + "session/minecraft/join").post(joinReq), Response.noContent());
+            http.execute(Request.url(baseUrl + "session/minecraft/join").postJson(joinReq), Response.noContent());
             return true;
         } catch (HttpException e) {
             LOGGER.log(Level.SEVERE, "Could not start verification with Mojang",e);

@@ -114,22 +114,22 @@ public class CollarServer {
     private void processMessage(Session session, InputStream is) {
         Optional<ProtocolRequest> requestOptional = read(session, is);
         requestOptional.ifPresent(req -> {
-            LOGGER.log(Level.INFO, req.getClass().getSimpleName() + " from " + req.identity);
+            LOGGER.log(Level.FINE, req.getClass().getSimpleName() + " from " + req.identity);
             ServerIdentity serverIdentity = services.identityStore.getIdentity();
             if (req instanceof KeepAliveRequest) {
-                LOGGER.log(Level.INFO, "KeepAliveRequest received. Sending KeepAliveRequest.");
+                LOGGER.log(Level.FINE, "KeepAliveRequest received. Sending KeepAliveRequest.");
                 sendPlain(session, new KeepAliveResponse(serverIdentity));
             } else if (req instanceof IdentifyRequest) {
                 IdentifyRequest request = (IdentifyRequest)req;
                 if (request.identity == null) {
-                    LOGGER.log(Level.INFO, "Signaling client to register");
+                    LOGGER.log(Level.FINE, "Signaling client to register");
                     String token = services.deviceRegistration.createDeviceRegistrationToken(session);
                     String url = services.urlProvider.deviceVerificationUrl(token);
                     sendPlain(session, new RegisterDeviceResponse(serverIdentity, url, token));
                 } else {
                     profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
                         if (processPrivateIdentityToken(profile, request)) {
-                            LOGGER.log(Level.INFO, "Profile found for " + req.identity.id());
+                            LOGGER.log(Level.FINE, "Profile found for " + req.identity.id());
                             sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic()));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));

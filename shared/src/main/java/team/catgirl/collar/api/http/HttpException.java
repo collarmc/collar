@@ -14,8 +14,17 @@ public abstract class HttpException extends RuntimeException {
     }
 
     public static class BadRequestException extends HttpException {
+
+        public final String body;
+
         public BadRequestException(String message) {
             super(400, message);
+            this.body = null;
+        }
+
+        public BadRequestException(String message, String body) {
+            super(400, message);
+            this.body = body;
         }
     }
 

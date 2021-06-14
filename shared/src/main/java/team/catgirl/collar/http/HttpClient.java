@@ -16,6 +16,7 @@ import team.catgirl.collar.api.http.HttpException.*;
 
 import javax.net.ssl.SSLException;
 import java.io.Closeable;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -129,7 +130,12 @@ public final class HttpClient implements Closeable {
                     } else {
                         switch (status) {
                             case 400:
-                                throw new BadRequestException(resp.reasonPhrase());
+                                byte[] contents = httpClientHandler.contentBuffer.array();
+                                if (contents.length > 0) {
+                                    throw new BadRequestException(resp.reasonPhrase(), new String(contents, StandardCharsets.UTF_8));
+                                } else {
+                                    throw new BadRequestException(resp.reasonPhrase());
+                                }
                             case 401:
                                 throw new UnauthorisedException(resp.reasonPhrase());
                             case 403:

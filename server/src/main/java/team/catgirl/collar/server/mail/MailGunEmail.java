@@ -47,6 +47,8 @@ public class MailGunEmail extends AbstractEmail {
                     .post(formBody);
             http.execute(request, Response.noContent());
             LOGGER.log(Level.INFO, "Sent " + templateName + " email to " + profile.email);
+        } catch (HttpException.BadRequestException e) {
+            LOGGER.log(Level.SEVERE, "Connection issue", e);
         } catch (HttpException e) {
             LOGGER.log(Level.SEVERE, "Connection issue", e);
         }

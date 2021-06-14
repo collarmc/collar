@@ -2,12 +2,14 @@ package team.catgirl.collar.server.session;
 
 import org.eclipse.jetty.websocket.api.Session;
 import team.catgirl.collar.api.http.HttpException;
+import team.catgirl.collar.api.http.HttpException.ServerErrorException;
 import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.protocol.devices.DeviceRegisteredResponse;
 import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.TokenGenerator;
 import team.catgirl.collar.security.cipher.CipherException;
 import team.catgirl.collar.server.services.devices.DeviceService;
+import team.catgirl.collar.server.services.devices.DeviceService.CreateDeviceResponse;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -48,7 +50,7 @@ public final class DeviceRegistrationService {
     public void onDeviceRegistered(@Nonnull ServerIdentity identity,
                                    @Nonnull PublicProfile profile,
                                    @Nonnull String token,
-                                   @Nonnull DeviceService.CreateDeviceResponse resp) {
+                                   @Nonnull CreateDeviceResponse resp) {
         Session session = devicesWaitingToRegister.get(token);
         if (session == null) {
             throw new HttpException.NotFoundException("session does not exist");
@@ -56,7 +58,7 @@ public final class DeviceRegistrationService {
         try {
             sessions.send(session, null, new DeviceRegisteredResponse(identity, profile, resp.device.deviceId));
         } catch (IOException | CipherException e) {
-            throw new HttpException.ServerErrorException("could not send DeviceRegisteredResponse", e);
+            throw new ServerErrorException("could not send DeviceRegisteredResponse", e);
         }
     }
 

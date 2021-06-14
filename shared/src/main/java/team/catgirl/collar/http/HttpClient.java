@@ -132,7 +132,7 @@ public final class HttpClient implements Closeable {
                             case 400:
                                 byte[] contents = httpClientHandler.contentBuffer.array();
                                 if (contents.length > 0) {
-                                    throw new BadRequestException(resp.reasonPhrase(), new String(contents, StandardCharsets.UTF_8));
+                                    throw new BadRequestException(resp.reasonPhrase(), new String(contents, StandardCharsets.UTF_8).trim());
                                 } else {
                                     throw new BadRequestException(resp.reasonPhrase());
                                 }

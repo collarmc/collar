@@ -33,14 +33,12 @@ public class MailGunEmail extends AbstractEmail {
     public void send(Profile profile, String subject, String templateName, Map<String, Object> variables) {
         variables = prepareVariables(profile, variables);
         Map<String, Object> formBody = new HashMap<>();
-        formBody.put("from", "no-reply@collarmc.com");
+        formBody.put("from", "mailgun@" + domain);
         formBody.put("to", profile.email);
         formBody.put("subject", subject);
         formBody.put("html", renderHtml(templateName, variables));
         formBody.put("text", renderText(templateName, variables));
-
         String auth = BaseEncoding.base64().encode(("api:" + apiKey).getBytes(StandardCharsets.UTF_8));
-
         try {
             Request request = Request.url("https://api.mailgun.net/v3/" + domain + " /messages")
                     .addHeader("Authorization", "Basic " + auth)

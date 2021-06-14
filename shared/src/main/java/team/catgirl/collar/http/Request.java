@@ -1,6 +1,7 @@
 package team.catgirl.collar.http;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.io.BaseEncoding;
 import io.mikael.urlbuilder.UrlBuilder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -15,6 +16,7 @@ import team.catgirl.collar.utils.Utils;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -147,6 +149,17 @@ public final class Request {
          */
         public Builder addHeader(String name, String value) {
             headers.put(name, value);
+            return this;
+        }
+
+        /**
+         * Authenticate using basic auth
+         * @param username to auth with
+         * @param password to auth with
+         * @return builder
+         */
+        public Builder basicAuth(String username, String password) {
+            headers.put("Authorization", "Basic " + BaseEncoding.base64().encode((username + ":" + password).getBytes(StandardCharsets.UTF_8)));
             return this;
         }
 

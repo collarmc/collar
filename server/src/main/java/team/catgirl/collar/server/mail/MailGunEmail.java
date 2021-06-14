@@ -38,10 +38,9 @@ public class MailGunEmail extends AbstractEmail {
         formBody.put("subject", subject);
         formBody.put("html", renderHtml(templateName, variables));
         formBody.put("text", renderText(templateName, variables));
-        String auth = BaseEncoding.base64().encode(("api:" + apiKey).getBytes(StandardCharsets.UTF_8));
         try {
-            Request request = Request.url("https://api.mailgun.net/v3/" + domain + " /messages")
-                    .addHeader("Authorization", "Basic " + auth)
+            Request request = Request.url(String.format("https://api.mailgun.net/v3/%s/messages", domain))
+                    .basicAuth("api", apiKey)
                     .postForm(formBody);
             http.execute(request, Response.noContent());
             LOGGER.log(Level.INFO, "Sent " + templateName + " email to " + profile.email);

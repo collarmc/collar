@@ -32,22 +32,39 @@ public class MailGunEmail extends AbstractEmail {
     @Override
     public void send(Profile profile, String subject, String templateName, Map<String, Object> variables) {
         variables = prepareVariables(profile, variables);
-        Map<String, String> formBody = new HashMap<>();
-        formBody.put("from", "noreply@collarmc.com");
-        formBody.put("to", profile.email);
-        formBody.put("subject", subject);
-        formBody.put("html", renderHtml(templateName, variables));
-        formBody.put("text", renderText(templateName, variables));
+        Message message = new Message(
+                "noreply@collarmc.com",
+                profile.email,
+                subject,
+                renderHtml(templateName, variables),
+                renderText(templateName, variables)
+        );
         try {
             Request request = Request.url(String.format("https://api.mailgun.net/v3/%s/messages", domain))
                     .basicAuth("api", apiKey)
-                    .postForm(formBody);
+                    .postJson(message);
             http.execute(request, Response.noContent());
             LOGGER.log(Level.INFO, "Sent " + templateName + " email to " + profile.email);
         } catch (HttpException.BadRequestException e) {
             LOGGER.log(Level.SEVERE, "Connection issue " + e.body, e);
         } catch (HttpException e) {
             LOGGER.log(Level.SEVERE, "Connection issue", e);
+        }
+    }
+
+    public static class Message {
+        public final String from;
+        public final String to;
+        public final String subject;
+        public final String html;
+        public final String text;
+
+        public Message(String from, String to, String subject, String html, String text) {
+            this.from = from;
+            this.to = to;
+            this.subject = subject;
+            this.html = html;
+            this.text = text;
         }
     }
 }

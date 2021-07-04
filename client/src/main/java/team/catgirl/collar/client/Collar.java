@@ -408,6 +408,7 @@ public final class Collar {
         @Override
         public void onFailure(WebSocket webSocket, Throwable throwable) {
             LOGGER.log(Level.SEVERE, "Socket failure", throwable);
+            configuration.listener.onError(collar, throwable);
             throwable.printStackTrace();
             if (state != State.DISCONNECTED) {
                 collar.changeState(State.DISCONNECTED);
@@ -429,7 +430,7 @@ public final class Collar {
                     if (session.mode == MinecraftSession.Mode.MOJANG) {
                         Mojang authentication = new Mojang(Http.client(), configuration.yggdrasilBaseUrl);
                         if (!authentication.joinServer(session)) {
-                            throw new ConnectionException("could start session with Mojang");
+                            throw new ConnectionException("couldn't start session with Mojang");
                         }
                     }
                     StartSessionRequest request = new StartSessionRequest(identity, session);

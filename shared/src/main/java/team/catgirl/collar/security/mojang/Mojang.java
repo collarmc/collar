@@ -2,6 +2,7 @@ package team.catgirl.collar.security.mojang;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.base.Suppliers;
 import com.google.common.io.BaseEncoding;
 import io.mikael.urlbuilder.UrlBuilder;
 import team.catgirl.collar.api.http.HttpException;
@@ -20,9 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Stream;
 
 public final class Mojang {
 
@@ -30,6 +31,7 @@ public final class Mojang {
 
     private final HttpClient http;
     private final String baseUrl;
+    private static final Supplier<String> SERVER_ID = Suppliers.memoize(Mojang::genServerIDHash);
 
     public Mojang(HttpClient http, String baseUrl) {
         this.http = http;
@@ -41,13 +43,13 @@ public final class Mojang {
         return http.execute(Request.url(baseUrl + "session/minecraft/profile/" + profileId).get(), Response.json(PlayerProfile.class));
     }
 
-    public boolean joinServer(MinecraftSession session) {
+    public boolean joinServer(MinecraftSession session, String mojangServerId) {
         try {
-            JoinRequest joinReq = new JoinRequest(session.accessToken, toProfileId(session.id), session.server);
+            JoinRequest joinReq = new JoinRequest(session.accessToken, toProfileId(session.id), mojangServerId);
             http.execute(Request.url(baseUrl + "session/minecraft/join").postJson(joinReq), Response.noContent());
             return true;
         } catch (HttpException e) {
-            LOGGER.log(Level.SEVERE, "Could not start verification with Mojang",e);
+            LOGGER.log(Level.SEVERE, "Could not start verification with Mojang (" + e.code + ")", e);
             return false;
         }
     }
@@ -56,11 +58,10 @@ public final class Mojang {
         try {
             UrlBuilder builder = UrlBuilder.fromString(baseUrl + "session/minecraft/hasJoined")
                     .addParameter("username", session.username)
-                    .addParameter("serverId", Mojang.genServerIDHash());
+                    .addParameter("serverId", serverId());
             HasJoinedResponse hasJoinedResponse = http.execute(Request.url(builder).get(), Response.json(HasJoinedResponse.class));
             return hasJoinedResponse.id.equals(toProfileId(session.id));
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+        } catch (Throwable e) {
             LOGGER.log(Level.SEVERE, "Couldn't verify " + session.username,e);
             return false;
         }
@@ -184,8 +185,20 @@ public final class Mojang {
         }
     }
 
-    private static String genServerIDHash() throws NoSuchAlgorithmException {
-        MessageDigest md = MessageDigest.getInstance("SHA-1");
+    /**
+     * @return our fake mc server id
+     */
+    public static String serverId() {
+        return SERVER_ID.get();
+    }
+
+    private static String genServerIDHash() {
+        MessageDigest md;
+        try {
+            md = MessageDigest.getInstance("SHA-1");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
         md.update(generateRandomKey());
         byte[] digest = md.digest();
         return new BigInteger(digest).toString(16);

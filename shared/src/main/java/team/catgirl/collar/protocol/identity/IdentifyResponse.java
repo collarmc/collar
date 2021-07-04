@@ -10,10 +10,18 @@ public final class IdentifyResponse extends ProtocolResponse {
     @JsonProperty("profile")
     public final PublicProfile profile;
 
+    /**
+     * The Collar servers emulated Mojang server id
+     */
+    @JsonProperty("mojangServerId")
+    public final String mojangServerId;
+
     @JsonCreator
     public IdentifyResponse(@JsonProperty("identity") ServerIdentity identity,
-                            @JsonProperty("profile") PublicProfile profile) {
+                            @JsonProperty("profile") PublicProfile profile,
+                            @JsonProperty("mojangServerId") String mojangServerId) {
         super(identity);
         this.profile = profile;
+        this.mojangServerId = mojangServerId;
     }
 }

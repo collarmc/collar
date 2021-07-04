@@ -33,6 +33,7 @@ import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.cipher.CipherException.InvalidCipherSessionException;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.security.cipher.CipherException;
+import team.catgirl.collar.security.mojang.Mojang;
 import team.catgirl.collar.server.protocol.*;
 import team.catgirl.collar.server.services.profiles.ProfileCache;
 
@@ -130,7 +131,7 @@ public class CollarServer {
                     profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
                         if (processPrivateIdentityToken(profile, request)) {
                             LOGGER.log(Level.FINE, "Profile found for " + req.identity.id());
-                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic()));
+                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverId()));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
                         }

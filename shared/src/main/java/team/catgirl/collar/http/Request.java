@@ -187,6 +187,7 @@ public final class Request {
          * @return request
          */
         public Request postJson(Object content) {
+            headers.put("Content-Type", "application/json");
             return new Request(HttpMethod.POST, uri, content, headers, null);
         }
 

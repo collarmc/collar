@@ -199,7 +199,10 @@ public final class Mojang {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
-        md.update(generateRandomKey());
+        md.update(new byte[0]);
+        KeyPair keyPair = generateRandomKeyPair();
+        md.update(keyPair.getPrivate().getEncoded());
+        md.update(keyPair.getPublic().getEncoded());
         byte[] digest = md.digest();
         return new BigInteger(digest).toString(16);
     }
@@ -208,7 +211,7 @@ public final class Mojang {
         return id.toString().replace("-", "");
     }
 
-    private static byte[] generateRandomKey() {
+    private static KeyPair generateRandomKeyPair() {
         KeyPair kp;
         try {
             KeyPairGenerator keyPairGene = KeyPairGenerator.getInstance("RSA");
@@ -217,6 +220,6 @@ public final class Mojang {
         } catch (Exception e) {
             throw new IllegalStateException("problem generating the key", e);
         }
-        return kp.getPublic().getEncoded();
+        return kp;
     }
 }

@@ -430,7 +430,7 @@ public final class Collar {
                     if (session.mode == MinecraftSession.Mode.MOJANG) {
                         Mojang authentication = new Mojang(Http.client(), configuration.yggdrasilBaseUrl);
                         if (!authentication.joinServer(session)) {
-                            throw new ConnectionException("couldn't start session with Mojang");
+                            throw new ConnectionException("Couldn't start session with Mojang");
                         }
                     }
                     StartSessionRequest request = new StartSessionRequest(identity, session);

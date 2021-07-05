@@ -216,7 +216,7 @@ public final class Mojang {
         KeyPair kp;
         try {
             KeyPairGenerator keyPairGene = KeyPairGenerator.getInstance("RSA");
-            keyPairGene.initialize(128);
+            keyPairGene.initialize(1024);
             kp = keyPairGene.genKeyPair();
         } catch (Exception e) {
             throw new IllegalStateException("problem generating the key", e);

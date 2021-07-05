@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Suppliers;
 import com.google.common.io.BaseEncoding;
 import io.mikael.urlbuilder.UrlBuilder;
-import sun.nio.cs.UTF_8;
 import sun.security.provider.X509Factory;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.http.HttpClient;
@@ -59,7 +58,7 @@ public final class Mojang {
             md.update(serverPublicKey.getBytes(StandardCharsets.ISO_8859_1));
             byte[] digest = md.digest();
             String serverId = new BigInteger(digest).toString(16);
-            JoinRequest joinReq = new JoinRequest(session.accessToken, toProfileId(session.id), serverId);
+            JoinRequest joinReq = new JoinRequest(Agent.MINECRAFT, session.accessToken, toProfileId(session.id), serverId);
             http.execute(Request.url(baseUrl + "session/minecraft/join").postJson(joinReq), Response.noContent());
             return Optional.of(new JoinServerResponse(serverId));
         } catch (HttpException e) {
@@ -270,6 +269,8 @@ public final class Mojang {
     }
 
     public static final class JoinRequest {
+        @JsonProperty("agent")
+        public final Agent agent;
         @JsonProperty("accessToken")
         public final String accessToken;
         @JsonProperty("selectedProfile")
@@ -278,9 +279,11 @@ public final class Mojang {
         public final String serverId;
 
         @JsonCreator
-        public JoinRequest(@JsonProperty("accessToken") String accessToken,
+        public JoinRequest(@JsonProperty("agent") Agent agent,
+                           @JsonProperty("accessToken") String accessToken,
                            @JsonProperty("selectedProfile") String selectedProfile,
                            @JsonProperty("serverId") String serverId) {
+            this.agent = agent;
             this.accessToken = accessToken;
             this.selectedProfile = selectedProfile;
             this.serverId = serverId;
@@ -307,6 +310,22 @@ public final class Mojang {
 
         public JoinServerResponse(@JsonProperty("serverId") String serverId) {
             this.serverId = serverId;
+        }
+    }
+
+    public static class Agent {
+
+        public static final Agent MINECRAFT = new Agent("Minecraft", 1);
+
+        @JsonProperty("name")
+        public final String name;
+        @JsonProperty("version")
+        public final Integer version;
+
+        public Agent(@JsonProperty("name") String name,
+                     @JsonProperty("version") Integer version) {
+            this.name = name;
+            this.version = version;
         }
     }
 

@@ -90,13 +90,12 @@ public final class Mojang {
 
     /**
      * Validates the clients access token
-     * @param accessToken to test
-     * @param clientToken to test
+     * @param request to send
      * @return accessToken is valid or not
      */
     public Optional<RefreshTokenResponse> refreshToken(RefreshTokenRequest request) {
         try {
-            return Optional.of(http.execute(Request.url(baseUrl + "session/minecraft/validate").postJson(request), Response.json(RefreshTokenResponse.class)));
+            return Optional.of(http.execute(Request.url(baseUrl + "session/minecraft/refresh").postJson(request), Response.json(RefreshTokenResponse.class)));
         } catch (Throwable e) {
             return Optional.empty();
         }

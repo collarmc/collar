@@ -55,6 +55,11 @@ public final class Mojang {
         }
     }
 
+    /**
+     * Verify that the client can login to the server
+     * @param session to check
+     * @return client verified or not
+     */
     public boolean verifyClient(MinecraftSession session) {
         try {
             UrlBuilder builder = UrlBuilder.fromString(baseUrl + "session/minecraft/hasJoined")
@@ -65,6 +70,99 @@ public final class Mojang {
         } catch (Throwable e) {
             LOGGER.log(Level.SEVERE, "Couldn't verify " + session.username,e);
             return false;
+        }
+    }
+
+    /**
+     * Validates the clients access token
+     * @param accessToken to test
+     * @param clientToken to test
+     * @return accessToken is valid or not
+     */
+    public boolean validateToken(String accessToken, String clientToken) {
+        try {
+            http.execute(Request.url(baseUrl + "session/minecraft/validate").postJson(new ValidateTokenRequest(accessToken, clientToken)), Response.noContent());
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    /**
+     * Validates the clients access token
+     * @param accessToken to test
+     * @param clientToken to test
+     * @return accessToken is valid or not
+     */
+    public Optional<RefreshTokenResponse> refreshToken(RefreshTokenRequest request) {
+        try {
+            return Optional.of(http.execute(Request.url(baseUrl + "session/minecraft/validate").postJson(request), Response.json(RefreshTokenResponse.class)));
+        } catch (Throwable e) {
+            return Optional.empty();
+        }
+    }
+
+
+    public static final class RefreshTokenRequest {
+        @JsonProperty("accessToken")
+        public final String accessToken;
+        @JsonProperty("clientToken")
+        public final String clientToken;
+        @JsonProperty("selectedProfile")
+        public final SelectedProfile selectedProfile;
+        @JsonProperty("requestUser")
+        public final boolean requestUser = true;
+
+        public RefreshTokenRequest(String accessToken, String clientToken, SelectedProfile selectedProfile) {
+            this.accessToken = accessToken;
+            this.clientToken = clientToken;
+            this.selectedProfile = selectedProfile;
+        }
+    }
+
+    public static final class RefreshTokenResponse {
+        @JsonProperty("accessToken")
+        public final String accessToken;
+        @JsonProperty("clientToken")
+        public final String clientToken;
+        @JsonProperty("selectedProfile")
+        public final SelectedProfile selectedProfile;
+        @JsonProperty("user")
+        public final PlayerProfile user;
+
+        public RefreshTokenResponse(@JsonProperty("accessToken") String accessToken,
+                                    @JsonProperty("clientToken") String clientToken,
+                                    @JsonProperty("selectedProfile") SelectedProfile selectedProfile,
+                                    @JsonProperty("user") PlayerProfile user) {
+            this.accessToken = accessToken;
+            this.clientToken = clientToken;
+            this.selectedProfile = selectedProfile;
+            this.user = user;
+        }
+    }
+
+    public static final class SelectedProfile {
+        @JsonProperty("id")
+        public final String id;
+        @JsonProperty("name")
+        public final String name;
+
+        public SelectedProfile(String id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+    }
+
+    public static final class ValidateTokenRequest {
+        @JsonProperty("accessToken")
+        public final String accessToken;
+        @JsonProperty("clientToken")
+        public final String clientToken;
+
+        public ValidateTokenRequest(@JsonProperty("accessToken") String accessToken,
+                                    @JsonProperty("clientToken") String clientToken) {
+            this.accessToken = accessToken;
+            this.clientToken = clientToken;
         }
     }
 
@@ -208,7 +306,7 @@ public final class Mojang {
         return new BigInteger(digest).toString(16);
     }
 
-    private static String toProfileId(UUID id) {
+    public static String toProfileId(UUID id) {
         return id.toString().replace("-", "");
     }
 

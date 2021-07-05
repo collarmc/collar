@@ -3,6 +3,7 @@ package team.catgirl.collar.server.security.mojang;
 import team.catgirl.collar.http.HttpClient;
 import team.catgirl.collar.security.mojang.MinecraftSession;
 import team.catgirl.collar.security.mojang.Mojang;
+import team.catgirl.collar.security.mojang.Mojang.RefreshTokenRequest;
 
 /**
  * Verifies identifies against Mojang auth servers

@@ -59,6 +59,8 @@ import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.mojang.MinecraftSession;
 import team.catgirl.collar.security.mojang.Mojang;
 import team.catgirl.collar.security.cipher.CipherException;
+import team.catgirl.collar.security.mojang.Mojang.RefreshTokenRequest;
+import team.catgirl.collar.security.mojang.Mojang.SelectedProfile;
 import team.catgirl.collar.utils.Utils;
 
 import java.io.IOException;
@@ -430,6 +432,19 @@ public final class Collar {
                     MinecraftSession session = configuration.sessionSupplier.get();
                     if (session.mode == MinecraftSession.Mode.MOJANG) {
                         Mojang authentication = new Mojang(Http.client(), configuration.yggdrasilBaseUrl);
+                        // Check if the access token is valid
+                        if (!authentication.validateToken(session.accessToken, session.clientToken)) {
+                            Optional<Mojang.RefreshTokenResponse> refreshTokenResponse = authentication.refreshToken(new RefreshTokenRequest(
+                                    session.accessToken,
+                                    session.clientToken,
+                                    new SelectedProfile(Mojang.toProfileId(session.id), session.username)
+                            ));
+                            if (refreshTokenResponse.isPresent()) {
+                                LOGGER.log(Level.INFO, "Successfully refreshed access token");
+                            } else {
+                                LOGGER.log(Level.SEVERE, "Failed to refresh access token. Will try joining the server anyway...");
+                            }
+                        }
                         if (!authentication.joinServer(session, response.mojangServerId)) {
                             throw new ConnectionException("Couldn't verify your client session with Mojang");
                         }

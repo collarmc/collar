@@ -13,6 +13,7 @@ import team.catgirl.collar.utils.Utils;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
@@ -199,8 +200,8 @@ public final class Mojang {
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException(e);
         }
-        md.update(new byte[0]);
-        KeyPair keyPair = generateRandomKeyPair();
+        md.update("".getBytes(StandardCharsets.ISO_8859_1));
+        KeyPair keyPair = generateServerKeyPair();
         md.update(keyPair.getPrivate().getEncoded());
         md.update(keyPair.getPublic().getEncoded());
         byte[] digest = md.digest();
@@ -211,11 +212,11 @@ public final class Mojang {
         return id.toString().replace("-", "");
     }
 
-    private static KeyPair generateRandomKeyPair() {
+    private static KeyPair generateServerKeyPair() {
         KeyPair kp;
         try {
             KeyPairGenerator keyPairGene = KeyPairGenerator.getInstance("RSA");
-            keyPairGene.initialize(512);
+            keyPairGene.initialize(128);
             kp = keyPairGene.genKeyPair();
         } catch (Exception e) {
             throw new IllegalStateException("problem generating the key", e);

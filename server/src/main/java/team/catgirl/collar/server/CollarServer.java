@@ -1,6 +1,5 @@
 package team.catgirl.collar.server;
 
-import com.google.common.hash.Hashing;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
@@ -133,7 +132,7 @@ public class CollarServer {
                     profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
                         if (processPrivateIdentityToken(profile, request)) {
                             LOGGER.log(Level.FINE, "Profile found for " + req.identity.id());
-                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), Hashing.sha1().hashBytes(TokenGenerator.byteToken(16)).asBytes()));
+                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), TokenGenerator.byteToken(16)));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
                         }

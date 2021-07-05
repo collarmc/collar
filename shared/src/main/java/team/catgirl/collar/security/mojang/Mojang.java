@@ -56,7 +56,7 @@ public final class Mojang {
             }
             md.update("".getBytes(StandardCharsets.ISO_8859_1));
             md.update(sharedSecret);
-            md.update(serverPublicKey.getBytes(StandardCharsets.UTF_8));
+            md.update(serverPublicKey.getBytes(StandardCharsets.ISO_8859_1));
             byte[] digest = md.digest();
             String serverId = new BigInteger(digest).toString(16);
             JoinRequest joinReq = new JoinRequest(session.accessToken, toProfileId(session.id), serverId);

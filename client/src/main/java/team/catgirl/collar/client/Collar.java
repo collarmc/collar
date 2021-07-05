@@ -400,6 +400,7 @@ public final class Collar {
             if (this.keepAlive != null) {
                 this.keepAlive.stop();
             }
+            configuration.listener.onError(collar, new ConnectionException("Connection closed: " + message));
             if (state != State.DISCONNECTED) {
                 collar.changeState(State.DISCONNECTED);
             }

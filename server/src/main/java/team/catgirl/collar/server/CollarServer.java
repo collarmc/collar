@@ -1,5 +1,6 @@
 package team.catgirl.collar.server;
 
+import com.google.common.hash.Hashing;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
@@ -31,9 +32,9 @@ import team.catgirl.collar.protocol.trust.CheckTrustRelationshipResponse.IsUntru
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.TokenGenerator;
+import team.catgirl.collar.security.cipher.CipherException;
 import team.catgirl.collar.security.cipher.CipherException.InvalidCipherSessionException;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
-import team.catgirl.collar.security.cipher.CipherException;
 import team.catgirl.collar.security.mojang.Mojang;
 import team.catgirl.collar.server.protocol.*;
 import team.catgirl.collar.server.services.profiles.ProfileCache;
@@ -132,7 +133,7 @@ public class CollarServer {
                     profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
                         if (processPrivateIdentityToken(profile, request)) {
                             LOGGER.log(Level.FINE, "Profile found for " + req.identity.id());
-                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), TokenGenerator.byteToken(16)));
+                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), Hashing.sha1().hashBytes(TokenGenerator.byteToken(16)).asBytes()));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
                         }

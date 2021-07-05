@@ -434,21 +434,6 @@ public final class Collar {
                     String serverId;
                     if (session.mode == MinecraftSession.Mode.MOJANG) {
                         Mojang authentication = new Mojang(Http.client(), configuration.yggdrasilBaseUrl);
-                        // Check if the access token is valid
-                        if (!authentication.validateToken(session.accessToken, session.clientToken)) {
-                            Optional<RefreshTokenResponse> refreshTokenResponse = authentication.refreshToken(
-                                    new RefreshTokenRequest(
-                                        session.accessToken,
-                                        session.clientToken,
-                                        new SelectedProfile(Mojang.toProfileId(session.id), session.username), false
-                                    )
-                            );
-                            if (refreshTokenResponse.isPresent()) {
-                                LOGGER.log(Level.INFO, "Successfully refreshed access token");
-                            } else {
-                                LOGGER.log(Level.SEVERE, "Failed to refresh access token. Will try joining the server anyway...");
-                            }
-                        }
                         Optional<Mojang.JoinServerResponse> joinServerResponse = authentication.joinServer(session, response.serverPublicKey, response.sharedSecret);
                         if (joinServerResponse.isPresent()) {
                             serverId = joinServerResponse.get().serverId;

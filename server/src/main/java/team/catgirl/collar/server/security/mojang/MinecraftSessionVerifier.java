@@ -1,6 +1,6 @@
 package team.catgirl.collar.server.security.mojang;
 
-import team.catgirl.collar.security.mojang.MinecraftSession;
+import team.catgirl.collar.protocol.session.StartSessionRequest;
 
 /**
  * Verification of reported Minecraft session identity
@@ -15,8 +15,8 @@ public interface MinecraftSessionVerifier {
 
     /**
      * Tests that the provided session is valid
-     * @param session to test
+     * @param request to test
      * @return valid
      */
-    boolean verify(MinecraftSession session);
+    boolean verify(StartSessionRequest request);
 }

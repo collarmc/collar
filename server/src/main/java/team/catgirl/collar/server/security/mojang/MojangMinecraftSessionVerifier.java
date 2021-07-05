@@ -1,9 +1,8 @@
 package team.catgirl.collar.server.security.mojang;
 
 import team.catgirl.collar.http.HttpClient;
-import team.catgirl.collar.security.mojang.MinecraftSession;
+import team.catgirl.collar.protocol.session.StartSessionRequest;
 import team.catgirl.collar.security.mojang.Mojang;
-import team.catgirl.collar.security.mojang.Mojang.RefreshTokenRequest;
 
 /**
  * Verifies identifies against Mojang auth servers
@@ -26,7 +25,7 @@ public class MojangMinecraftSessionVerifier implements MinecraftSessionVerifier 
     }
 
     @Override
-    public boolean verify(MinecraftSession session) {
-        return new Mojang(http, baseUrl).verifyClient(session);
+    public boolean verify(StartSessionRequest request) {
+        return new Mojang(http, baseUrl).hasJoined(request.session, request.serverId);
     }
 }

@@ -14,10 +14,7 @@ import team.catgirl.collar.utils.Utils;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -30,9 +27,10 @@ public final class Mojang {
 
     private static final Logger LOGGER = Logger.getLogger(Mojang.class.getName());
 
+    private static final Supplier<KeyPair> SERVER_KEY_PAIR = Suppliers.memoize(Mojang::createKeyPair);
+
     private final HttpClient http;
     private final String baseUrl;
-    private static final Supplier<String> SERVER_ID = Suppliers.memoize(Mojang::genServerIDHash);
 
     public Mojang(HttpClient http, String baseUrl) {
         this.http = http;
@@ -44,27 +42,39 @@ public final class Mojang {
         return http.execute(Request.url(baseUrl + "session/minecraft/profile/" + profileId).get(), Response.json(PlayerProfile.class));
     }
 
-    public boolean joinServer(MinecraftSession session, String mojangServerId) {
+    public Optional<JoinServerResponse> joinServer(MinecraftSession session, byte[] serverPublicKey, byte[] sharedSecret) {
         try {
-            JoinRequest joinReq = new JoinRequest(session.accessToken, toProfileId(session.id), mojangServerId);
+            MessageDigest md;
+            try {
+                md = MessageDigest.getInstance("SHA-1");
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalStateException(e);
+            }
+            md.update("".getBytes(StandardCharsets.ISO_8859_1));
+            md.update(sharedSecret);
+            md.update(serverPublicKey);
+            byte[] digest = md.digest();
+            String serverId = new BigInteger(digest).toString(16);
+            JoinRequest joinReq = new JoinRequest(session.accessToken, toProfileId(session.id), serverId);
             http.execute(Request.url(baseUrl + "session/minecraft/join").postJson(joinReq), Response.noContent());
-            return true;
+            return Optional.of(new JoinServerResponse(serverId));
         } catch (HttpException e) {
             LOGGER.log(Level.SEVERE, "Could not start verification with Mojang (" + e.code + ")", e);
-            return false;
+            return Optional.empty();
         }
     }
 
     /**
      * Verify that the client can login to the server
      * @param session to check
+     * @param serverId server id
      * @return client verified or not
      */
-    public boolean verifyClient(MinecraftSession session) {
+    public boolean hasJoined(MinecraftSession session, String serverId) {
         try {
             UrlBuilder builder = UrlBuilder.fromString(baseUrl + "session/minecraft/hasJoined")
                     .addParameter("username", session.username)
-                    .addParameter("serverId", serverId());
+                    .addParameter("serverId", serverId);
             HasJoinedResponse hasJoinedResponse = http.execute(Request.url(builder).get(), Response.json(HasJoinedResponse.class));
             return hasJoinedResponse.id.equals(toProfileId(session.id));
         } catch (Throwable e) {
@@ -287,33 +297,24 @@ public final class Mojang {
         }
     }
 
-    /**
-     * @return our fake mc server id
-     */
-    public static String serverId() {
-        return SERVER_ID.get();
+    public static class JoinServerResponse {
+        @JsonProperty("serverId")
+        public final String serverId;
+
+        public JoinServerResponse(@JsonProperty("serverId") String serverId) {
+            this.serverId = serverId;
+        }
     }
 
-    private static String genServerIDHash() {
-        MessageDigest md;
-        try {
-            md = MessageDigest.getInstance("SHA-1");
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException(e);
-        }
-        md.update("".getBytes(StandardCharsets.ISO_8859_1));
-        KeyPair keyPair = generateServerKeyPair();
-        md.update(keyPair.getPrivate().getEncoded());
-        md.update(keyPair.getPublic().getEncoded());
-        byte[] digest = md.digest();
-        return new BigInteger(digest).toString(16);
+    public static PublicKey serverPublicKey() {
+        return SERVER_KEY_PAIR.get().getPublic();
     }
 
     public static String toProfileId(UUID id) {
         return id.toString().replace("-", "");
     }
 
-    private static KeyPair generateServerKeyPair() {
+    private static KeyPair createKeyPair() {
         KeyPair kp;
         try {
             KeyPairGenerator keyPairGene = KeyPairGenerator.getInstance("RSA");

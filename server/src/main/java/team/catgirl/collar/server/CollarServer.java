@@ -30,6 +30,7 @@ import team.catgirl.collar.protocol.trust.CheckTrustRelationshipResponse.IsTrust
 import team.catgirl.collar.protocol.trust.CheckTrustRelationshipResponse.IsUntrustedRelationshipResponse;
 import team.catgirl.collar.security.ClientIdentity;
 import team.catgirl.collar.security.ServerIdentity;
+import team.catgirl.collar.security.TokenGenerator;
 import team.catgirl.collar.security.cipher.CipherException.InvalidCipherSessionException;
 import team.catgirl.collar.security.mojang.MinecraftPlayer;
 import team.catgirl.collar.security.cipher.CipherException;
@@ -131,7 +132,7 @@ public class CollarServer {
                     profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
                         if (processPrivateIdentityToken(profile, request)) {
                             LOGGER.log(Level.FINE, "Profile found for " + req.identity.id());
-                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverId()));
+                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey().getEncoded(), TokenGenerator.byteToken(16)));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
                         }
@@ -149,7 +150,7 @@ public class CollarServer {
             } else if (req instanceof StartSessionRequest) {
                 LOGGER.log(Level.INFO, "Starting session with " + req.identity);
                 StartSessionRequest request = (StartSessionRequest)req;
-                if (services.minecraftSessionVerifier.verify(request.session)) {
+                if (services.minecraftSessionVerifier.verify(request)) {
                     MinecraftPlayer minecraftPlayer = request.session.toPlayer();
                     services.sessions.identify(session, req.identity, minecraftPlayer);
                     services.profiles.updateProfile(RequestContext.SERVER, UpdateProfileRequest.addMinecraftAccount(req.identity.id(), request.session.id));

@@ -1,6 +1,6 @@
 package team.catgirl.collar.server.security.mojang;
 
-import team.catgirl.collar.security.mojang.MinecraftSession;
+import team.catgirl.collar.protocol.session.StartSessionRequest;
 
 /**
  * Offline {@link MinecraftSessionVerifier}
@@ -15,7 +15,7 @@ public class NojangMinecraftSessionVerifier implements MinecraftSessionVerifier 
     }
 
     @Override
-    public boolean verify(MinecraftSession session) {
+    public boolean verify(StartSessionRequest request) {
         return true;
     }
 }

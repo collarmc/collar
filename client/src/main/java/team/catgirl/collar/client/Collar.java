@@ -437,8 +437,7 @@ public final class Collar {
                             Optional<Mojang.RefreshTokenResponse> refreshTokenResponse = authentication.refreshToken(new RefreshTokenRequest(
                                     session.accessToken,
                                     session.clientToken,
-                                    new SelectedProfile(Mojang.toProfileId(session.id), session.username)
-                            ));
+                                    new SelectedProfile(Mojang.toProfileId(session.id), session.username), false));
                             if (refreshTokenResponse.isPresent()) {
                                 LOGGER.log(Level.INFO, "Successfully refreshed access token");
                             } else {

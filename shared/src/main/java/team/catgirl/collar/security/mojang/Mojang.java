@@ -110,12 +110,16 @@ public final class Mojang {
         @JsonProperty("selectedProfile")
         public final SelectedProfile selectedProfile;
         @JsonProperty("requestUser")
-        public final boolean requestUser = true;
+        public final boolean requestUser;
 
-        public RefreshTokenRequest(String accessToken, String clientToken, SelectedProfile selectedProfile) {
+        public RefreshTokenRequest(@JsonProperty("accessToken") String accessToken,
+                                   @JsonProperty("clientToken") String clientToken,
+                                   @JsonProperty("selectedProfile") SelectedProfile selectedProfile,
+                                   @JsonProperty("requestUser") boolean requestUser) {
             this.accessToken = accessToken;
             this.clientToken = clientToken;
             this.selectedProfile = selectedProfile;
+            this.requestUser = requestUser;
         }
     }
 

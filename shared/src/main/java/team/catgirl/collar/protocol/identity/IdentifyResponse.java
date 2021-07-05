@@ -14,14 +14,15 @@ public final class IdentifyResponse extends ProtocolResponse {
      * The Collar servers emulated Mojang server id
      */
     @JsonProperty("serverPublicKey")
-    public final byte[] serverPublicKey;
+    public final String serverPublicKey;
 
+    @JsonProperty("sharedSecret")
     public final byte[] sharedSecret;
 
     @JsonCreator
     public IdentifyResponse(@JsonProperty("identity") ServerIdentity identity,
                             @JsonProperty("profile") PublicProfile profile,
-                            @JsonProperty("serverPublicKey") byte[] serverPublicKey,
+                            @JsonProperty("serverPublicKey") String serverPublicKey,
                             @JsonProperty("sharedSecret") byte[] sharedSecret) {
         super(identity);
         this.profile = profile;

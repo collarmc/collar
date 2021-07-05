@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Suppliers;
 import com.google.common.io.BaseEncoding;
 import io.mikael.urlbuilder.UrlBuilder;
+import sun.nio.cs.UTF_8;
+import sun.security.provider.X509Factory;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.http.HttpClient;
 import team.catgirl.collar.http.Request;
@@ -12,6 +14,8 @@ import team.catgirl.collar.http.Response;
 import team.catgirl.collar.utils.Utils;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
@@ -42,7 +46,7 @@ public final class Mojang {
         return http.execute(Request.url(baseUrl + "session/minecraft/profile/" + profileId).get(), Response.json(PlayerProfile.class));
     }
 
-    public Optional<JoinServerResponse> joinServer(MinecraftSession session, byte[] serverPublicKey, byte[] sharedSecret) {
+    public Optional<JoinServerResponse> joinServer(MinecraftSession session, String serverPublicKey, byte[] sharedSecret) {
         try {
             MessageDigest md;
             try {
@@ -52,7 +56,7 @@ public final class Mojang {
             }
             md.update("".getBytes(StandardCharsets.ISO_8859_1));
             md.update(sharedSecret);
-            md.update(serverPublicKey);
+            md.update(serverPublicKey.getBytes(StandardCharsets.UTF_8));
             byte[] digest = md.digest();
             String serverId = new BigInteger(digest).toString(16);
             JoinRequest joinReq = new JoinRequest(session.accessToken, toProfileId(session.id), serverId);
@@ -306,8 +310,13 @@ public final class Mojang {
         }
     }
 
-    public static PublicKey serverPublicKey() {
-        return SERVER_KEY_PAIR.get().getPublic();
+    public static String serverPublicKey() {
+        StringWriter writer = new StringWriter();
+        PrintWriter printWriter = new PrintWriter(writer);
+        printWriter.println(X509Factory.BEGIN_CERT);
+        printWriter.println(BaseEncoding.base32().encode(SERVER_KEY_PAIR.get().getPublic().getEncoded()));
+        printWriter.println(X509Factory.END_CERT);
+        return writer.toString();
     }
 
     public static String toProfileId(UUID id) {

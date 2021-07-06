@@ -27,4 +27,4 @@ Run in the command line:
 
 ## Building a mod?
 
-Checkout [team-catgirl/collar-mod](https://github.com/team-catgirl/collar-mod) for more information.
+Checkout [collarmc/collar-mod](https://github.com/collarmc/collar-mod) for more information.

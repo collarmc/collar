@@ -55,7 +55,6 @@ public final class CollarConfiguration {
         private File homeDirectory;
         private URL collarServerURL;
         private Ticks ticks;
-        private String yggdrasilBaseUrl;
 
         public Builder() {}
 

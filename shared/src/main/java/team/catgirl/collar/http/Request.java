@@ -70,12 +70,16 @@ public final class Request {
         }
         ByteBuf byteBuf;
         try {
-            byteBuf = this.content == null ? Unpooled.EMPTY_BUFFER : Unpooled.copiedBuffer(Utils.jsonMapper().writeValueAsBytes(content));
+            if (this.content == null) {
+                byteBuf = Unpooled.EMPTY_BUFFER;
+            } else {
+                byte[] array = Utils.jsonMapper().writeValueAsBytes(content);
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                headers.put("Content-Length", Long.toString(array.length));
+                byteBuf = Unpooled.copiedBuffer(array);
+            }
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
-        }
-        if (content != null) {
-            headers.put("Content-Type", "application/json");
         }
         HttpRequest request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, uri.toString(), byteBuf);
         headers.forEach((name, value) -> request.headers().add(name, value));
@@ -187,7 +191,6 @@ public final class Request {
          * @return request
          */
         public Request postJson(Object content) {
-            headers.put("Content-Type", "application/json");
             return new Request(HttpMethod.POST, uri, content, headers, null);
         }
 

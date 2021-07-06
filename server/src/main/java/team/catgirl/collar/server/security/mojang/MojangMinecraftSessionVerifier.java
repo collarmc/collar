@@ -12,11 +12,9 @@ public class MojangMinecraftSessionVerifier implements MinecraftSessionVerifier 
     private static final String NAME = "mojang";
 
     private final HttpClient http;
-    public final String baseUrl;
 
-    public MojangMinecraftSessionVerifier(HttpClient http, String baseUrl) {
+    public MojangMinecraftSessionVerifier(HttpClient http) {
         this.http = http;
-        this.baseUrl = baseUrl;
     }
 
     @Override
@@ -26,6 +24,6 @@ public class MojangMinecraftSessionVerifier implements MinecraftSessionVerifier 
 
     @Override
     public boolean verify(StartSessionRequest request) {
-        return new Mojang(http, baseUrl).hasJoined(request.session, request.serverId);
+        return new Mojang(http).hasJoined(request.session, request.serverId);
     }
 }

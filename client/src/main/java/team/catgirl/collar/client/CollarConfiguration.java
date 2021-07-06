@@ -5,6 +5,7 @@ import team.catgirl.collar.api.entities.Entity;
 import team.catgirl.collar.api.location.Location;
 import team.catgirl.collar.client.minecraft.Ticks;
 import team.catgirl.collar.security.mojang.MinecraftSession;
+import team.catgirl.collar.security.mojang.Mojang;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,7 +28,6 @@ public final class CollarConfiguration {
     public final URL collarServerURL;
     public final CollarListener listener;
     public final Ticks ticks;
-    public final String yggdrasilBaseUrl;
     public final boolean debugMode;
 
     private CollarConfiguration(Supplier<Location> playerLocation,
@@ -36,7 +36,7 @@ public final class CollarConfiguration {
                                 HomeDirectory homeDirectory,
                                 URL collarServerURL,
                                 CollarListener listener,
-                                Ticks ticks, String yggdrasilBaseUrl) {
+                                Ticks ticks) {
         this.playerLocation = playerLocation;
         this.sessionSupplier = sessionSupplier;
         this.entitiesSupplier = entitiesSupplier;
@@ -44,7 +44,6 @@ public final class CollarConfiguration {
         this.collarServerURL = collarServerURL;
         this.listener = listener;
         this.ticks = ticks;
-        this.yggdrasilBaseUrl = yggdrasilBaseUrl;
         this.debugMode = homeDirectory.debugFile().exists();
     }
 
@@ -163,16 +162,6 @@ public final class CollarConfiguration {
         }
 
         /**
-         * Override the Mojang Yggdrasil base server
-         * @param yggdrasilBaseUrl alternative
-         * @return builder
-         */
-        public Builder withYggdrasilBaseUrl(String yggdrasilBaseUrl) {
-            this.yggdrasilBaseUrl = yggdrasilBaseUrl;
-            return this;
-        }
-
-        /**
          * Builds the new configuration
          * @return configuration of the collar client
          * @throws IOException if collar state directories cant be created
@@ -189,8 +178,7 @@ public final class CollarConfiguration {
                 LOGGER.log(Level.WARNING, "Location features are disabled. Consumer did not provide a player position supplier");
                 return Location.UNKNOWN;
             });
-            String yggdrasilBaseUrl = MoreObjects.firstNonNull(this.yggdrasilBaseUrl, "https://sessionserver.mojang.com/");
-            return new CollarConfiguration(playerPosition, sessionSupplier, entitiesSupplier, from, collarServerURL, listener, ticks, yggdrasilBaseUrl);
+            return new CollarConfiguration(playerPosition, sessionSupplier, entitiesSupplier, from, collarServerURL, listener, ticks);
         }
     }
 }

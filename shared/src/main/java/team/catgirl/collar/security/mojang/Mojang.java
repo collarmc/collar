@@ -2,14 +2,16 @@ package team.catgirl.collar.security.mojang;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Suppliers;
 import com.google.common.io.BaseEncoding;
 import io.mikael.urlbuilder.UrlBuilder;
-import sun.security.provider.X509Factory;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.http.HttpClient;
 import team.catgirl.collar.http.Request;
 import team.catgirl.collar.http.Response;
+import team.catgirl.collar.security.TokenGenerator;
 import team.catgirl.collar.utils.Utils;
 
 import java.io.IOException;
@@ -30,19 +32,28 @@ public final class Mojang {
 
     private static final Logger LOGGER = Logger.getLogger(Mojang.class.getName());
 
+    public static final String DEFAULT_AUTH_SERVER = "https://authserver.mojang.com/";
+    public static final String DEFAULT_SESSION_SERVER = "https://sessionserver.mojang.com/";
+
     private static final Supplier<KeyPair> SERVER_KEY_PAIR = Suppliers.memoize(Mojang::createKeyPair);
 
     private final HttpClient http;
-    private final String baseUrl;
+    private final String sessionServerBaseUrl;
+    private final String authServerBaseUrl;
 
-    public Mojang(HttpClient http, String baseUrl) {
+    public Mojang(HttpClient http, String sessionServerBaseUrl, String authServerBaseUrl) {
         this.http = http;
-        this.baseUrl = baseUrl;
+        this.sessionServerBaseUrl = sessionServerBaseUrl;
+        this.authServerBaseUrl = authServerBaseUrl;
     }
 
-    public PlayerProfile getProfile(UUID id) {
+    public Mojang(HttpClient client) {
+        this(client, Mojang.DEFAULT_SESSION_SERVER, Mojang.DEFAULT_AUTH_SERVER);
+    }
+
+    public PlayerPlayerProfile getProfile(UUID id) {
         String profileId = id.toString().replace("-", "");
-        return http.execute(Request.url(baseUrl + "session/minecraft/profile/" + profileId).get(), Response.json(PlayerProfile.class));
+        return http.execute(Request.url(sessionServerBaseUrl + "session/minecraft/profile/" + profileId).get(), Response.json(PlayerPlayerProfile.class));
     }
 
     public Optional<JoinServerResponse> joinServer(MinecraftSession session, String serverPublicKey, byte[] sharedSecret) {
@@ -59,7 +70,7 @@ public final class Mojang {
             byte[] digest = md.digest();
             String serverId = new BigInteger(digest).toString(16);
             JoinRequest joinReq = new JoinRequest(Agent.MINECRAFT, session.accessToken, toProfileId(session.id), serverId);
-            http.execute(Request.url(baseUrl + "session/minecraft/join").postJson(joinReq), Response.noContent());
+            http.execute(Request.url(sessionServerBaseUrl + "session/minecraft/join").postJson(joinReq), Response.noContent());
             return Optional.of(new JoinServerResponse(serverId));
         } catch (HttpException e) {
             LOGGER.log(Level.SEVERE, "Could not start verification with Mojang (" + e.code + ")", e);
@@ -75,7 +86,7 @@ public final class Mojang {
      */
     public boolean hasJoined(MinecraftSession session, String serverId) {
         try {
-            UrlBuilder builder = UrlBuilder.fromString(baseUrl + "session/minecraft/hasJoined")
+            UrlBuilder builder = UrlBuilder.fromString(sessionServerBaseUrl + "session/minecraft/hasJoined")
                     .addParameter("username", session.username)
                     .addParameter("serverId", serverId);
             HasJoinedResponse hasJoinedResponse = http.execute(Request.url(builder).get(), Response.json(HasJoinedResponse.class));
@@ -88,13 +99,12 @@ public final class Mojang {
 
     /**
      * Validates the clients access token
-     * @param accessToken to test
-     * @param clientToken to test
+     * @param request to send
      * @return accessToken is valid or not
      */
-    public boolean validateToken(String accessToken, String clientToken) {
+    public boolean validateToken(ValidateTokenRequest request) {
         try {
-            http.execute(Request.url(baseUrl + "session/minecraft/validate").postJson(new ValidateTokenRequest(accessToken, clientToken)), Response.noContent());
+            http.execute(Request.url(authServerBaseUrl + "/validate").postJson(request), Response.noContent());
             return true;
         } catch (Throwable e) {
             return false;
@@ -108,26 +118,39 @@ public final class Mojang {
      */
     public Optional<RefreshTokenResponse> refreshToken(RefreshTokenRequest request) {
         try {
-            return Optional.of(http.execute(Request.url(baseUrl + "session/minecraft/refresh").postJson(request), Response.json(RefreshTokenResponse.class)));
+            return Optional.of(http.execute(Request.url(authServerBaseUrl + "/refresh").postJson(request), Response.json(RefreshTokenResponse.class)));
         } catch (Throwable e) {
             return Optional.empty();
         }
     }
 
+    /**
+     * Authenticate with Mojang
+     * @param request to send
+     * @return response on success or empty on failure
+     */
+    public Optional<AuthenticateResponse> authenticate(AuthenticateRequest request) {
+        try {
+            return Optional.of(http.execute(Request.url(authServerBaseUrl + "/authenticate").postJson(request), Response.json(AuthenticateResponse.class)));
+        } catch (Throwable e) {
+            LOGGER.log(Level.SEVERE, "auth failed " + e.getMessage(), e);
+            return Optional.empty();
+        }
+    }
 
     public static final class RefreshTokenRequest {
         @JsonProperty("accessToken")
         public final String accessToken;
         @JsonProperty("clientToken")
-        public final String clientToken;
+        public final UUID clientToken;
         @JsonProperty("selectedProfile")
-        public final SelectedProfile selectedProfile;
+        public final PlayerProfileInfo selectedProfile;
         @JsonProperty("requestUser")
         public final boolean requestUser;
 
         public RefreshTokenRequest(@JsonProperty("accessToken") String accessToken,
-                                   @JsonProperty("clientToken") String clientToken,
-                                   @JsonProperty("selectedProfile") SelectedProfile selectedProfile,
+                                   @JsonProperty("clientToken") UUID clientToken,
+                                   @JsonProperty("selectedProfile") PlayerProfileInfo selectedProfile,
                                    @JsonProperty("requestUser") boolean requestUser) {
             this.accessToken = accessToken;
             this.clientToken = clientToken;
@@ -142,14 +165,14 @@ public final class Mojang {
         @JsonProperty("clientToken")
         public final String clientToken;
         @JsonProperty("selectedProfile")
-        public final SelectedProfile selectedProfile;
+        public final PlayerProfileInfo selectedProfile;
         @JsonProperty("user")
-        public final PlayerProfile user;
+        public final PlayerPlayerProfile user;
 
         public RefreshTokenResponse(@JsonProperty("accessToken") String accessToken,
                                     @JsonProperty("clientToken") String clientToken,
-                                    @JsonProperty("selectedProfile") SelectedProfile selectedProfile,
-                                    @JsonProperty("user") PlayerProfile user) {
+                                    @JsonProperty("selectedProfile") PlayerProfileInfo selectedProfile,
+                                    @JsonProperty("user") PlayerPlayerProfile user) {
             this.accessToken = accessToken;
             this.clientToken = clientToken;
             this.selectedProfile = selectedProfile;
@@ -157,15 +180,20 @@ public final class Mojang {
         }
     }
 
-    public static final class SelectedProfile {
+    public static class PlayerProfileInfo {
         @JsonProperty("id")
         public final String id;
         @JsonProperty("name")
         public final String name;
 
-        public SelectedProfile(String id, String name) {
+        public PlayerProfileInfo(@JsonProperty("id") String id,
+                                 @JsonProperty("name") String name) {
             this.id = id;
             this.name = name;
+        }
+
+        public UUID toId() {
+            return UUID.fromString(id.replaceFirst("(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)", "$1-$2-$3-$4-$5" ));
         }
     }
 
@@ -173,34 +201,29 @@ public final class Mojang {
         @JsonProperty("accessToken")
         public final String accessToken;
         @JsonProperty("clientToken")
-        public final String clientToken;
+        public final UUID clientToken;
 
         public ValidateTokenRequest(@JsonProperty("accessToken") String accessToken,
-                                    @JsonProperty("clientToken") String clientToken) {
+                                    @JsonProperty("clientToken") UUID clientToken) {
             this.accessToken = accessToken;
             this.clientToken = clientToken;
         }
     }
 
-    public static final class PlayerProfile {
-        @JsonProperty("id")
-        public final String id;
-        @JsonProperty("name")
-        public final String name;
+    public static final class PlayerPlayerProfile extends PlayerProfileInfo {
         @JsonProperty("properties")
-        public final List<ProfileProperty> properties;
+        public final List<PlayerProfileProperty> properties;
 
-        public PlayerProfile(@JsonProperty("id") String id,
-                             @JsonProperty("name") String name,
-                             @JsonProperty("properties") List<ProfileProperty> properties) {
-            this.id = id;
-            this.name = name;
+        public PlayerPlayerProfile(@JsonProperty("id") String id,
+                                   @JsonProperty("name") String name,
+                                   @JsonProperty("properies") List<PlayerProfileProperty> properties) {
+            super(id, name);
             this.properties = properties;
         }
 
         public Optional<TexturesProperty> textures() {
-            return properties.stream().filter(profileProperty -> profileProperty.name.equals("textures"))
-                    .map(profileProperty -> profileProperty.value)
+            return properties.stream().filter(playerProfileProperty -> playerProfileProperty.name.equals("textures"))
+                    .map(playerProfileProperty -> playerProfileProperty.value)
                     .map(value -> BaseEncoding.base64().decode(value))
                     .map(bytes -> {
                         try {
@@ -213,14 +236,14 @@ public final class Mojang {
         }
     }
 
-    public static final class ProfileProperty {
+    public static final class PlayerProfileProperty {
         @JsonProperty("name")
         public final String name;
         @JsonProperty("value")
         public final String value;
 
-        public ProfileProperty(@JsonProperty("name") String name,
-                               @JsonProperty("value") String value) {
+        public PlayerProfileProperty(@JsonProperty("name") String name,
+                                     @JsonProperty("value") String value) {
             this.name = name;
             this.value = value;
         }
@@ -313,6 +336,56 @@ public final class Mojang {
         }
     }
 
+    public static final class AuthenticateRequest {
+        @JsonProperty("agent")
+        public final Agent agent;
+        @JsonProperty("username")
+        public final String username;
+        @JsonProperty("password")
+        public final String password;
+        @JsonProperty("clientToken")
+        public final UUID clientToken;
+        @JsonProperty("requestUser")
+        public final boolean requestUser;
+
+        public AuthenticateRequest(@JsonProperty("agent") Agent agent,
+                                   @JsonProperty("username") String username,
+                                   @JsonProperty("password") String password,
+                                   @JsonProperty("clientToken") UUID clientToken,
+                                   @JsonProperty("requestUser") boolean requestUser) {
+            this.agent = agent;
+            this.username = username;
+            this.password = password;
+            this.clientToken = clientToken;
+            this.requestUser = requestUser;
+        }
+    }
+
+    public static final class AuthenticateResponse {
+        @JsonProperty("clientToken")
+        public final String clientToken;
+        @JsonProperty("accessToken")
+        public final String accessToken;
+        @JsonProperty("selectedProfile")
+        public final PlayerProfileInfo selectedProfile;
+        @JsonProperty("user")
+        public final PlayerPlayerProfile user;
+        @JsonProperty("availableProfiles")
+        public final List<PlayerProfileInfo> availableProfiles;
+
+        public AuthenticateResponse(@JsonProperty("clientToken") String clientToken,
+                                    @JsonProperty("accessToken") String accessToken,
+                                    @JsonProperty("selectedProfile") PlayerProfileInfo selectedProfile,
+                                    @JsonProperty("user") PlayerPlayerProfile user,
+                                    @JsonProperty("availableProfiles") List<PlayerProfileInfo> availableProfiles) {
+            this.clientToken = clientToken;
+            this.accessToken = accessToken;
+            this.selectedProfile = selectedProfile;
+            this.user = user;
+            this.availableProfiles = availableProfiles;
+        }
+    }
+
     public static class Agent {
 
         public static final Agent MINECRAFT = new Agent("Minecraft", 1);
@@ -332,9 +405,9 @@ public final class Mojang {
     public static String serverPublicKey() {
         StringWriter writer = new StringWriter();
         PrintWriter printWriter = new PrintWriter(writer);
-        printWriter.println(X509Factory.BEGIN_CERT);
+        printWriter.println("-----BEGIN PUBLIC KEY-----");
         printWriter.println(BaseEncoding.base32().encode(SERVER_KEY_PAIR.get().getPublic().getEncoded()));
-        printWriter.println(X509Factory.END_CERT);
+        printWriter.println("-----END PUBLIC KEY-----");
         return writer.toString();
     }
 

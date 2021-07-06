@@ -59,9 +59,6 @@ import team.catgirl.collar.security.ServerIdentity;
 import team.catgirl.collar.security.mojang.MinecraftSession;
 import team.catgirl.collar.security.mojang.Mojang;
 import team.catgirl.collar.security.cipher.CipherException;
-import team.catgirl.collar.security.mojang.Mojang.RefreshTokenRequest;
-import team.catgirl.collar.security.mojang.Mojang.RefreshTokenResponse;
-import team.catgirl.collar.security.mojang.Mojang.SelectedProfile;
 import team.catgirl.collar.utils.Utils;
 
 import java.io.IOException;
@@ -433,7 +430,7 @@ public final class Collar {
                     MinecraftSession session = configuration.sessionSupplier.get();
                     String serverId;
                     if (session.mode == MinecraftSession.Mode.MOJANG) {
-                        Mojang authentication = new Mojang(Http.client(), configuration.yggdrasilBaseUrl);
+                        Mojang authentication = new Mojang(Http.client());
                         Optional<Mojang.JoinServerResponse> joinServerResponse = authentication.joinServer(session, response.serverPublicKey, response.sharedSecret);
                         if (joinServerResponse.isPresent()) {
                             serverId = joinServerResponse.get().serverId;

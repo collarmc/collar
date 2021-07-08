@@ -181,11 +181,31 @@ public final class CollarConfiguration {
                 LOGGER.log(Level.INFO, "Debug file has specified an alternate collar server url " + collarServerURL + " that will be used instead of " + this.collarServerURL);
                 this.collarServerURL = collarServerURL;
             });
+            Supplier<MinecraftSession> configuredSession = this.sessionSupplier;
+            debugging.sessionMode.ifPresent(mode -> {
+                this.sessionSupplier = () -> {
+                    MinecraftSession session = configuredSession.get();
+                    if (session.mode == mode) {
+                        return session;
+                    }
+                    LOGGER.log(Level.INFO, "Debug file has specified session mode " + mode + " that will be used instead of " + session.mode);
+                    return new MinecraftSession(session.id, session.username, session.server, mode, session.accessToken, session.clientToken, session.networkId);
+                };
+            });
             Supplier<Location> playerPosition = MoreObjects.firstNonNull(this.playerLocation, () -> {
                 LOGGER.log(Level.WARNING, "Location features are disabled. Consumer did not provide a player position supplier");
                 return Location.UNKNOWN;
             });
-            return new CollarConfiguration(playerPosition, sessionSupplier, entitiesSupplier, homeDirectory, debugging, collarServerURL, listener, ticks);
+            return new CollarConfiguration(
+                    playerPosition,
+                    sessionSupplier,
+                    entitiesSupplier,
+                    homeDirectory,
+                    debugging,
+                    collarServerURL,
+                    listener,
+                    ticks
+            );
         }
     }
 }

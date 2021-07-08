@@ -1,6 +1,7 @@
 package team.catgirl.collar.client.debug;
 
 import team.catgirl.collar.client.HomeDirectory;
+import team.catgirl.collar.security.mojang.MinecraftSession;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,26 +17,31 @@ import java.util.Properties;
 public final class DebugConfiguration {
     public final boolean tracers;
     public final boolean waypoints;
+    public final Optional<MinecraftSession.Mode> sessionMode;
     public final Optional<URL> serverUrl;
 
-    public DebugConfiguration(boolean tracers, boolean waypoints, URL serverUrl) {
+    public DebugConfiguration(boolean tracers, boolean waypoints, MinecraftSession.Mode sessionMode, URL serverUrl) {
         this.tracers = tracers;
         this.waypoints = waypoints;
+        this.sessionMode = Optional.ofNullable(sessionMode);
         this.serverUrl = Optional.ofNullable(serverUrl);
     }
 
     public static DebugConfiguration load(HomeDirectory home) throws IOException {
         if (!home.debugFile().exists()) {
-            return new DebugConfiguration(false, false, null);
+            return new DebugConfiguration(false, false, null, null);
         }
         Properties properties = new Properties();
         try (InputStream is = new FileInputStream(home.debugFile())) {
             properties.load(is);
         }
         String url = properties.getProperty("server.url", null);
+        String mode = properties.getProperty("session.mode", null);
+        MinecraftSession.Mode sessionMode = mode == null ? null : MinecraftSession.Mode.valueOf(mode.toUpperCase());
         return new DebugConfiguration(
                 (boolean) properties.getOrDefault("tracers", false),
                 (boolean) properties.getOrDefault("waypoints", false),
+                sessionMode,
                 url == null ? null : new URL(url)
         );
     }

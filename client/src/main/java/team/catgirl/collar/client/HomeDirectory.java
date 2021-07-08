@@ -5,9 +5,11 @@ import java.io.IOException;
 
 public final class HomeDirectory {
 
+    private final File mcHome;
     private final File collarHome;
 
-    private HomeDirectory(File collarHome) {
+    private HomeDirectory(File mcHome, File collarHome) {
+        this.mcHome = mcHome;
         this.collarHome = collarHome;
     }
 
@@ -40,7 +42,7 @@ public final class HomeDirectory {
      * @return the debug file
      */
     public File debugFile() {
-        return new File(collarHome, "debug");
+        return new File(mcHome, "collar/debug");
     }
 
     private File createDirectory(String dht) throws IOException {
@@ -62,6 +64,6 @@ public final class HomeDirectory {
         if (!collar.exists() && !collar.mkdirs()) {
             throw new IOException("could not make directory " + collar.getAbsolutePath());
         }
-        return new HomeDirectory(collar);
+        return new HomeDirectory(mcHome, collar);
     }
 }

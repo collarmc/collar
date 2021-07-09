@@ -30,7 +30,7 @@ public final class HomeDirectory {
     }
 
     /**
-     * @return directory containing collar profile information
+     * @return directory containing collar dht state
      * @throws IOException if directories could not be created
      */
     public File dhtState() throws IOException {

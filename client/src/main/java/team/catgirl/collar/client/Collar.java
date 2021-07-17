@@ -142,6 +142,10 @@ public final class Collar {
      * Connect to server
      */
     public void connect() {
+        if (!configuration.homeDirectory.getLock().tryLock()) {
+            configuration.listener.onError(this, "Collar cannot connect as there is another client using Collar. Disconnect the other client.");
+            return;
+        }
         checkServerCompatibility(configuration);
         String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
         LOGGER.log(Level.INFO, "Connecting to server " + url);
@@ -167,6 +171,7 @@ public final class Collar {
             if (identityStore != null) {
                 try {
                     identityStore.save();
+                    configuration.homeDirectory.getLock().unlock();
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, "Could not save Collar signal state", e);
                 }
@@ -335,6 +340,8 @@ public final class Collar {
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, "Could not save Collar signal state to disk", e);
                 }
+                // Unlock
+                instance.configuration.homeDirectory.getLock().unlock();
             }
         }));
     }
@@ -402,8 +409,6 @@ public final class Collar {
         @Override
         public void onFailure(WebSocket webSocket, Throwable throwable) {
             LOGGER.log(Level.SEVERE, "Socket failure", throwable);
-            configuration.listener.onError(collar, throwable);
-            throwable.printStackTrace();
             if (state != State.DISCONNECTED) {
                 collar.changeState(State.DISCONNECTED);
             }

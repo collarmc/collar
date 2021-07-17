@@ -50,4 +50,11 @@ public interface CollarListener {
      * @param throwable to log
      */
     default void onError(Collar collar, Throwable throwable) {}
+
+    /**
+     * Fired whenever Collar encounters an unrecoverable error. Used for debugging.
+     * @param collar client
+     * @param reason to log
+     */
+    default void onError(Collar collar, String reason) {}
 }

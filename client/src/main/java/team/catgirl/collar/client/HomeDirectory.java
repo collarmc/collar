@@ -62,7 +62,7 @@ public final class HomeDirectory {
     /**
      * @return lock
      */
-    public DirectoryLock getLock() {
+    DirectoryLock getLock() {
         return lock;
     }
 
@@ -87,7 +87,7 @@ public final class HomeDirectory {
     /**
      * Locks the home directory when the client is running so multiple processes don't stomp the Signal state
      */
-    public static final class DirectoryLock {
+    static final class DirectoryLock {
 
         private static final Object LOCK = new Object();
 

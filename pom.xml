@@ -29,7 +29,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <minecraft.java.runtime>1.8</minecraft.java.runtime>
-        <log4j.version>2.8.1</log4j.version>
+        <log4j.version>2.13.2</log4j.version>
     </properties>
 
     <build>

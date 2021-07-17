@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>parent</artifactId>
-        <groupId>team.catgirl.collar</groupId>
+        <groupId>com.collarmc</groupId>
         <version>0.0.7-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -10,7 +10,7 @@
     <artifactId>client</artifactId>
     <dependencies>
         <dependency>
-            <groupId>team.catgirl.collar</groupId>
+            <groupId>com.collarmc</groupId>
             <artifactId>shared</artifactId>
         </dependency>
         <dependency>
@@ -70,79 +70,79 @@
                     <relocations>
                         <relocation>
                             <pattern>kotlin</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.kotlin</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.kotlin</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>okhttp3</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.okhttp3</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.okhttp3</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>okio</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.okio</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.okio</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.jetbrains</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.org.jetbrains</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.org.jetbrains</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.intellij</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.org.intellij</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.org.intellij</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.fasterxml</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.org.fasterxml</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.org.fasterxml</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>edu.umd.cs.findbugs</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.edu.umd.cs.findbugs</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.edu.umd.cs.findbugs</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>net.jcip.annotations</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.net.jcip.annotations</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.net.jcip.annotations</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>javax.annotation</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.javax.annotation</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.javax.annotation</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>name.neuhalfen.projects</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.name.neuhalfen.projects</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.name.neuhalfen.projects</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.bouncycastle</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.org.bouncycastle</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.org.bouncycastle</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>io.mikael.urlbuilder</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.io.mikael.urlbuilder</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.io.mikael.urlbuilder</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.whispersystems</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.org.whispersystems</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.org.whispersystems</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.google.protobuf</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.com.google.protobuf</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.com.google.protobuf</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.google.gson</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.com.google.gson</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.com.google.gson</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>net.chris54721</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.net.chris54721</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.net.chris54721</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.stoyanr.evict</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.com.stoyanr.evict</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.com.stoyanr.evict</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.msgpack</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.org.msgpack</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.org.msgpack</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>google.protobuf</pattern>
-                            <shadedPattern>team.catgirl.collar.libs.google.protobuf</shadedPattern>
+                            <shadedPattern>com.collarmc.libs.google.protobuf</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

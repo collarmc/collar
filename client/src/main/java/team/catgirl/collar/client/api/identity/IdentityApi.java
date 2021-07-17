@@ -7,6 +7,8 @@ import com.stoyanr.evictor.map.ConcurrentHashMapWithTimedEviction;
 import com.stoyanr.evictor.map.EvictibleEntry;
 import com.stoyanr.evictor.scheduler.RegularTaskEvictionScheduler;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.profiles.PublicProfile;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.client.Collar;
@@ -24,15 +26,13 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Identity API used for resolving Collar identities from minecraft player IDs
  */
 public class IdentityApi extends AbstractApi<IdentityListener> {
 
-    private static final Logger LOGGER = Logger.getLogger(IdentityApi.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(IdentityApi.class.getName());
 
     // TODO: switch this over to a global task execution scheduler when we use this pattern again
     private final RegularTaskEvictionScheduler<Long, CompletableFuture<Optional<ClientIdentity>>> identifyFuturesScheduler = new RegularTaskEvictionScheduler<Long, CompletableFuture<Optional<ClientIdentity>>>(1, TimeUnit.SECONDS) {
@@ -129,7 +129,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
         } else {
             CreateTrustRequest request = identityStore().createPreKeyRequest(clientIdentity, TokenGenerator.longToken());
             CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
-            LOGGER.log(Level.INFO, "Creating trust future with " + identity + " and id " + request.id);
+            LOGGER.info("Creating trust future with " + identity + " and id " + request.id);
             identifyFutures.put(request.id, future);
             sender.accept(request);
             return future;
@@ -159,10 +159,10 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             });
             CompletableFuture<Optional<ClientIdentity>> removed = identifyFutures.remove(response.id);
             if (removed == null) {
-                LOGGER.log(Level.INFO, "Sending back a CreateTrustRequest to " + response.sender + " and id " + response.id);
+                LOGGER.info("Sending back a CreateTrustRequest to " + response.sender + " and id " + response.id);
                 sender.accept(identityStore().createPreKeyRequest(response.sender, response.id));
             } else {
-                LOGGER.log(Level.INFO, "Finished creating trust with " + response.sender + " and id " + response.id);
+                LOGGER.info("Finished creating trust with " + response.sender + " and id " + response.id);
                 removed.complete(response.sender == null ? Optional.empty() : Optional.of(response.sender));
             }
             return true;

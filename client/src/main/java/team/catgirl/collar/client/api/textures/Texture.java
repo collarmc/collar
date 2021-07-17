@@ -1,5 +1,7 @@
 package team.catgirl.collar.client.api.textures;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.api.textures.TextureType;
 import team.catgirl.collar.client.utils.Http;
@@ -14,15 +16,13 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Client representation of a remote Texture
  */
 public final class Texture {
 
-    private final Logger LOGGER = Logger.getLogger(Texture.class.getName());
+    private final Logger LOGGER = LogManager.getLogger(Texture.class.getName());
 
     public final Player player;
     public final UUID group;
@@ -47,7 +47,7 @@ public final class Texture {
                 BufferedImage image = ImageIO.read(new ByteArrayInputStream(bytes));
                 onLoad.accept(Optional.of(image));
             } catch (Throwable e) {
-                LOGGER.log(Level.SEVERE, "Failed to load texture from " + url, e);
+                LOGGER.error("Failed to load texture from " + url, e);
                 onLoad.accept(Optional.empty());
             }
         });

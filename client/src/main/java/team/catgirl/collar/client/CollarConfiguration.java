@@ -1,6 +1,8 @@
 package team.catgirl.collar.client;
 
 import com.google.common.base.MoreObjects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.entities.Entity;
 import team.catgirl.collar.api.location.Location;
 import team.catgirl.collar.client.debug.DebugConfiguration;
@@ -12,15 +14,12 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public final class CollarConfiguration {
 
-    private static final Logger LOGGER = Logger.getLogger(CollarConfiguration.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(CollarConfiguration.class.getName());
 
     public final Supplier<Location> playerLocation;
     public final Supplier<MinecraftSession> sessionSupplier;
@@ -178,7 +177,7 @@ public final class CollarConfiguration {
             Objects.requireNonNull(ticks, "Ticks not set");
             DebugConfiguration debugging = DebugConfiguration.load(homeDirectory);
             debugging.serverUrl.ifPresent(collarServerURL -> {
-                LOGGER.log(Level.INFO, "Debug file has specified an alternate collar server url " + collarServerURL + " that will be used instead of " + this.collarServerURL);
+                LOGGER.info("Debug file has specified an alternate collar server url " + collarServerURL + " that will be used instead of " + this.collarServerURL);
                 this.collarServerURL = collarServerURL;
             });
             Supplier<MinecraftSession> configuredSession = this.sessionSupplier;
@@ -188,12 +187,12 @@ public final class CollarConfiguration {
                     if (session.mode == mode) {
                         return session;
                     }
-                    LOGGER.log(Level.INFO, "Debug file has specified session mode " + mode + " that will be used instead of " + session.mode);
+                    LOGGER.info("Debug file has specified session mode " + mode + " that will be used instead of " + session.mode);
                     return new MinecraftSession(session.id, session.username, session.server, mode, session.accessToken, session.clientToken, session.networkId);
                 };
             });
             Supplier<Location> playerPosition = MoreObjects.firstNonNull(this.playerLocation, () -> {
-                LOGGER.log(Level.WARNING, "Location features are disabled. Consumer did not provide a player position supplier");
+                LOGGER.warn( "Location features are disabled. Consumer did not provide a player position supplier");
                 return Location.UNKNOWN;
             });
             return new CollarConfiguration(

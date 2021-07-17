@@ -1,20 +1,20 @@
 package team.catgirl.collar.server.services.authentication;
 
 import com.google.common.io.BaseEncoding;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Used by the {@link ServerAuthenticationService} for identifying users for password resets, etc.
  */
 public final class VerificationToken {
 
-    private static final Logger LOGGER = Logger.getLogger(VerificationToken.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(VerificationToken.class.getName());
 
     private static final int VERSION = 1;
 
@@ -31,7 +31,7 @@ public final class VerificationToken {
             try {
                 bytes = crypter.decrypt(BaseEncoding.base64Url().decode(token));
             } catch (Throwable e) {
-                LOGGER.log(Level.SEVERE, "Problem decoding token bytes", e);
+                LOGGER.error("Problem decoding token bytes", e);
                 return Optional.empty();
             }
         }
@@ -50,14 +50,14 @@ public final class VerificationToken {
                 }
                 Date expiredAt = new Date(expiresAt);
                 if (new Date().after(expiredAt)) {
-                    LOGGER.log(Level.INFO, "Token expired at " + expiredAt);
+                    LOGGER.info("Token expired at " + expiredAt);
                     return Optional.empty();
                 } else {
                     return Optional.of(new VerificationToken(UUID.fromString(profileId), expiresAt));
                 }
             }
         } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Decoding token structure", e);
+            LOGGER.error("Decoding token structure", e);
             return Optional.empty();
         }
     }

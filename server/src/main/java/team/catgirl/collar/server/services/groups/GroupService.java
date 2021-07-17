@@ -2,6 +2,8 @@ package team.catgirl.collar.server.services.groups;
 
 import com.google.common.collect.ImmutableList;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.friends.Status;
 import team.catgirl.collar.api.groups.*;
 import team.catgirl.collar.api.profiles.Profile;
@@ -18,16 +20,13 @@ import team.catgirl.collar.server.services.location.NearbyGroups;
 import team.catgirl.collar.server.services.profiles.ProfileCache;
 import team.catgirl.collar.server.session.SessionManager;
 
-import javax.swing.text.html.Option;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public final class GroupService {
 
-    private static final Logger LOGGER = Logger.getLogger(GroupService.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(GroupService.class.getName());
 
     private final GroupStore store;
     private final ServerIdentity serverIdentity;
@@ -378,7 +377,7 @@ public final class GroupService {
 
     private void updateState(Group group) {
         if (group != null && group.members.isEmpty()) {
-            LOGGER.log(Level.INFO, "Removed group " + group.id + " as it has no members.");
+            LOGGER.info("Removed group " + group.id + " as it has no members.");
             store.delete(group.id);
         }
     }

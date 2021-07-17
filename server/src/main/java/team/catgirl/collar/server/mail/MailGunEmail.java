@@ -1,11 +1,10 @@
 package team.catgirl.collar.server.mail;
 
 import com.google.common.io.BaseEncoding;
-import team.catgirl.collar.api.http.HttpException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.http.HttpClient;
-import team.catgirl.collar.http.Request;
-import team.catgirl.collar.http.Response;
 import team.catgirl.collar.server.http.AppUrlProvider;
 
 import java.io.IOException;
@@ -16,12 +15,10 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MailGunEmail extends AbstractEmail {
 
-    private static final Logger LOGGER = Logger.getLogger(MailGunEmail.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(MailGunEmail.class.getName());
 
     private final HttpClient http;
     private final String domain;
@@ -58,7 +55,7 @@ public class MailGunEmail extends AbstractEmail {
         try {
             client.send(request, HttpResponse.BodyHandlers.ofString());
         } catch (IOException | InterruptedException e) {
-            LOGGER.log(Level.SEVERE, "Connection issue", e);
+            LOGGER.error("Connection issue", e);
         }
     }
 

@@ -1,12 +1,13 @@
 package team.catgirl.collar.client.utils;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.security.Permission;
 import java.security.PermissionCollection;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Horribly necessary as Minecraft does not ship the unlimited strength JCE policy files
@@ -14,12 +15,12 @@ import java.util.logging.Logger;
  * See https://stackoverflow.com/questions/1179672/how-to-avoid-installing-unlimited-strength-jce-policy-files-when-deploying-an/44056166
  */
 public class Crypto {
-    private static final Logger LOGGER = Logger.getLogger(Crypto.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(Crypto.class.getName());
     private static final int RESTRICTED_CRYPTO_MIN_REVISION = 161;
 
     public static void removeCryptographyRestrictions() {
         if (!isRestrictedCryptography()) {
-            LOGGER.fine("Cryptography restrictions removal not needed");
+            LOGGER.debug("Cryptography restrictions removal not needed");
             return;
         }
         try {
@@ -53,9 +54,9 @@ public class Crypto {
             instance.setAccessible(true);
             defaultPolicy.add((Permission) instance.get(null));
 
-            LOGGER.fine("Successfully removed cryptography restrictions");
+            LOGGER.debug("Successfully removed cryptography restrictions");
         } catch (final Exception e) {
-            LOGGER.log(Level.WARNING, "Failed to remove cryptography restrictions", e);
+            LOGGER.warn( "Failed to remove cryptography restrictions", e);
         }
     }
 

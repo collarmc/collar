@@ -1,5 +1,7 @@
 package team.catgirl.collar.server.services.authentication;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.authentication.AuthenticationService;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.api.http.HttpException.*;
@@ -20,12 +22,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ServerAuthenticationService implements AuthenticationService {
 
-    private final static Logger LOGGER = Logger.getLogger(ServerAuthenticationService.class.getName());
+    private final static Logger LOGGER = LogManager.getLogger(ServerAuthenticationService.class.getName());
 
     private final ProfileService profiles;
     private final PasswordHashing passwordHashing;
@@ -82,7 +82,7 @@ public class ServerAuthenticationService implements AuthenticationService {
             try {
                 email.send(profile, "Verify your new Collar account", "verify-account", Map.of("verificationUrl", url));
             } catch (Throwable e) {
-                LOGGER.log(Level.INFO, "could not send verification email", e);
+                LOGGER.info("could not send verification email", e);
             }
         });
     }
@@ -121,7 +121,7 @@ public class ServerAuthenticationService implements AuthenticationService {
             if (!profile.emailVerified) {
                 throw new UnauthorisedException("Verify your email address first before logging in");
             }
-            LOGGER.log(Level.INFO, "Verified account for " + profile.id);
+            LOGGER.info("Verified account for " + profile.id);
             return new VerifyAccountResponse(urlProvider.homeUrl());
         }).orElseThrow(() -> new UnauthorisedException("bad or missing token"));
     }

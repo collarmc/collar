@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Suppliers;
 import com.google.common.io.BaseEncoding;
 import io.mikael.urlbuilder.UrlBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.http.HttpException;
 import team.catgirl.collar.http.HttpClient;
 import team.catgirl.collar.http.Request;
@@ -25,12 +27,10 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public final class Mojang {
 
-    private static final Logger LOGGER = Logger.getLogger(Mojang.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(Mojang.class.getName());
 
     public static final String DEFAULT_AUTH_SERVER = "https://authserver.mojang.com/";
     public static final String DEFAULT_SESSION_SERVER = "https://sessionserver.mojang.com/";
@@ -80,7 +80,7 @@ public final class Mojang {
             http.execute(Request.url(sessionServerBaseUrl + "session/minecraft/join").postJson(joinReq), Response.noContent());
             return Optional.of(new JoinServerResponse(serverId));
         } catch (HttpException e) {
-            LOGGER.log(Level.SEVERE, "Could not start verification with Mojang (" + e.code + ")", e);
+            LOGGER.error("Could not start verification with Mojang (" + e.code + ")", e);
             return Optional.empty();
         }
     }
@@ -99,7 +99,7 @@ public final class Mojang {
             HasJoinedResponse hasJoinedResponse = http.execute(Request.url(builder).get(), Response.json(HasJoinedResponse.class));
             return hasJoinedResponse.id.equals(toProfileId(session.id));
         } catch (Throwable e) {
-            LOGGER.log(Level.SEVERE, "Couldn't verify " + session.username,e);
+            LOGGER.error("Couldn't verify " + session.username,e);
             return false;
         }
     }
@@ -140,7 +140,7 @@ public final class Mojang {
         try {
             return Optional.of(http.execute(Request.url(authServerBaseUrl + "/authenticate").postJson(request), Response.json(AuthenticateResponse.class)));
         } catch (Throwable e) {
-            LOGGER.log(Level.SEVERE, "auth failed " + e.getMessage(), e);
+            LOGGER.error("auth failed " + e.getMessage(), e);
             return Optional.empty();
         }
     }

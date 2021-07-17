@@ -3,12 +3,13 @@ package team.catgirl.collar.http;
 import io.netty.channel.*;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.websocketx.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.nio.ByteBuffer;
-import java.util.logging.Logger;
 
 class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> {
-    private static final Logger logger = Logger.getLogger(WebSocketClientHandler.class.getName());
+    private static final Logger logger = LogManager.getLogger(WebSocketClientHandler.class.getName());
     public static final int CLOSE_NORMAL = 1000;
     public static final int SERVER_ERROR = 1011;
 

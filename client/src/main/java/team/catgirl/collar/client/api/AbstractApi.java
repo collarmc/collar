@@ -1,5 +1,7 @@
 package team.catgirl.collar.client.api;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.client.Collar;
 import team.catgirl.collar.client.security.ClientIdentityStore;
 import team.catgirl.collar.protocol.ProtocolRequest;
@@ -10,12 +12,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public abstract class AbstractApi<T extends ApiListener> {
 
-    private static final Logger LOGGER = Logger.getLogger(AbstractApi.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(AbstractApi.class.getName());
 
     private final Set<T> listeners = new HashSet<>();
     protected final Collar collar;
@@ -49,12 +49,12 @@ public abstract class AbstractApi<T extends ApiListener> {
     }
 
     protected void fireListener(String name, Consumer<T> listener) {
-        LOGGER.log(Level.INFO, "Firing " + name + " listeners");
+        LOGGER.info("Firing " + name + " listeners");
         listeners.forEach(t -> {
             try {
                 listener.accept(t);
             } catch (Throwable e) {
-                LOGGER.log(Level.INFO, "Listener threw exception", e);
+                LOGGER.info("Listener threw exception", e);
             }
         });
     }

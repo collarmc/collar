@@ -2,6 +2,8 @@ package team.catgirl.collar.server.security.signal;
 
 import com.google.common.base.Suppliers;
 import com.mongodb.client.MongoDatabase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.whispersystems.libsignal.*;
 import org.whispersystems.libsignal.state.PreKeyBundle;
 import org.whispersystems.libsignal.state.SessionRecord;
@@ -18,12 +20,10 @@ import team.catgirl.collar.server.security.ServerIdentityStore;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class SignalServerIdentityStore implements ServerIdentityStore {
 
-    private static final Logger LOGGER = Logger.getLogger(SignalServerIdentityStore.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(SignalServerIdentityStore.class.getName());
 
     private final ServerSignalProtocolStore store;
     private final Supplier<ServerIdentity> serverIdentitySupplier;
@@ -62,7 +62,7 @@ public class SignalServerIdentityStore implements ServerIdentityStore {
         }
         SessionRecord sessionRecord = store.loadSession(address);
         sessionRecord.getSessionState().clearUnacknowledgedPreKeyMessage();
-        LOGGER.log(Level.INFO, "Trust established with " + address);
+        LOGGER.info("Trust established with " + address);
     }
 
     public boolean isTrustedIdentity(ClientIdentity clientIdentity) {

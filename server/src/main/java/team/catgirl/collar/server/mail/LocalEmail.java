@@ -1,6 +1,8 @@
 package team.catgirl.collar.server.mail;
 
 import com.google.common.io.Files;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.server.http.AppUrlProvider;
 
@@ -8,12 +10,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class LocalEmail extends AbstractEmail {
 
-    private final Logger LOGGER = Logger.getLogger(LocalEmail.class.getName());
+    private final Logger LOGGER = LogManager.getLogger(LocalEmail.class.getName());
 
     public LocalEmail(AppUrlProvider urlProvider) {
         super(urlProvider);
@@ -37,6 +37,6 @@ public class LocalEmail extends AbstractEmail {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        LOGGER.log(Level.INFO, "Email sent " + file);
+        LOGGER.info("Email sent " + file);
     }
 }

@@ -1,6 +1,8 @@
 package team.catgirl.collar.server.protocol;
 
 import org.eclipse.jetty.websocket.api.Session;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.friends.Friend;
 import team.catgirl.collar.api.friends.Status;
 import team.catgirl.collar.api.http.RequestContext;
@@ -24,12 +26,10 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class FriendsProtocolHandler extends ProtocolHandler {
 
-    private static final Logger LOGGER = Logger.getLogger(FriendsProtocolHandler.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(FriendsProtocolHandler.class.getName());
 
     private final ServerIdentity serverIdentity;
     private final ProfileCache profiles;
@@ -51,7 +51,7 @@ public class FriendsProtocolHandler extends ProtocolHandler {
                 Friend friend = friends.createFriend(RequestContext.from(req.identity), new CreateFriendRequest(request.identity.owner, friendProfileId)).friend;
                 sender.accept(req.identity, new AddFriendResponse(serverIdentity, friend));
             }, () -> {
-                LOGGER.log(Level.SEVERE, "Could not add friend with profileId " + request.profile  + " or playerId " + request.player);
+                LOGGER.error("Could not add friend with profileId " + request.profile  + " or playerId " + request.player);
             });
             return true;
         } else if (req instanceof RemoveFriendRequest) {
@@ -60,7 +60,7 @@ public class FriendsProtocolHandler extends ProtocolHandler {
                 UUID deletedFriend = friends.deleteFriend(RequestContext.from(req.identity), new DeleteFriendRequest(req.identity.owner, friendProfileId)).friend;
                 sender.accept(req.identity, new RemoveFriendResponse(serverIdentity, deletedFriend));
             }, () -> {
-                LOGGER.log(Level.SEVERE, "Could not add friend with profileId " + request.profile + " or playerId " + request.player);
+                LOGGER.error("Could not add friend with profileId " + request.profile + " or playerId " + request.player);
             });
             return true;
         } else if (req instanceof GetFriendListRequest) {
@@ -90,10 +90,10 @@ public class FriendsProtocolHandler extends ProtocolHandler {
             sessions.getSessionStateByOwner(friend.owner).ifPresentOrElse(sessionState -> {
                 PublicProfile profile = profiles.getById(identity.owner).orElseThrow(() -> new IllegalStateException("could not find profile " + identity.owner)).toPublic();
                 Friend offline = new Friend(sessionState.identity.owner, profile, Status.OFFLINE, Set.of());
-                LOGGER.log(Level.INFO, "Notifying " + sessionState.identity + " that player " + identity + " is OFFLINE");
+                LOGGER.info("Notifying " + sessionState.identity + " that player " + identity + " is OFFLINE");
                 sender.accept(sessionState.session, new FriendChangedResponse(serverIdentity, offline));
             }, () -> {
-                LOGGER.log(Level.INFO, "No friends to notify");
+                LOGGER.info("No friends to notify");
             });
         });
     }

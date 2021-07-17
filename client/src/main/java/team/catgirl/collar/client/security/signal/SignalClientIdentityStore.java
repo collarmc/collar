@@ -1,6 +1,8 @@
 package team.catgirl.collar.client.security.signal;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.whispersystems.libsignal.*;
 import org.whispersystems.libsignal.groups.GroupSessionBuilder;
 import org.whispersystems.libsignal.groups.SenderKeyName;
@@ -37,12 +39,10 @@ import java.util.UUID;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public final class SignalClientIdentityStore implements ClientIdentityStore {
 
-    private static final Logger LOGGER = Logger.getLogger(SignalClientIdentityStore.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(SignalClientIdentityStore.class.getName());
 
     private final UUID owner;
     private final Supplier<PrivateIdentity> privateIdentitySupplier;
@@ -99,7 +99,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         } catch (InvalidKeyException | UntrustedIdentityException e) {
             throw new IllegalStateException("Problem trusting PreKeyBundle for " + owner, e);
         }
-        LOGGER.log(Level.INFO, currentIdentity() + " now trusts " + owner);
+        LOGGER.info(currentIdentity() + " now trusts " + owner);
     }
 
     @Override
@@ -199,7 +199,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
         GroupSessionBuilder builder = new GroupSessionBuilder(store);
         // Generate my sender key and send it back to the sender
         SenderKeyDistributionMessage message = builder.create(new SenderKeyName(resp.group.toString(), signalProtocolAddressFrom(currentIdentity())));
-        LOGGER.log(Level.INFO, currentIdentity() + " creating group session for " + currentIdentity() + " in group " + resp.group + " to send to " + resp.sender);
+        LOGGER.info(currentIdentity() + " creating group session for " + currentIdentity() + " in group " + resp.group + " to send to " + resp.sender);
         // Process the joining clients message
         if (!resp.sender.equals(currentIdentity())) {
             try {
@@ -228,7 +228,7 @@ public final class SignalClientIdentityStore implements ClientIdentityStore {
             throw new IllegalStateException("could not join group " + response.group.id, e);
         }
         builder.process(name, senderKeyDistributionMessage);
-        LOGGER.log(Level.INFO, currentIdentity() + " processed " + response.sender + "'s session with group " + response.group.id);
+        LOGGER.info(currentIdentity() + " processed " + response.sender + "'s session with group " + response.group.id);
     }
 
     @Override

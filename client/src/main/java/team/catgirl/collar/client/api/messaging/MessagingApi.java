@@ -1,6 +1,8 @@
 package team.catgirl.collar.client.api.messaging;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.messaging.Message;
 import team.catgirl.collar.api.session.Player;
@@ -19,12 +21,10 @@ import team.catgirl.collar.utils.Utils;
 import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MessagingApi extends AbstractApi<MessagingListener> {
 
-    private static final Logger LOGGER = Logger.getLogger(MessagingApi.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(MessagingApi.class.getName());
 
     public MessagingApi(Collar collar, Supplier<ClientIdentityStore> identityStoreSupplier, Consumer<ProtocolRequest> sender) {
         super(collar, identityStoreSupplier, sender);
@@ -53,7 +53,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                             listener.onPrivateMessageSent(collar, this, player, message);
                         });
                     } else {
-                        LOGGER.log(Level.INFO, collar.identity() + " could not locate identity for " + player + ". The private message was not sent.");
+                        LOGGER.info(collar.identity() + " could not locate identity for " + player + ". The private message was not sent.");
                         fireListener("onPrivateMessageRecipientIsUntrusted", listener -> {
                             listener.onPrivateMessageRecipientIsUntrusted(collar, this, player.minecraftPlayer, message);
                         });
@@ -67,7 +67,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
      * @param message to send
      */
     public void sendGroupMessage(Group group, Message message) {
-        LOGGER.log(Level.INFO, identity() + " sending message to group " + group.id);
+        LOGGER.info(identity() + " sending message to group " + group.id);
         Cipher cipher = identityStore().createCypher();
         byte[] messageBytes;
         try {
@@ -77,7 +77,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
             throw new IllegalStateException(collar.identity() + " could not encrypt group message sent to " + group.id, e);
         }
         sender.accept(new SendMessageRequest(collar.identity(), null, group.id, messageBytes));
-        LOGGER.log(Level.INFO, identity() + " sent message to group " + group.id);
+        LOGGER.info(identity() + " sent message to group " + group.id);
         fireListener("onGroupMessageSent", listener -> {
             listener.onGroupMessageSent(collar, this, group, message);
         });
@@ -103,7 +103,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                         message = Utils.messagePackMapper().readValue(decryptedBytes, Message.class);
                     } catch (IOException | CipherException e) {
                         // We don't throw an exception here in case someone is doing something naughty to disrupt the group and cause the client to exit
-                        LOGGER.log(Level.SEVERE, collar.identity() + "could not read group message from group " + group.id, e);
+                        LOGGER.error(collar.identity() + "could not read group message from group " + group.id, e);
                         message = null;
                     }
                     if (message != null) {
@@ -125,7 +125,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                     listener.onPrivateMessageReceived(collar, this, response.player, message);
                 });
             } else {
-                LOGGER.log(Level.WARNING, collar.identity() + "could not process message. It was not addressed correctly.");
+                LOGGER.warn( collar.identity() + "could not process message. It was not addressed correctly.");
             }
             return true;
         }

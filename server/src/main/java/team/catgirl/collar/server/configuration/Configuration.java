@@ -1,6 +1,8 @@
 package team.catgirl.collar.server.configuration;
 
 import com.mongodb.client.MongoDatabase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.http.HttpClient;
 import team.catgirl.collar.server.http.AppUrlProvider;
 import team.catgirl.collar.server.http.CollarWebAppUrlProvider;
@@ -15,11 +17,8 @@ import team.catgirl.collar.server.security.mojang.MojangMinecraftSessionVerifier
 import team.catgirl.collar.server.security.mojang.NojangMinecraftSessionVerifier;
 import team.catgirl.collar.server.services.authentication.TokenCrypter;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 public class Configuration {
-    private static final Logger LOGGER = Logger.getLogger(Configuration.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(Configuration.class.getName());
 
     public final MongoDatabase database;
     public final AppUrlProvider appUrlProvider;
@@ -53,7 +52,7 @@ public class Configuration {
         this.httpPort = httpPort;
         this.email = email;
         this.http = http;
-        LOGGER.log(Level.INFO, "Using Email type " + email.getClass().getSimpleName());
+        LOGGER.info("Using Email type " + email.getClass().getSimpleName());
     }
 
     public static Configuration fromEnvironment() {
@@ -100,7 +99,7 @@ public class Configuration {
     }
 
     public static Configuration defaultConfiguration() {
-        LOGGER.log(Level.SEVERE, "Starting in insecure development mode. Do not use in production.");
+        LOGGER.error("Starting in insecure development mode. Do not use in production.");
         DefaultAppUrlProvider appUrlProvider = new DefaultAppUrlProvider("http://localhost:3000");
         return new Configuration(
                 Mongo.database("mongodb://localhost/collar-dev"),
@@ -116,7 +115,7 @@ public class Configuration {
     }
 
     public static Configuration testConfiguration(MongoDatabase db, MinecraftSessionVerifier sessionVerifier) {
-        LOGGER.log(Level.SEVERE, "Starting in insecure testing mode. Do not use in production.");
+        LOGGER.error("Starting in insecure testing mode. Do not use in production.");
         DefaultAppUrlProvider appUrlProvider = new DefaultAppUrlProvider("http://localhost:3001");
         return new Configuration(
                 db,

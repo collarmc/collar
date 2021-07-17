@@ -1,6 +1,8 @@
 package team.catgirl.collar.server.protocol;
 
 import org.eclipse.jetty.websocket.api.Session;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.protocol.ProtocolRequest;
 import team.catgirl.collar.protocol.ProtocolResponse;
@@ -13,12 +15,10 @@ import team.catgirl.collar.server.services.groups.GroupService;
 import team.catgirl.collar.server.session.SessionManager;
 
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class MessagingProtocolHandler extends ProtocolHandler {
 
-    private static final Logger LOGGER = Logger.getLogger(MessagingProtocolHandler.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(MessagingProtocolHandler.class.getName());
 
     private final SessionManager sessions;
     private final GroupService groups;
@@ -40,10 +40,10 @@ public class MessagingProtocolHandler extends ProtocolHandler {
                 sessions.findPlayer(request.identity).ifPresentOrElse(player -> {
                     sender.accept(request.recipient, new SendMessageResponse(this.serverIdentity, req.identity, null, player, request.message));
                 }, () -> {
-                    LOGGER.log(Level.INFO, "could not find player for " + req.identity);
+                    LOGGER.info("could not find player for " + req.identity);
                 });
             } else {
-                LOGGER.log(Level.WARNING, "sent a malformed SendMessageRequest by " + req.identity);
+                LOGGER.warn( "sent a malformed SendMessageRequest by " + req.identity);
             }
             return true;
         }

@@ -1,6 +1,8 @@
 package team.catgirl.collar.server.services.location;
 
 import com.google.common.collect.ArrayListMultimap;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.groups.Group;
 import team.catgirl.collar.api.groups.Member;
 import team.catgirl.collar.api.groups.MemberSource;
@@ -16,13 +18,11 @@ import team.catgirl.collar.server.services.profiles.ProfileCache;
 import team.catgirl.collar.server.session.SessionManager;
 
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public class PlayerLocationService {
 
-    private static final Logger LOGGER = Logger.getLogger(PlayerLocationService.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(PlayerLocationService.class.getName());
 
     private final SessionManager sessions;
     private final ProfileCache profiles;
@@ -44,7 +44,7 @@ public class PlayerLocationService {
             synchronized (playersSharing) {
                 playersSharing.put(req.groupId, player);
             }
-            LOGGER.log(Level.INFO,"Player " + player + " started sharing location with group " + req.groupId);
+            LOGGER.info("Player " + player + " started sharing location with group " + req.groupId);
         });
     }
 
@@ -82,7 +82,7 @@ public class PlayerLocationService {
     }
 
     private Optional<BatchProtocolResponse> stopSharing(UUID groupId, ClientIdentity identity, Player player) {
-        LOGGER.log(Level.INFO,"Player " + player + " started sharing location with group " + groupId);
+        LOGGER.info("Player " + player + " started sharing location with group " + groupId);
         LocationUpdatedResponse locationUpdatedResponse = new LocationUpdatedResponse(serverIdentity, identity, groupId, player, null);
         Optional<BatchProtocolResponse> responses = createLocationResponses(player, locationUpdatedResponse);
         synchronized (playersSharing) {

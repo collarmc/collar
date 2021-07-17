@@ -1,6 +1,8 @@
 package team.catgirl.collar.server.protocol;
 
 import org.eclipse.jetty.websocket.api.Session;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.http.HttpException.NotFoundException;
 import team.catgirl.collar.api.http.RequestContext;
 import team.catgirl.collar.api.profiles.PublicProfile;
@@ -20,12 +22,10 @@ import team.catgirl.collar.server.services.textures.TextureService.Texture;
 import team.catgirl.collar.server.session.SessionManager;
 
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class TexturesProtocolHandler extends ProtocolHandler {
 
-    private static final Logger LOGGER = Logger.getLogger(TexturesProtocolHandler.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(TexturesProtocolHandler.class.getName());
 
     private final ServerIdentity serverIdentity;
     private final ProfileCache profiles;
@@ -58,7 +58,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                         }
                         response = new GetTextureResponse(serverIdentity, texture.id, null, sessionState.toPlayer(), texture.url, texture.type);
                     } catch (NotFoundException ignored) {
-                        LOGGER.log(Level.INFO, "Could not find texture " + request.type + " for player " + request.player);
+                        LOGGER.info("Could not find texture " + request.type + " for player " + request.player);
                         response = new GetTextureResponse(serverIdentity, null, null, sessionState.toPlayer(), null, request.type);
                     }
                     sender.accept(request.identity, response);
@@ -67,7 +67,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                         Player requestedPlayer = new Player(null, new MinecraftPlayer(request.player, player.minecraftPlayer.server, player.minecraftPlayer.networkId));
                         // Send this back to complete any futures on the client
                         sender.accept(req.identity, new GetTextureResponse(serverIdentity, null, null, requestedPlayer, null, request.type));
-                        LOGGER.log(Level.INFO, "Could not find player " + request.player + " when fetching texture " + request.type);
+                        LOGGER.info("Could not find player " + request.player + " when fetching texture " + request.type);
                     });
                 });
             } else if (request.group != null) {
@@ -76,7 +76,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                     Texture texture = textures.getTexture(RequestContext.ANON, new GetTextureRequest(null,null, request.group, request.type)).texture;
                     response = new GetTextureResponse(serverIdentity, texture.id, texture.group, null, texture.url, texture.type);
                 } catch (NotFoundException ignored) {
-                    LOGGER.log(Level.INFO, "Could not find texture " + request.type + " for group " + request.group);
+                    LOGGER.info("Could not find texture " + request.type + " for group " + request.group);
                     response = new GetTextureResponse(serverIdentity, null, request.group, null, null, request.type);
                 }
                 sender.accept(request.identity, response);
@@ -93,7 +93,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
             try {
                 texture = textures.getTexture(RequestContext.ANON, new GetTextureRequest(playerProfile.cape.texture, null, null, null)).texture;
             } catch (NotFoundException ignored) {
-                LOGGER.log(Level.INFO, "Could not find texture " + playerProfile.cape.texture + " for player " + request.player);
+                LOGGER.info("Could not find texture " + playerProfile.cape.texture + " for player " + request.player);
                 texture = null;
             }
         } else {

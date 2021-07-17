@@ -3,6 +3,8 @@ package team.catgirl.collar.server.session;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.session.Player;
 import team.catgirl.collar.protocol.PacketIO;
 import team.catgirl.collar.protocol.ProtocolResponse;
@@ -22,13 +24,11 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 public final class SessionManager {
 
-    private static final Logger LOGGER = Logger.getLogger(SessionManager.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(SessionManager.class.getName());
 
     private final ConcurrentMap<Session, SessionState> sessions = new ConcurrentHashMap<>();
 
@@ -65,7 +65,11 @@ public final class SessionManager {
             callback.accept(state.identity, state.toPlayer());
         }
         // Start removing state
-        LOGGER.log(e == null ? Level.INFO : Level.SEVERE, reason, e);
+        if (e == null) {
+            LOGGER.info(reason);
+        } else {
+            LOGGER.error(reason, e);
+        }
         SessionState sessionState = sessions.remove(session);
         if (sessionState != null) {
             if (session.isOpen()) {

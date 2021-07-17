@@ -2,6 +2,8 @@ package team.catgirl.collar.server;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import spark.Request;
 import team.catgirl.collar.api.authentication.AuthenticationService.*;
 import team.catgirl.collar.api.groups.Group;
@@ -40,8 +42,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import static spark.Spark.*;
@@ -49,7 +49,7 @@ import static spark.Spark.*;
 public class WebServer {
 
     private static final HandlebarsTemplateEngine TEMPLATE_ENGINE = new HandlebarsTemplateEngine("/templates");
-    private static final Logger LOGGER = Logger.getLogger(WebServer.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(WebServer.class.getName());
 
     private final Configuration configuration;
 
@@ -76,7 +76,7 @@ public class WebServer {
             } catch (JsonProcessingException jsonProcessingException) {
                 throw new RuntimeException(e);
             }
-            LOGGER.log(Level.SEVERE, request.pathInfo(), e);
+            LOGGER.error(request.pathInfo(), e);
         });
 
         exception(Exception.class, (e, request, response) -> {
@@ -86,7 +86,7 @@ public class WebServer {
             } catch (JsonProcessingException jsonProcessingException) {
                 throw new RuntimeException(e);
             }
-            LOGGER.log(Level.SEVERE, request.pathInfo(), e);
+            LOGGER.error(request.pathInfo(), e);
         });
 
         staticFiles.location("/public");

@@ -5,6 +5,8 @@ import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.api.http.RequestContext;
 import team.catgirl.collar.api.profiles.Profile;
 import team.catgirl.collar.api.profiles.ProfileService.UpdateProfileRequest;
@@ -50,12 +52,10 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @WebSocket
 public class CollarServer {
-    private static final Logger LOGGER = Logger.getLogger(CollarServer.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(CollarServer.class.getName());
 
     private final List<ProtocolHandler> protocolHandlers;
     private final BiConsumer<ClientIdentity, Player> sessionStarted;
@@ -82,7 +82,7 @@ public class CollarServer {
 
     @OnWebSocketConnect
     public void connected(Session session) {
-        LOGGER.log(Level.INFO, "New socket connected");
+        LOGGER.info("New socket connected");
         buckets.computeIfAbsent(session, theSession -> Bucket4j.builder()
                 .addLimit(Bandwidth.simple(18000, Duration.ofSeconds(3600)))
                 .addLimit(Bandwidth.simple(50, Duration.ofSeconds(1)))
@@ -91,7 +91,7 @@ public class CollarServer {
 
     @OnWebSocketClose
     public void closed(Session session, int statusCode, String reason) {
-        LOGGER.log(Level.INFO, "Session closed " + statusCode + " " + reason);
+        LOGGER.info("Session closed " + statusCode + " " + reason);
         services.sessions.stopSession(session, reason, null, sessionStopped);
         services.deviceRegistration.onSessionClosed(session);
         buckets.remove(session);
@@ -99,7 +99,7 @@ public class CollarServer {
 
     @OnWebSocketError
     public void onError(Session session, Throwable e) {
-        LOGGER.log(Level.SEVERE, "Unrecoverable error " + e.getMessage(), e);
+        LOGGER.error("Unrecoverable error " + e.getMessage(), e);
         services.sessions.stopSession(session, "Unrecoverable error", null, sessionStopped);
     }
 
@@ -116,28 +116,28 @@ public class CollarServer {
     private void processMessage(Session session, InputStream is) {
         Optional<ProtocolRequest> requestOptional = read(session, is);
         requestOptional.ifPresent(req -> {
-            LOGGER.log(Level.FINE, req.getClass().getSimpleName() + " from " + req.identity);
+            LOGGER.debug(req.getClass().getSimpleName() + " from " + req.identity);
             ServerIdentity serverIdentity = services.identityStore.getIdentity();
             if (req instanceof KeepAliveRequest) {
-                LOGGER.log(Level.FINE, "KeepAliveRequest received. Sending KeepAliveRequest.");
+                LOGGER.debug("KeepAliveRequest received. Sending KeepAliveRequest.");
                 sendPlain(session, new KeepAliveResponse(serverIdentity));
             } else if (req instanceof IdentifyRequest) {
                 IdentifyRequest request = (IdentifyRequest)req;
                 if (request.identity == null) {
-                    LOGGER.log(Level.FINE, "Signaling client to register");
+                    LOGGER.debug("Signaling client to register");
                     String token = services.deviceRegistration.createDeviceRegistrationToken(session);
                     String url = services.urlProvider.deviceVerificationUrl(token);
                     sendPlain(session, new RegisterDeviceResponse(serverIdentity, url, token));
                 } else {
                     profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
                         if (processPrivateIdentityToken(profile, request)) {
-                            LOGGER.log(Level.FINE, "Profile found for " + req.identity.id());
+                            LOGGER.debug("Profile found for " + req.identity.id());
                             sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), TokenGenerator.byteToken(16)));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
                         }
                     }, () -> {
-                        LOGGER.log(Level.SEVERE, "Profile " + request.identity.id() + " does not exist but the client thinks it should.");
+                        LOGGER.error("Profile " + request.identity.id() + " does not exist but the client thinks it should.");
                         sendPlain(session, new IsUntrustedRelationshipResponse(serverIdentity));
                         services.sessions.stopSession(session, "Identity " + request.identity.id() + " was not found", null, null);
                     });
@@ -148,7 +148,7 @@ public class CollarServer {
                 SendPreKeysResponse response = services.identityStore.createSendPreKeysResponse();
                 sendPlain(session, response);
             } else if (req instanceof StartSessionRequest) {
-                LOGGER.log(Level.INFO, "Starting session with " + req.identity);
+                LOGGER.info("Starting session with " + req.identity);
                 StartSessionRequest request = (StartSessionRequest)req;
                 if (services.minecraftSessionVerifier.verify(request)) {
                     MinecraftPlayer minecraftPlayer = request.session.toPlayer();
@@ -160,16 +160,16 @@ public class CollarServer {
                     services.sessions.stopSession(session, "Minecraft session invalid", null, sessionStopped);
                 }
             } else if (req instanceof CheckTrustRelationshipRequest) {
-                LOGGER.log(Level.INFO, "Checking if client/server have a trusted relationship");
+                LOGGER.info("Checking if client/server have a trusted relationship");
                 if (services.identityStore.isTrustedIdentity(req.identity)) {
-                    LOGGER.log(Level.INFO, req.identity + " is trusted. Signaling client to start encryption. ");
+                    LOGGER.info(req.identity + " is trusted. Signaling client to start encryption. ");
                     CheckTrustRelationshipResponse response = new IsTrustedRelationshipResponse(serverIdentity);
                     sendPlain(session, response);
                     services.sessions.findPlayer(req.identity).ifPresent(player -> {
                         sessionStarted.accept(req.identity, new Player(req.identity.id(), player.minecraftPlayer));
                     });
                 } else {
-                    LOGGER.log(Level.INFO, req.identity + " is NOT trusted. Signaling client to restart registration.");
+                    LOGGER.info(req.identity + " is NOT trusted. Signaling client to restart registration.");
                     CheckTrustRelationshipResponse response = new IsUntrustedRelationshipResponse(serverIdentity);
                     sendPlain(session, response);
                     services.sessions.stopSession(session, req.identity + " identity is not trusted", null, null);
@@ -234,7 +234,7 @@ public class CollarServer {
                 });
             });
         } else {
-            LOGGER.log(Level.INFO, "Sending " + resp.getClass().getSimpleName());
+            LOGGER.info("Sending " + resp.getClass().getSimpleName());
             if (session == null) {
                 throw new IllegalStateException("Session cannot be null");
             }

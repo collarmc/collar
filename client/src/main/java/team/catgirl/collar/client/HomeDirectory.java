@@ -1,6 +1,8 @@
 package team.catgirl.collar.client;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,15 +10,13 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.StandardOpenOption;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Collar home directory and well known locations
  */
 public final class HomeDirectory {
 
-    private static final Logger LOGGER = Logger.getLogger(HomeDirectory.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(HomeDirectory.class.getName());
 
     private final File mcHome;
     private final File collarHome;
@@ -118,7 +118,7 @@ public final class HomeDirectory {
                     lock = lockFile.tryLock();
                     return true;
                 } catch (IOException | OverlappingFileLockException e) {
-                    LOGGER.log(Level.WARNING, "Could not get lock on home directory", e);
+                    LOGGER.warn( "Could not get lock on home directory", e);
                     return false;
                 }
             }
@@ -133,12 +133,12 @@ public final class HomeDirectory {
                 try {
                     if (lock != null) lock.release();
                 } catch (IOException e) {
-                    LOGGER.log(Level.WARNING, "Could not close home directory lock", e);
+                    LOGGER.warn( "Could not close home directory lock", e);
                 }
                 try {
                     if (lockFile != null) lockFile.close();
                 } catch (IOException e) {
-                    LOGGER.log(Level.WARNING, "Could not close home directory lock channel", e);
+                    LOGGER.warn( "Could not close home directory lock channel", e);
                 }
                 lockFile = null;
                 lock = null;

@@ -1,6 +1,8 @@
 package team.catgirl.collar.sdht.impl;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import team.catgirl.collar.sdht.Record;
 import team.catgirl.collar.sdht.*;
 import team.catgirl.collar.sdht.cipher.ContentCipher;
@@ -17,12 +19,10 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public final class DefaultDistributedHashTable extends DistributedHashTable {
 
-    private static final Logger LOGGER = Logger.getLogger(DefaultDistributedHashTable.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(DefaultDistributedHashTable.class.getName());
 
     private static final int MAX_NAMESPACES = Short.MAX_VALUE;
     private static final int MAX_RECORDS = Short.MAX_VALUE;
@@ -122,7 +122,7 @@ public final class DefaultDistributedHashTable extends DistributedHashTable {
     @Override
     protected void add(Record record, Content content) {
         if (!content.isValid(record)) {
-            LOGGER.log(Level.SEVERE, "Record " + record + " did not match the content");
+            LOGGER.error("Record " + record + " did not match the content");
             return;
         }
         dhtContent.compute(record.key.namespace, (namespace, contentMap) -> {

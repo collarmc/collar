@@ -1,15 +1,16 @@
 package team.catgirl.collar.client.minecraft;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Allows Collar internals to subscribe to Minecraft client ticks
  */
 public final class Ticks {
 
-    private static final Logger LOGGER = Logger.getLogger(Ticks.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(Ticks.class.getName());
 
     private final CopyOnWriteArrayList<TickListener> listeners = new CopyOnWriteArrayList<>();
 
@@ -37,7 +38,7 @@ public final class Ticks {
             try {
                 onTick.onTick();
             } catch (Throwable e) {
-                LOGGER.log(Level.INFO, "Tick listener failed", e);
+                LOGGER.info("Tick listener failed", e);
             }
         });
     }

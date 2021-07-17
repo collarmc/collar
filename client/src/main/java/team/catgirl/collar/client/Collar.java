@@ -2,6 +2,8 @@ package team.catgirl.collar.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mikael.urlbuilder.UrlBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.whispersystems.libsignal.IdentityKey;
 import team.catgirl.collar.api.http.CollarFeature;
 import team.catgirl.collar.api.http.CollarVersion;
@@ -67,13 +69,11 @@ import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import static team.catgirl.collar.http.Request.url;
 
 public final class Collar {
-    private static final Logger LOGGER = Logger.getLogger(Collar.class.getName());
+    private static final Logger LOGGER = LogManager.getLogger(Collar.class.getName());
     private static final CollarVersion VERSION = new CollarVersion(0, 1);
 
     public final CollarConfiguration configuration;
@@ -149,7 +149,7 @@ public final class Collar {
         try {
             checkServerCompatibility(configuration);
             String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
-            LOGGER.log(Level.INFO, "Connecting to server " + url);
+            LOGGER.info("Connecting to server " + url);
             webSocket = Http.client().webSocket(Request.url(url).ws(), new CollarWebSocket(this));
             changeState(State.CONNECTING);
         } catch (CollarException e) {
@@ -166,7 +166,7 @@ public final class Collar {
      */
     public void disconnect() {
         if (this.webSocket != null) {
-            LOGGER.log(Level.INFO, "Disconnected");
+            LOGGER.info("Disconnected");
             this.webSocket.close();
             this.webSocket = null;
             if (this.identityStore != null) {
@@ -180,7 +180,7 @@ public final class Collar {
                 try {
                     identityStore.save();
                 } catch (IOException e) {
-                    LOGGER.log(Level.SEVERE, "Could not save Collar signal state", e);
+                    LOGGER.error("Could not save Collar signal state", e);
                 }
             }
         }
@@ -260,12 +260,12 @@ public final class Collar {
                 disconnect();
             }
             if (previousState == null) {
-                LOGGER.log(Level.INFO, "client in state " + state);
+                LOGGER.info("client in state " + state);
             } else {
                 if (identityStore != null) {
-                    LOGGER.log(Level.INFO, identityStore.currentIdentity() + " state changed from " + previousState + " to " + state);
+                    LOGGER.info(identityStore.currentIdentity() + " state changed from " + previousState + " to " + state);
                 } else {
-                    LOGGER.log(Level.INFO, "state changed from " + previousState + " to " + state);
+                    LOGGER.info("state changed from " + previousState + " to " + state);
                 }
             }
             if (previousState != null) {
@@ -316,7 +316,7 @@ public final class Collar {
         }
         verificationScheme.ifPresent(collarFeature -> {
             MinecraftSession minecraftSession = configuration.sessionSupplier.get();
-            LOGGER.log(Level.INFO, "Server supports versions " + versions);
+            LOGGER.info("Server supports versions " + versions);
             if ("mojang".equals(collarFeature.value) && minecraftSession.mode != MinecraftSession.Mode.MOJANG && minecraftSession.accessToken == null) {
                 throw new IllegalStateException("mojang verification scheme requested but was provided an invalid MinecraftSession");
             } else if ("nojang".equals(collarFeature.value) && minecraftSession.mode != MinecraftSession.Mode.NOJANG && minecraftSession.accessToken != null) {
@@ -346,7 +346,7 @@ public final class Collar {
                 try {
                     instance.identityStore.save();
                 } catch (IOException e) {
-                    LOGGER.log(Level.SEVERE, "Could not save Collar signal state to disk", e);
+                    LOGGER.error("Could not save Collar signal state to disk", e);
                 }
                 // Unlock
                 instance.configuration.homeDirectory.getLock().unlock();
@@ -373,7 +373,7 @@ public final class Collar {
                 }
                 sendRequest(webSocket, request);
             };
-            LOGGER.log(Level.INFO, "Connection established");
+            LOGGER.info("Connection established");
             if (SignalClientIdentityStore.hasIdentityStore(configuration.homeDirectory)) {
                 identityStore = getOrCreateIdentityKeyStore(webSocket, null);
             } else {
@@ -390,10 +390,10 @@ public final class Collar {
             }
             UUID finalOwner = owner;
             return new ResettableClientIdentityStore(() -> SignalClientIdentityStore.from(finalOwner, configuration.homeDirectory, signalProtocolStore -> {
-                LOGGER.log(Level.INFO, "New installation. Registering device with server");
+                LOGGER.info("New installation. Registering device with server");
                 new ProfileState(finalOwner).write(configuration.homeDirectory);
             }, (store) -> {
-                LOGGER.log(Level.INFO, "Existing installation. Loading the store and identifying with server " + serverIdentity);
+                LOGGER.info("Existing installation. Loading the store and identifying with server " + serverIdentity);
                 IdentityKey publicKey = store.getIdentityKeyPair().getPublicKey();
                 ClientIdentity clientIdentity = new ClientIdentity(finalOwner, new PublicKey(publicKey.serialize()), null);
                 PrivateIdentity privateIdentity = PrivateIdentity.getOrCreate(configuration.homeDirectory);
@@ -404,7 +404,7 @@ public final class Collar {
 
         @Override
         public void onClose(WebSocket webSocket, int code, String message) {
-            LOGGER.log(Level.SEVERE, "Closed socket: " + message);
+            LOGGER.error("Closed socket: " + message);
             if (this.keepAlive != null) {
                 this.keepAlive.stop();
             }
@@ -415,7 +415,7 @@ public final class Collar {
 
         @Override
         public void onFailure(WebSocket webSocket, Throwable throwable) {
-            LOGGER.log(Level.SEVERE, "Socket failure", throwable);
+            LOGGER.error("Socket failure", throwable);
             if (state != State.DISCONNECTED) {
                 collar.changeState(State.DISCONNECTED);
             }
@@ -425,7 +425,7 @@ public final class Collar {
         public void onMessage(WebSocket webSocket, ByteBuffer messageBuffer) {
             Optional<ProtocolResponse> responseOptional = readResponse(messageBuffer);
             responseOptional.ifPresent(resp -> {
-                LOGGER.log(Level.INFO, resp.getClass().getSimpleName() + " from " + resp.identity);
+                LOGGER.info(resp.getClass().getSimpleName() + " from " + resp.identity);
                 ClientIdentity identity = identityStore == null ? null : identityStore.currentIdentity();
                 if (resp instanceof IdentifyResponse) {
                     IdentifyResponse response = (IdentifyResponse) resp;
@@ -450,16 +450,16 @@ public final class Collar {
                     keepAlive.stop();
                     keepAlive.start(identity);
                 } else if (resp instanceof KeepAliveResponse) {
-                    LOGGER.log(Level.INFO, "KeepAliveResponse received");
+                    LOGGER.info("KeepAliveResponse received");
                 } else if (resp instanceof RegisterDeviceResponse) {
                     RegisterDeviceResponse registerDeviceResponse = (RegisterDeviceResponse)resp;
-                    LOGGER.log(Level.INFO, "RegisterDeviceResponse received with registration url " + ((RegisterDeviceResponse) resp).approvalUrl);
+                    LOGGER.info("RegisterDeviceResponse received with registration url " + ((RegisterDeviceResponse) resp).approvalUrl);
                     configuration.listener.onConfirmDeviceRegistration(collar, registerDeviceResponse.approvalToken, registerDeviceResponse.approvalUrl);
                 } else if (resp instanceof DeviceRegisteredResponse) {
                     DeviceRegisteredResponse response = (DeviceRegisteredResponse)resp;
                     identityStore = getOrCreateIdentityKeyStore(webSocket, response.profile.id);
                     identityStore.processDeviceRegisteredResponse(response);
-                    LOGGER.log(Level.INFO, "Ready to exchange keys for device " + response.deviceId);
+                    LOGGER.info("Ready to exchange keys for device " + response.deviceId);
                     SendPreKeysRequest request = identityStore.createPreKeyRequest(response);
                     sendRequest(webSocket, request);
                 } else if (resp instanceof SendPreKeysResponse) {
@@ -468,38 +468,38 @@ public final class Collar {
                         throw new IllegalStateException("identity has not been established");
                     }
                     identityStore.trustIdentity(response.identity, response.preKeyBundle);
-                    LOGGER.log(Level.INFO, "PreKeys have been exchanged successfully");
+                    LOGGER.info("PreKeys have been exchanged successfully");
                     sendRequest(webSocket, new IdentifyRequest(identity, identityStore.privateIdentityToken()));
                 } else if (resp instanceof ResendPreKeysResponse) {
                     ResendPreKeysResponse response = (ResendPreKeysResponse) resp;
                     SendPreKeysRequest request = identityStore.createPreKeyRequest(response);
                     sendRequest(webSocket, request);
                 } else if (resp instanceof StartSessionResponse) {
-                    LOGGER.log(Level.INFO, "Session has started. Checking if the client and server are in a trusted relationship");
+                    LOGGER.info("Session has started. Checking if the client and server are in a trusted relationship");
                     sendRequest(webSocket, new CheckTrustRelationshipRequest(identity));
                 } else if (resp instanceof SessionFailedResponse) {
-                    LOGGER.log(Level.INFO, "SessionFailedResponse received");
+                    LOGGER.info("SessionFailedResponse received");
                     if (resp instanceof MojangVerificationFailedResponse) {
                         MojangVerificationFailedResponse response = (MojangVerificationFailedResponse) resp;
-                        LOGGER.log(Level.INFO, "SessionFailedResponse with mojang session verification failure");
+                        LOGGER.info("SessionFailedResponse with mojang session verification failure");
                         configuration.listener.onMinecraftAccountVerificationFailed(collar, response.minecraftSession);
                     } else if (resp instanceof PrivateIdentityMismatchResponse) {
                         PrivateIdentityMismatchResponse response = (PrivateIdentityMismatchResponse) resp;
-                        LOGGER.log(Level.INFO, "SessionFailedResponse with private identity mismatch");
+                        LOGGER.info("SessionFailedResponse with private identity mismatch");
                         configuration.listener.onPrivateIdentityMismatch(collar, response.url);
                     } else if (resp instanceof SessionErrorResponse) {
-                        LOGGER.log(Level.INFO, "SessionFailedResponse Reason: " + ((SessionErrorResponse) resp).reason);
+                        LOGGER.info("SessionFailedResponse Reason: " + ((SessionErrorResponse) resp).reason);
                     }
                     collar.changeState(State.DISCONNECTED);
                 } else if (resp instanceof IsTrustedRelationshipResponse) {
-                    LOGGER.log(Level.INFO, "Server has confirmed a trusted relationship with the client");
+                    LOGGER.info("Server has confirmed a trusted relationship with the client");
                     if (resp.identity == null) {
                         throw new IllegalStateException("sever identity was null");
                     }
                     this.serverIdentity = resp.identity;
                     collar.changeState(State.CONNECTED);
                 } else if (resp instanceof IsUntrustedRelationshipResponse) {
-                    LOGGER.log(Level.INFO, "Server has declared the client as untrusted. Consumer should reset the identity store and reconnect.");
+                    LOGGER.info("Server has declared the client as untrusted. Consumer should reset the identity store and reconnect.");
                     collar.changeState(State.DISCONNECTED);
                     configuration.listener.onClientUntrusted(collar, identityStore);
                 } else {

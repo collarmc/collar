@@ -101,7 +101,7 @@ public class CollarServer {
     @OnWebSocketError
     public void onError(Session session, Throwable e) {
         LOGGER.error("Unrecoverable error " + e.getMessage(), e);
-        services.sessions.stopSession(session, "Unrecoverable error", null, sessionStopped);
+        services.sessions.stopSession(session, "Unrecoverable error", e, sessionStopped);
     }
 
     @OnWebSocketMessage

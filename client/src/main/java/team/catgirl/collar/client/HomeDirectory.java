@@ -8,11 +8,15 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.StandardOpenOption;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Collar home directory and well known locations
  */
 public final class HomeDirectory {
+
+    private static final Logger LOGGER = Logger.getLogger(HomeDirectory.class.getName());
 
     private final File mcHome;
     private final File collarHome;
@@ -114,6 +118,7 @@ public final class HomeDirectory {
                     lock = lockFile.tryLock();
                     return true;
                 } catch (IOException | OverlappingFileLockException e) {
+                    LOGGER.log(Level.WARNING, "Could not get lock on home directory", e);
                     return false;
                 }
             }
@@ -127,10 +132,14 @@ public final class HomeDirectory {
             synchronized (LOCK) {
                 try {
                     if (lock != null) lock.release();
-                } catch (IOException ignore) {}
+                } catch (IOException e) {
+                    LOGGER.log(Level.WARNING, "Could not close home directory lock", e);
+                }
                 try {
                     if (lockFile != null) lockFile.close();
-                } catch (IOException ignore) {}
+                } catch (IOException e) {
+                    LOGGER.log(Level.WARNING, "Could not close home directory lock channel", e);
+                }
                 lockFile = null;
                 lock = null;
             }

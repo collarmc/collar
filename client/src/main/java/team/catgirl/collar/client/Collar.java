@@ -146,11 +146,19 @@ public final class Collar {
             configuration.listener.onError(this, "Collar cannot connect as there is another client using Collar. Disconnect the other client.");
             return;
         }
-        checkServerCompatibility(configuration);
-        String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
-        LOGGER.log(Level.INFO, "Connecting to server " + url);
-        webSocket = Http.client().webSocket(Request.url(url).ws(), new CollarWebSocket(this));
-        changeState(State.CONNECTING);
+        try {
+            checkServerCompatibility(configuration);
+            String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
+            LOGGER.log(Level.INFO, "Connecting to server " + url);
+            webSocket = Http.client().webSocket(Request.url(url).ws(), new CollarWebSocket(this));
+            changeState(State.CONNECTING);
+        } catch (CollarException e) {
+            changeState(State.DISCONNECTED);
+            throw e;
+        } catch (Throwable e) {
+            changeState(State.DISCONNECTED);
+            throw new ConnectionException("Failed to connect", e);
+        }
     }
 
     /**
@@ -171,7 +179,6 @@ public final class Collar {
             if (identityStore != null) {
                 try {
                     identityStore.save();
-                    configuration.homeDirectory.getLock().unlock();
                 } catch (IOException e) {
                     LOGGER.log(Level.SEVERE, "Could not save Collar signal state", e);
                 }
@@ -265,8 +272,9 @@ public final class Collar {
                 this.configuration.listener.onStateChanged(this, state);
                 apis.forEach(abstractApi -> abstractApi.onStateChanged(state));
             }
-        } else {
-            throw new IllegalStateException("Cannot change state " + state + " to the same state");
+        }
+        if (state == State.DISCONNECTED) {
+            this.configuration.homeDirectory.getLock().unlock();
         }
     }
 

@@ -12,6 +12,18 @@ public interface ProfileService {
 
     UpdateProfileResponse updateProfile(RequestContext context, UpdateProfileRequest req);
 
+    PlayerCountResponse playerCount(RequestContext context, PlayerCountRequest req);
+
+    class PlayerCountRequest {}
+
+    class PlayerCountResponse {
+        public final long total;
+
+        public PlayerCountResponse(long total) {
+            this.total = total;
+        }
+    }
+
     class CreateProfileRequest {
         public final String email;
         public final String password;

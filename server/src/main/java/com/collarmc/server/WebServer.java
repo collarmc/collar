@@ -4,6 +4,8 @@ import com.collarmc.api.authentication.AuthenticationService;
 import com.collarmc.api.authentication.AuthenticationService.*;
 import com.collarmc.api.http.*;
 import com.collarmc.api.http.HttpException.*;
+import com.collarmc.api.profiles.ProfileService;
+import com.collarmc.server.common.ServerStatus;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.services.authentication.TokenCrypter;
@@ -262,6 +264,7 @@ public class WebServer {
         // Reports server version
         // This contract is forever, please change with care!
         get("/api/version", (request, response) -> ServerVersion.version(), services.jsonMapper::writeValueAsString);
+        get("/api/status", (request, response) -> new ServerStatus(services.profiles.playerCount(RequestContext.SERVER, new ProfileService.PlayerCountRequest()).total, services.sessions.count()), services.jsonMapper::writeValueAsString);
         // Query this route to discover what version of the APIs are supported and how the server is configured
         get("/api/discover", (request, response) -> {
             List<CollarVersion> versions = new ArrayList<>();

@@ -186,6 +186,10 @@ public final class SessionManager {
                 .map(SessionState::toPlayer);
     }
 
+    public long count() {
+        return sessions.size();
+    }
+
     public static final class SessionState {
         public final Session session;
         public final ClientIdentity identity;

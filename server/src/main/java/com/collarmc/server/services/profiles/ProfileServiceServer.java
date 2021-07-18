@@ -144,6 +144,11 @@ public class ProfileServiceServer implements ProfileService {
         }
     }
 
+    @Override
+    public PlayerCountResponse playerCount(RequestContext context, PlayerCountRequest req) {
+        return new PlayerCountResponse(docs.countDocuments());
+    }
+
     private static Profile map(Document doc) {
         UUID profileId = doc.get(FIELD_PROFILE_ID, UUID.class);
         String email = doc.getString(FIELD_EMAIL);

@@ -82,7 +82,7 @@ public final class SessionManager {
                 }
             }
         } else {
-            session.close(1000, "Session stopped");
+            session.close(reason.code, "Session stopped");
         }
     }
 

@@ -70,12 +70,17 @@ public final class HomeDirectory {
         return lock;
     }
 
-    private File createDirectory(String dht) throws IOException {
-        File dir = new File(collarHome, dht);
+    private File createDirectory(String path) throws IOException {
+        File dir = new File(collarHome, path);
         if (!dir.exists() && !dir.mkdirs()) {
             throw new IOException("could not make directory " + dir.getAbsolutePath());
         }
         return dir;
+    }
+
+    @Override
+    public String toString() {
+        return collarHome.getAbsolutePath();
     }
 
     /**

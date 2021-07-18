@@ -3,6 +3,7 @@ package com.collarmc.client;
 import com.collarmc.client.debug.DebugConfiguration;
 import com.collarmc.client.minecraft.Ticks;
 import com.google.common.base.MoreObjects;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.collarmc.api.entities.Entity;
@@ -195,6 +196,7 @@ public final class CollarConfiguration {
                 LOGGER.warn( "Location features are disabled. Consumer did not provide a player position supplier");
                 return Location.UNKNOWN;
             });
+            LOGGER.log(Level.INFO, "Collar home at " + homeDirectory);
             return new CollarConfiguration(
                     playerPosition,
                     sessionSupplier,

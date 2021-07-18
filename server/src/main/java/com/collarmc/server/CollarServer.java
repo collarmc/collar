@@ -1,5 +1,6 @@
 package com.collarmc.server;
 
+import com.collarmc.protocol.SessionStopReason;
 import com.collarmc.server.protocol.*;
 import com.collarmc.server.services.profiles.ProfileCache;
 import io.github.bucket4j.Bandwidth;
@@ -93,7 +94,7 @@ public class CollarServer {
     @OnWebSocketClose
     public void closed(Session session, int statusCode, String reason) {
         LOGGER.info("Session closed " + statusCode + " " + reason);
-        services.sessions.stopSession(session, reason, null, sessionStopped);
+        services.sessions.stopSession(session, SessionStopReason.NORMAL_CLOSE, null, null, sessionStopped);
         services.deviceRegistration.onSessionClosed(session);
         buckets.remove(session);
     }
@@ -101,7 +102,7 @@ public class CollarServer {
     @OnWebSocketError
     public void onError(Session session, Throwable e) {
         LOGGER.error("Unrecoverable error " + e.getMessage(), e);
-        services.sessions.stopSession(session, "Unrecoverable error", e, sessionStopped);
+        services.sessions.stopSession(session, SessionStopReason.SERVER_ERROR, null, e, sessionStopped);
     }
 
     @OnWebSocketMessage
@@ -110,7 +111,7 @@ public class CollarServer {
         if (bucket.tryConsume(1)) {
             processMessage(session, is);
         } else {
-            services.sessions.stopSession(session, "Too many requests sent", null, sessionStopped);
+            services.sessions.stopSession(session, SessionStopReason.TOO_MANY_REQUESTS, null, null, sessionStopped);
         }
     }
 
@@ -140,7 +141,7 @@ public class CollarServer {
                     }, () -> {
                         LOGGER.error("Profile " + request.identity.id() + " does not exist but the client thinks it should.");
                         sendPlain(session, new IsUntrustedRelationshipResponse(serverIdentity));
-                        services.sessions.stopSession(session, "Identity " + request.identity.id() + " was not found", null, null);
+                        services.sessions.stopSession(session, SessionStopReason.UNAUTHORISED, "Identity " + request.identity.id() + " was not found", null, null);
                     });
                 }
             } else if (req instanceof SendPreKeysRequest) {
@@ -158,7 +159,7 @@ public class CollarServer {
                     sendPlain(session, new StartSessionResponse(serverIdentity));
                 } else {
                     sendPlain(session, new MojangVerificationFailedResponse(serverIdentity, ((StartSessionRequest) req).session));
-                    services.sessions.stopSession(session, "Minecraft session invalid", null, sessionStopped);
+                    services.sessions.stopSession(session, SessionStopReason.UNAUTHORISED, "Minecraft session invalid", null, sessionStopped);
                 }
             } else if (req instanceof CheckTrustRelationshipRequest) {
                 LOGGER.info("Checking if client/server have a trusted relationship");
@@ -173,7 +174,7 @@ public class CollarServer {
                     LOGGER.info(req.identity + " is NOT trusted. Signaling client to restart registration.");
                     CheckTrustRelationshipResponse response = new IsUntrustedRelationshipResponse(serverIdentity);
                     sendPlain(session, response);
-                    services.sessions.stopSession(session, req.identity + " identity is not trusted", null, null);
+                    services.sessions.stopSession(session, SessionStopReason.UNAUTHORISED, req.identity + " identity is not trusted", null, null);
                 }
             } else {
                 for (ProtocolHandler handler : protocolHandlers) {

@@ -1,5 +1,6 @@
 package com.collarmc.protocol.session;
 
+import com.collarmc.protocol.SessionStopReason;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.protocol.ProtocolResponse;
@@ -51,11 +52,16 @@ public abstract class SessionFailedResponse extends ProtocolResponse {
      */
     public static final class SessionErrorResponse extends SessionFailedResponse {
         @JsonProperty("reason")
-        public final String reason;
+        public final SessionStopReason reason;
+        @JsonProperty("message")
+        public final String message;
         @JsonCreator
-        public SessionErrorResponse(@JsonProperty("identity") ServerIdentity identity, @JsonProperty("reason") String reason) {
+        public SessionErrorResponse(@JsonProperty("identity") ServerIdentity identity,
+                                    @JsonProperty("reason") SessionStopReason reason,
+                                    @JsonProperty("message") String message) {
             super(identity);
             this.reason = reason;
+            this.message = message;
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.collarmc.server.session;
 
 
+import com.collarmc.protocol.SessionStopReason;
 import com.collarmc.server.security.ServerIdentityStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.websocket.api.Session;
@@ -56,7 +57,8 @@ public final class SessionManager {
 
 
     public void stopSession(Session session,
-                            String reason,
+                            SessionStopReason reason,
+                            String message,
                             Throwable e,
                             BiConsumer<ClientIdentity, Player> callback) {
         // Run callback
@@ -66,15 +68,15 @@ public final class SessionManager {
         }
         // Start removing state
         if (e == null) {
-            LOGGER.info(reason);
+            LOGGER.info(reason.message(message));
         } else {
-            LOGGER.error(reason, e);
+            LOGGER.error(reason.message(message), e);
         }
         SessionState sessionState = sessions.remove(session);
         if (sessionState != null) {
             if (session.isOpen()) {
                 try {
-                    send(session, sessionState.identity, new SessionErrorResponse(store.getIdentity(), reason));
+                    send(session, sessionState.identity, new SessionErrorResponse(store.getIdentity(), reason, message));
                 } catch (IOException | CipherException ex) {
                     throw new IllegalStateException("Couldn't send SessionErrorResponse", ex);
                 }

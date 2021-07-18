@@ -14,6 +14,7 @@ import com.collarmc.client.security.ProfileState;
 import com.collarmc.client.security.signal.SignalClientIdentityStore;
 import com.collarmc.client.utils.Crypto;
 import com.collarmc.client.utils.Http;
+import com.collarmc.protocol.SessionStopReason;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mikael.urlbuilder.UrlBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -406,6 +407,9 @@ public final class Collar {
             if (this.keepAlive != null) {
                 this.keepAlive.stop();
             }
+            if (code != SessionStopReason.NORMAL_CLOSE.code) {
+                collar.configuration.listener.onError(collar, message);
+            }
             if (state != State.DISCONNECTED) {
                 collar.changeState(State.DISCONNECTED);
             }
@@ -486,7 +490,12 @@ public final class Collar {
                         LOGGER.info("SessionFailedResponse with private identity mismatch");
                         configuration.listener.onPrivateIdentityMismatch(collar, response.url);
                     } else if (resp instanceof SessionErrorResponse) {
-                        LOGGER.info("SessionFailedResponse Reason: " + ((SessionErrorResponse) resp).reason);
+                        SessionErrorResponse response = (SessionErrorResponse) resp;
+                        String message = response.reason.message(response.message);
+                        LOGGER.info("SessionFailedResponse Reason: " + message);
+                        if (response.reason != SessionStopReason.NORMAL_CLOSE) {
+                            collar.configuration.listener.onError(collar, response.message);
+                        }
                     }
                     collar.changeState(State.DISCONNECTED);
                 } else if (resp instanceof IsTrustedRelationshipResponse) {

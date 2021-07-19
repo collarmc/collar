@@ -15,6 +15,7 @@ import com.collarmc.client.security.signal.SignalClientIdentityStore;
 import com.collarmc.client.utils.Crypto;
 import com.collarmc.client.utils.Http;
 import com.collarmc.protocol.SessionStopReason;
+import com.collarmc.security.cipher.CipherException.InvalidCipherSessionException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mikael.urlbuilder.UrlBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -494,7 +495,7 @@ public final class Collar {
                         String message = response.reason.message(response.message);
                         LOGGER.info("SessionFailedResponse Reason: " + message);
                         if (response.reason != SessionStopReason.NORMAL_CLOSE) {
-                            collar.configuration.listener.onError(collar, response.message);
+                            collar.configuration.listener.onError(collar, response.reason.message(response.message));
                         }
                     }
                     collar.changeState(State.DISCONNECTED);
@@ -522,7 +523,7 @@ public final class Collar {
         private Optional<ProtocolResponse> readResponse(ByteBuffer buffer) {
             PacketIO packetIO = new PacketIO(mapper, identityStore == null ? null : identityStore.createCypher());
             try {
-                return Optional.of(packetIO.decode(serverIdentity, buffer, ProtocolResponse.class));
+                return packetIO.decode(serverIdentity, buffer, ProtocolResponse.class);
             } catch (CipherException e) {
                 if (identityStore == null) {
                     throw new IllegalStateException("Could not recover from cipher error", e);
@@ -543,6 +544,9 @@ public final class Collar {
                         throw new IllegalStateException("identity store should be available by the time the client is CONNECTED");
                     }
                     bytes = packetIO.encodeEncrypted(serverIdentity, req);
+                } catch (InvalidCipherSessionException e) {
+                    collar.configuration.listener.onClientUntrusted(collar, identityStore);
+                    return;
                 } catch (IOException | CipherException e) {
                     throw new IllegalStateException(e);
                 }

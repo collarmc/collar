@@ -2,9 +2,12 @@ package com.collarmc.client.api.location;
 
 import com.collarmc.client.minecraft.Ticks;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 class LocationUpdater implements Ticks.TickListener {
     private final LocationApi locationApi;
     private final Ticks ticks;
+    private final AtomicInteger tickCounter = new AtomicInteger();
 
     public LocationUpdater(LocationApi locationApi, Ticks ticks) {
         this.locationApi = locationApi;
@@ -25,6 +28,8 @@ class LocationUpdater implements Ticks.TickListener {
 
     @Override
     public void onTick() {
-        locationApi.publishLocation();
+        if (tickCounter.incrementAndGet() % 10 == 0) {
+            locationApi.publishLocation();
+        }
     }
 }

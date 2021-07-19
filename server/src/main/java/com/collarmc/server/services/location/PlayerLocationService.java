@@ -18,6 +18,8 @@ import com.collarmc.security.ServerIdentity;
 import com.collarmc.server.session.SessionManager;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class PlayerLocationService {
@@ -30,7 +32,8 @@ public class PlayerLocationService {
     private final ServerIdentity serverIdentity;
     private final NearbyGroups nearbyGroups = new NearbyGroups();
 
-    private final ArrayListMultimap<UUID, Player> playersSharing = ArrayListMultimap.create();
+    // Group to players
+    private final ConcurrentMap<UUID, Set<Player>> playersSharing = new ConcurrentHashMap<>();
 
     public PlayerLocationService(SessionManager sessions, ProfileCache profiles, GroupService groups, ServerIdentity serverIdentity) {
         this.sessions = sessions;
@@ -41,9 +44,12 @@ public class PlayerLocationService {
 
     public void startSharing(StartSharingLocationRequest req) {
         sessions.findPlayer(req.identity).ifPresent(player -> {
-            synchronized (playersSharing) {
-                playersSharing.put(req.groupId, player);
-            }
+            playersSharing.compute(req.groupId, (uuid, players) -> {
+                if (players == null) {
+                    players = new HashSet<>();
+                }
+                return players;
+            });
             LOGGER.info("Player " + player + " started sharing location with group " + req.groupId);
         });
     }
@@ -57,8 +63,7 @@ public class PlayerLocationService {
         return sessions.getIdentity(player)
                 .map(identity -> {
                     BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
-                    List<BatchProtocolResponse> allResponses = playersSharing.asMap().entrySet().stream()
-                            .filter(candidate -> candidate.getValue().contains(player))
+                    List<BatchProtocolResponse> allResponses = playersSharing.entrySet().stream().filter(entry -> entry.getValue().contains(player))
                             .map(Map.Entry::getKey)
                             .map(uuid -> stopSharing(uuid, identity, player))
                             .filter(Optional::isPresent)
@@ -86,7 +91,13 @@ public class PlayerLocationService {
         LocationUpdatedResponse locationUpdatedResponse = new LocationUpdatedResponse(serverIdentity, identity, groupId, player, null);
         Optional<BatchProtocolResponse> responses = createLocationResponses(player, locationUpdatedResponse);
         synchronized (playersSharing) {
-            playersSharing.remove(groupId, player);
+            playersSharing.compute(groupId, (uuid, players) -> {
+                if (players == null) {
+                    return null;
+                }
+                players.remove(player);
+                return players.isEmpty() ? null : players;
+            });
         }
         return responses;
     }
@@ -104,7 +115,7 @@ public class PlayerLocationService {
     private Optional<BatchProtocolResponse> createLocationResponses(Player player, LocationUpdatedResponse resp) {
         BatchProtocolResponse responses = new BatchProtocolResponse(serverIdentity);
         // Find all the groups the requesting player is a member of
-        Set<UUID> sharingWithGroups = playersSharing.entries().stream().filter(entry -> player.equals(entry.getValue()))
+        Set<UUID> sharingWithGroups = playersSharing.entrySet().stream().filter(entry -> entry.getValue().contains(player))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toSet());
         Set<Group> memberGroups = groups.findGroups(sharingWithGroups);

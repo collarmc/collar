@@ -58,8 +58,12 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
         }
     }).build();
 
-    private final Cache<UUID, PublicProfile> profiles = CacheBuilder.newBuilder()
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+    private final Cache<UUID, Optional<PublicProfile>> profileCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .build();
+
+    private final Cache<UUID, Optional<ClientIdentity>> identityCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(5, TimeUnit.SECONDS)
             .build();
 
     public IdentityApi(Collar collar, Supplier<ClientIdentityStore> identityStoreSupplier, Consumer<ProtocolRequest> sender) {
@@ -82,7 +86,8 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             return identityOptional.map(identity -> new Player(identity.owner, new MinecraftPlayer(
                     playerId,
                     collar.player().minecraftPlayer.server,
-                    collar.player().minecraftPlayer.networkId))
+                    collar.player().minecraftPlayer.networkId)
+                )
             );
         });
     }
@@ -93,14 +98,14 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
      * @return profile
      */
     public CompletableFuture<Optional<PublicProfile>> resolveProfile(Player player) {
-        PublicProfile profile = profiles.getIfPresent(player.profile);
-        if (profile == null) {
+        Optional<PublicProfile> profile = profileCache.asMap().getOrDefault(player.profile, Optional.empty());
+        if (profile.isPresent()) {
+            return CompletableFuture.completedFuture(profile);
+        } else {
             CompletableFuture<Optional<PublicProfile>> future = new CompletableFuture<>();
             profileFutures.put(player.profile, future);
             sender.accept(new GetProfileRequest(identity(), player.profile));
             return future;
-        } else {
-            return CompletableFuture.completedFuture(Optional.of(profile));
         }
     }
 
@@ -110,11 +115,16 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
      * @return identity future
      */
     public CompletableFuture<Optional<ClientIdentity>> identify(UUID playerId) {
-        CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
-        long id = TokenGenerator.longToken();
-        identifyFutures.put(id, future);
-        sender.accept(new GetIdentityRequest(identity(), id, playerId));
-        return future;
+        Optional<ClientIdentity> identity = identityCache.asMap().getOrDefault(playerId, Optional.empty());
+        if (identity.isPresent()) {
+            return CompletableFuture.completedFuture(identity);
+        } else {
+            CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
+            long id = TokenGenerator.longToken();
+            identifyFutures.put(id, future);
+            sender.accept(new GetIdentityRequest(identity(), id, playerId));
+            return future;
+        }
     }
 
     /**
@@ -149,7 +159,9 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
         if (resp instanceof GetIdentityResponse) {
             GetIdentityResponse response = (GetIdentityResponse) resp;
             CompletableFuture<Optional<ClientIdentity>> future = identifyFutures.get(response.id);
-            future.complete(response.found == null ? Optional.empty() : Optional.of(response.found));
+            Optional<ClientIdentity> identity = Optional.ofNullable(response.found);
+            identityCache.put(response.player, identity);
+            future.complete(identity);
             return true;
         } else if (resp instanceof CreateTrustResponse) {
             CreateTrustResponse response = (CreateTrustResponse) resp;
@@ -163,7 +175,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
                 sender.accept(identityStore().createPreKeyRequest(response.sender, response.id));
             } else {
                 LOGGER.info("Finished creating trust with " + response.sender + " and id " + response.id);
-                removed.complete(response.sender == null ? Optional.empty() : Optional.of(response.sender));
+                removed.complete(Optional.ofNullable(response.sender));
             }
             return true;
         } else if (resp instanceof GetProfileResponse) {
@@ -171,11 +183,9 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             CompletableFuture<Optional<PublicProfile>> future = profileFutures.getIfPresent(response.profile.id);
             profileFutures.invalidate(response.id);
             if (future != null) {
-                if (response.profile == null) {
-                    future.complete(Optional.empty());
-                } else {
-                    future.complete(Optional.of(response.profile));
-                }
+                Optional<PublicProfile> profile = Optional.ofNullable(response.profile);
+                profileCache.put(response.id, profile);
+                future.complete(profile);
             }
             return true;
         }

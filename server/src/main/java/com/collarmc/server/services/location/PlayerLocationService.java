@@ -90,15 +90,13 @@ public class PlayerLocationService {
         LOGGER.info("Player " + player + " started sharing location with group " + groupId);
         LocationUpdatedResponse locationUpdatedResponse = new LocationUpdatedResponse(serverIdentity, identity, groupId, player, null);
         Optional<BatchProtocolResponse> responses = createLocationResponses(player, locationUpdatedResponse);
-        synchronized (playersSharing) {
-            playersSharing.compute(groupId, (uuid, players) -> {
-                if (players == null) {
-                    return null;
-                }
-                players.remove(player);
-                return players.isEmpty() ? null : players;
-            });
-        }
+        playersSharing.compute(groupId, (uuid, players) -> {
+            if (players == null) {
+                return null;
+            }
+            players.remove(player);
+            return players.isEmpty() ? null : players;
+        });
         return responses;
     }
 

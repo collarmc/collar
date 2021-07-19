@@ -64,12 +64,12 @@ public class ApiToken {
                 long expiresAt;
                 Set<Role> roles = new HashSet<>();
                 switch (version) {
-                    case 1:
+                    case 1 -> {
                         uuidAsString = dataStream.readUTF();
                         expiresAt = dataStream.readLong();
                         roles.add(Role.PLAYER);
-                        break;
-                    case 2:
+                    }
+                    case 2 -> {
                         uuidAsString = dataStream.readUTF();
                         expiresAt = dataStream.readLong();
                         int rolesCount = dataStream.readInt();
@@ -77,9 +77,8 @@ public class ApiToken {
                             int roleId = dataStream.readInt();
                             roles.add(Role.values()[roleId]);
                         }
-                        break;
-                    default:
-                        throw new IllegalStateException("unknown version " + version);
+                    }
+                    default -> throw new IllegalStateException("unknown version " + version);
                 }
                 return new ApiToken(UUID.fromString(uuidAsString), expiresAt, roles);
             }

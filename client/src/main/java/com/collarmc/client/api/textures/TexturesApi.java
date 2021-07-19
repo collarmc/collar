@@ -96,7 +96,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
      * @param type the type of texture
      */
     public void requestPlayerTexture(Player player, TextureType type) {
-        Optional<Texture> texture = textureCache.asMap().getOrDefault(player.profile, Optional.empty());
+        Optional<Texture> texture = textureCache.asMap().getOrDefault(new TextureKey(player.profile, type), Optional.empty());
         if (texture.isPresent()) {
             fireListener("onTextureReceived", texturesListener -> {
                 texturesListener.onTextureReceived(collar, this, texture.get());

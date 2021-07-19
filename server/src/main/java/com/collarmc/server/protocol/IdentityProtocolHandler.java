@@ -37,9 +37,9 @@ public class IdentityProtocolHandler extends ProtocolHandler {
         if (req instanceof GetIdentityRequest) {
             GetIdentityRequest request = (GetIdentityRequest) req;
             sessions.getIdentityByMinecraftPlayerId(request.player).ifPresentOrElse(identity -> {
-                sender.accept(request.identity, new GetIdentityResponse(serverIdentity, request.id, identity));
+                sender.accept(request.identity, new GetIdentityResponse(serverIdentity, request.id, identity, request.player));
             }, () -> {
-                sender.accept(request.identity, new GetIdentityResponse(serverIdentity, request.id, null));
+                sender.accept(request.identity, new GetIdentityResponse(serverIdentity, request.id, null, request.player));
             });
             return true;
         } else if (req instanceof CreateTrustRequest) {

@@ -177,10 +177,11 @@ public final class CollarConfiguration {
             Objects.requireNonNull(entitiesSupplier, "Entities supplier not set");
             Objects.requireNonNull(ticks, "Ticks not set");
             DebugConfiguration debugging = DebugConfiguration.load(homeDirectory);
-            debugging.serverUrl.ifPresent(collarServerURL -> {
+            if (debugging.serverUrl.isPresent()) {
                 LOGGER.info("Debug file has specified an alternate collar server url " + collarServerURL + " that will be used instead of " + this.collarServerURL);
-                this.collarServerURL = collarServerURL;
-            });
+                this.collarServerURL = debugging.serverUrl.get();
+                homeDirectory = HomeDirectory.from(this.homeDirectory, collarServerURL.getHost());
+            }
             Supplier<MinecraftSession> configuredSession = this.sessionSupplier;
             debugging.sessionMode.ifPresent(mode -> {
                 this.sessionSupplier = () -> {

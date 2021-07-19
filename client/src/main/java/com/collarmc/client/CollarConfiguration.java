@@ -184,14 +184,11 @@ public final class CollarConfiguration {
             }
             Supplier<MinecraftSession> configuredSession = this.sessionSupplier;
             debugging.sessionMode.ifPresent(mode -> {
-                this.sessionSupplier = () -> {
-                    MinecraftSession session = configuredSession.get();
-                    if (session.mode == mode) {
-                        return session;
-                    }
+                MinecraftSession session = configuredSession.get();
+                if (session.mode == mode) {
                     LOGGER.info("Debug file has specified session mode " + mode + " that will be used instead of " + session.mode);
-                    return new MinecraftSession(session.id, session.username, session.server, mode, session.accessToken, session.clientToken, session.networkId);
-                };
+                }
+                this.sessionSupplier = () -> new MinecraftSession(session.id, session.username, session.server, mode, session.accessToken, session.clientToken, session.networkId);
             });
             Supplier<Location> playerPosition = MoreObjects.firstNonNull(this.playerLocation, () -> {
                 LOGGER.warn( "Location features are disabled. Consumer did not provide a player position supplier");

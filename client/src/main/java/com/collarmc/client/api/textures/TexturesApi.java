@@ -2,6 +2,8 @@ package com.collarmc.client.api.textures;
 
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.security.ClientIdentityStore;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.stoyanr.evictor.ConcurrentMapWithTimedEviction;
 import com.stoyanr.evictor.map.ConcurrentHashMapWithTimedEviction;
 import com.stoyanr.evictor.map.EvictibleEntry;
@@ -37,6 +39,10 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
 
     private final ConcurrentMapWithTimedEviction<TextureKey, CompletableFuture<Optional<Texture>>> textureFutures = new ConcurrentHashMapWithTimedEviction<>(texturesFutureScheduler);
 
+    private final Cache<TextureKey, Optional<Texture>> textureCache = CacheBuilder.newBuilder()
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .build();
+
     public TexturesApi(Collar collar, Supplier<ClientIdentityStore> identityStoreSupplier, Consumer<ProtocolRequest> sender) {
         super(collar, identityStoreSupplier, sender);
     }
@@ -57,7 +63,8 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
             Texture texture = response.texturePath == null ? null : new Texture(response.player, response.group, response.type, textureUrl);
             CompletableFuture<Optional<Texture>> removed = textureFutures.remove(textureKey);
             if (removed != null) {
-                Optional<Texture> optionalTexture = texture == null ? Optional.empty() : Optional.of(texture);
+                Optional<Texture> optionalTexture = Optional.ofNullable(texture);
+                textureCache.put(textureKey, optionalTexture);
                 removed.complete(optionalTexture);
             }
             if (texture != null) {
@@ -89,7 +96,14 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
      * @param type the type of texture
      */
     public void requestPlayerTexture(Player player, TextureType type) {
-        sender.accept(new GetTextureRequest(identity(), player.minecraftPlayer.id, null, type));
+        Optional<Texture> texture = textureCache.asMap().getOrDefault(player.profile, Optional.empty());
+        if (texture.isPresent()) {
+            fireListener("onTextureReceived", texturesListener -> {
+                texturesListener.onTextureReceived(collar, this, texture.get());
+            });
+        } else {
+            sender.accept(new GetTextureRequest(identity(), player.minecraftPlayer.id, null, type));
+        }
     }
 
     /**
@@ -111,7 +125,14 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
      * @param type the type of texture
      */
     public void requestGroupTexture(Group group, TextureType type) {
-        sender.accept(new GetTextureRequest(identity(), null, group.id, type));
+        Optional<Texture> texture = textureCache.asMap().getOrDefault(new TextureKey(group.id, type), Optional.empty());
+        if (texture.isPresent()) {
+            fireListener("onTextureReceived", texturesListener -> {
+                texturesListener.onTextureReceived(collar, this, texture.get());
+            });
+        } else {
+            sender.accept(new GetTextureRequest(identity(), null, group.id, type));
+        }
     }
 
     @Override

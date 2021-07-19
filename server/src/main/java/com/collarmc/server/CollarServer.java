@@ -211,11 +211,11 @@ public class CollarServer {
         PacketIO packetIO = new PacketIO(services.packetMapper, services.identityStore.createCypher());
         ClientIdentity identity = services.sessions.getIdentity(session).orElse(null);
         try {
-            ProtocolRequest packet = packetIO.decode(identity, message, ProtocolRequest.class);
-            if (packet.identity != null && identity != null && !packet.identity.equals(identity)) {
+            Optional<ProtocolRequest> packet = packetIO.decode(identity, message, ProtocolRequest.class);
+            if (packet.isPresent() && packet.get().identity != null && identity != null && !packet.get().identity.equals(identity)) {
                 throw new IllegalStateException("Identity associated with this session was different to decoded packet");
             }
-            return Optional.of(packet);
+            return packet;
         } catch (InvalidCipherSessionException e) {
             send(session, new ResendPreKeysResponse(services.identityStore.getIdentity()));
             return Optional.empty();

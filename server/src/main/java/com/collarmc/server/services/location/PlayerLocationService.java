@@ -48,6 +48,7 @@ public class PlayerLocationService {
                 if (players == null) {
                     players = new HashSet<>();
                 }
+                players.add(player);
                 return players;
             });
             LOGGER.info("Player " + player + " started sharing location with group " + req.groupId);

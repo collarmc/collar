@@ -6,15 +6,21 @@ import com.collarmc.security.Identity;
 import com.collarmc.security.cipher.Cipher;
 import com.collarmc.io.IO;
 import com.collarmc.security.cipher.CipherException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.*;
 import java.nio.ByteBuffer;
+import java.util.Optional;
 
 /**
  * Encodes and decodes packets for/from the wire, handling encryption and different types of signal messages
  * Packet format is int(0x22)+int(version)+int(ENCRYPTEDMODE)+int(SIGNAL_MESSAGE_TYPE)+CiphertextMessage()
  */
 public final class PacketIO {
+
+    private static final Logger LOGGER = LogManager.getLogger(PacketIO.class);
+
     /** UwU **/
     private static final int PACKET_MARKER = 0x22;
     private static final int VERSION = 1;
@@ -29,11 +35,11 @@ public final class PacketIO {
         this.cipher = cipher;
     }
 
-    public <T> T decode(Identity sender, InputStream is, Class<T> type) throws IOException, CipherException {
+    public <T> Optional<T> decode(Identity sender, InputStream is, Class<T> type) throws IOException, CipherException {
         return decode(sender, IO.toByteBuffer(is), type);
     }
 
-    public <T> T decode(Identity sender, ByteBuffer buffer, Class<T> type) throws IOException, CipherException {
+    public <T> Optional<T> decode(Identity sender, ByteBuffer buffer, Class<T> type) throws IOException, CipherException {
         T decoded;
         int packetType;
         try (DataInputStream objectStream = new DataInputStream(new ByteBufferInputStream(buffer))) {
@@ -52,16 +58,19 @@ public final class PacketIO {
                 decoded = mapper.readValue(remainingBytes, type);
             } else if (packetType == MODE_ENCRYPTED) {
                 if (sender == null) {
-                    throw new IllegalStateException("Cannot read encrypted packets with no sender");
+                    LOGGER.error("Cannot read encrypted packets with no sender");
+                    decoded = null;
+                } else {
+                    remainingBytes = cipher.decrypt(sender, remainingBytes);
+                    checkPacketSize(remainingBytes);
+                    decoded = mapper.readValue(remainingBytes, type);
                 }
-                remainingBytes = cipher.decrypt(sender, remainingBytes);
-                checkPacketSize(remainingBytes);
-                decoded = mapper.readValue(remainingBytes, type);
             } else {
-                throw new IllegalStateException("unknown packet type " + packetType);
+                LOGGER.error("unknown packet type " + packetType);
+                decoded = null;
             }
         }
-        return decoded;
+        return Optional.ofNullable(decoded);
     }
 
     public byte[] encodePlain(Object object) throws IOException {

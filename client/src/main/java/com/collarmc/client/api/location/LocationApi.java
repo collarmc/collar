@@ -26,6 +26,8 @@ import com.collarmc.protocol.waypoints.RemoveWaypointRequest;
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.Key;
 import com.collarmc.security.cipher.CipherException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +40,8 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class LocationApi extends AbstractApi<LocationListener> {
+
+    private static final Logger LOGGER = LogManager.getLogger(LocationApi.class);
 
     private final HashSet<UUID> groupsSharingWith = new HashSet<>();
     private final ConcurrentHashMap<Player, Location> playerLocations = new ConcurrentHashMap<>();
@@ -257,7 +261,8 @@ public class LocationApi extends AbstractApi<LocationListener> {
                             byte[] decryptedBytes = identityStore().createCypher().decrypt(response.sender, group, response.location);
                             location = new Location(decryptedBytes);
                         } catch (IOException | CipherException e) {
-                            throw new IllegalStateException("could not decrypt location sent by " + response.sender);
+                            LOGGER.error("could not decrypt location sent by " + response.sender);
+                            return;
                         }
                     }
                     if (location.equals(Location.UNKNOWN)) {
@@ -279,7 +284,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                             try {
                                 return identityStore().createCypher().decrypt(encryptedWaypoint.waypoint);
                             } catch (CipherException e) {
-                                throw new IllegalStateException(e);
+                                throw new IllegalStateException("Unable to decrypt private waypoint", e);
                             }
                         }).map(Waypoint::new)
                         .filter(waypoint -> waypoint.server.equals(collar.player().minecraftPlayer.server))

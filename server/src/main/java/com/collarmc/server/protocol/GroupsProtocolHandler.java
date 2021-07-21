@@ -73,8 +73,6 @@ public final class GroupsProtocolHandler extends ProtocolHandler {
     public void onSessionStopping(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) {
         super.onSessionStopping(identity, player, sender);
         if (player == null) return;
-        groups.playerIsOffline(player).ifPresent(response -> {
-            sender.accept(null, response);
-        });
+        groups.playerIsOffline(player).ifPresent(response -> sender.accept(null, response));
     }
 }

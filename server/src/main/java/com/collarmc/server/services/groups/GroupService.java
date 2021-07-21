@@ -137,7 +137,7 @@ public final class GroupService {
             Group finalGroup = group;
             BatchProtocolResponse updates = createMemberMessages(
                     group,
-                    member -> member.membershipState.equals(MembershipState.ACCEPTED),
+                    member -> member.membershipState.equals(MembershipState.ACCEPTED) && !member.player.equals(player),
                     ((memberIdentity, memberPlayer, updatedMember) -> {
                         // As they are not playing any more, we need to clear their minecraft player and send it to all members
                         Player clearedPlayer = new Player(player.profile, null);

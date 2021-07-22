@@ -303,6 +303,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
             sender.accept(new GetWaypointsRequest(identity()));
         } else if (state == Collar.State.DISCONNECTED) {
             synchronized (this) {
+                updater.stop();
                 playerLocations.clear();
                 groupsSharingWith.clear();
             }

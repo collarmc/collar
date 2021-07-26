@@ -54,6 +54,11 @@ public abstract class AbstractCipher implements Cipher {
             } catch (Throwable e) {
                 throw new UnknownCipherException("Message crypting failed. Recipient " + recipient, e);
             }
+        } catch (IllegalArgumentException e) {
+            if (e.getMessage().equals("Empty key")) {
+                throw new InvalidCipherSessionException("Signal state is corrupted", e);
+            }
+            throw e;
         } catch (UntrustedIdentityException e) {
             throw new InvalidCipherSessionException("Identity is untrusted", e);
         }

@@ -3,9 +3,9 @@ package com.collarmc.server;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.AppUrlProvider;
 import com.collarmc.server.security.ServerIdentityStore;
+import com.collarmc.server.security.ServerIdentityStoreImpl;
 import com.collarmc.server.security.hashing.PasswordHashing;
 import com.collarmc.server.security.mojang.MinecraftSessionVerifier;
-import com.collarmc.server.security.signal.SignalServerIdentityStore;
 import com.collarmc.server.services.authentication.ServerAuthenticationService;
 import com.collarmc.server.services.authentication.TokenCrypter;
 import com.collarmc.server.services.devices.DeviceService;
@@ -47,11 +47,11 @@ public final class Services {
     public final DeviceRegistrationService deviceRegistration;
     public final ProfileCache profileCache;
 
-    public Services(Configuration configuration) {
+    public Services(Configuration configuration) throws Exception {
         this.jsonMapper = Utils.jsonMapper();
         this.packetMapper = Utils.messagePackMapper();
         this.urlProvider = configuration.appUrlProvider;
-        this.identityStore = new SignalServerIdentityStore(configuration.database);
+        this.identityStore = new ServerIdentityStoreImpl(configuration.database);
         this.sessions = new SessionManager(packetMapper, identityStore);
         this.deviceRegistration = new DeviceRegistrationService(sessions);
         this.passwordHashing = configuration.passwordHashing;
@@ -63,8 +63,8 @@ public final class Services {
         this.auth = new ServerAuthenticationService(profiles, passwordHashing, tokenCrypter, configuration.email, urlProvider);
         this.minecraftSessionVerifier = configuration.minecraftSessionVerifier;
         this.groupStore = new GroupStore(profileCache, sessions, configuration.database);
-        this.groups = new GroupService(groupStore, identityStore.getIdentity(), profileCache, sessions);
-        this.playerLocations = new PlayerLocationService(sessions, profileCache, groups, identityStore.getIdentity());
+        this.groups = new GroupService(groupStore, identityStore.identity(), profileCache, sessions);
+        this.playerLocations = new PlayerLocationService(sessions, profileCache, groups, identityStore.identity());
         this.textures = new TextureService(configuration.database);
         this.friends = new FriendsService(configuration.database, profileCache, sessions);
         this.waypoints = new WaypointService(profileStorage);

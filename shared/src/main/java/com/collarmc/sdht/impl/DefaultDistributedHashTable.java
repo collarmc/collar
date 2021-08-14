@@ -7,7 +7,7 @@ import com.collarmc.sdht.events.CreateEntryEvent;
 import com.collarmc.sdht.events.DeleteRecordEvent;
 import com.collarmc.sdht.events.Publisher;
 import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.discrete.CipherException;
 import com.google.common.collect.ImmutableSet;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -26,9 +26,6 @@ import com.collarmc.protocol.session.SessionFailedResponse.MojangVerificationFai
 import com.collarmc.protocol.session.SessionFailedResponse.PrivateIdentityMismatchResponse;
 import com.collarmc.protocol.session.StartSessionRequest;
 import com.collarmc.protocol.session.StartSessionResponse;
-import com.collarmc.protocol.signal.ResendPreKeysResponse;
-import com.collarmc.protocol.signal.SendPreKeysRequest;
-import com.collarmc.protocol.signal.SendPreKeysResponse;
 import com.collarmc.protocol.trust.CheckTrustRelationshipRequest;
 import com.collarmc.protocol.trust.CheckTrustRelationshipResponse;
 import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsTrustedRelationshipResponse;
@@ -36,11 +33,9 @@ import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsUntrustedRel
 import com.collarmc.security.ClientIdentity;
 import com.collarmc.security.ServerIdentity;
 import com.collarmc.security.TokenGenerator;
-import com.collarmc.security.cipher.CipherException;
-import com.collarmc.security.cipher.CipherException.InvalidCipherSessionException;
+import com.collarmc.security.discrete.CipherException;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.security.mojang.Mojang;
-import com.collarmc.server.protocol.*;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -74,12 +69,12 @@ public class CollarServer {
         this.sessionStopped = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStopping(identity, player, this::send));
 
         protocolHandlers.add(new GroupsProtocolHandler(services.groups));
-        protocolHandlers.add(new LocationProtocolHandler(services.playerLocations, services.waypoints, services.identityStore.getIdentity()));
-        protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.getIdentity(), services.profileCache, services.sessions, services.textures));
-        protocolHandlers.add(new IdentityProtocolHandler(services.sessions, services.profiles, services.identityStore.getIdentity()));
-        protocolHandlers.add(new MessagingProtocolHandler(services.sessions, services.groups, services.identityStore.getIdentity()));
-        protocolHandlers.add(new SDHTProtocolHandler(services.groups, services.sessions, services.identityStore.getIdentity()));
-        protocolHandlers.add(new FriendsProtocolHandler(services.identityStore.getIdentity(), services.profileCache, services.friends, services.sessions));
+        protocolHandlers.add(new LocationProtocolHandler(services.playerLocations, services.waypoints, services.identityStore.identity()));
+        protocolHandlers.add(new TexturesProtocolHandler(services.identityStore.identity(), services.profileCache, services.sessions, services.textures));
+        protocolHandlers.add(new IdentityProtocolHandler(services.sessions, services.profiles, services.identityStore.identity()));
+        protocolHandlers.add(new MessagingProtocolHandler(services.sessions, services.groups, services.identityStore.identity()));
+        protocolHandlers.add(new SDHTProtocolHandler(services.groups, services.sessions, services.identityStore.identity()));
+        protocolHandlers.add(new FriendsProtocolHandler(services.identityStore.identity(), services.profileCache, services.friends, services.sessions));
     }
 
     @OnWebSocketConnect
@@ -119,7 +114,7 @@ public class CollarServer {
         Optional<ProtocolRequest> requestOptional = read(session, is);
         requestOptional.ifPresent(req -> {
             LOGGER.debug(req.getClass().getSimpleName() + " from " + req.identity);
-            ServerIdentity serverIdentity = services.identityStore.getIdentity();
+            ServerIdentity serverIdentity = services.identityStore.identity();
             if (req instanceof KeepAliveRequest) {
                 LOGGER.debug("KeepAliveRequest received. Sending KeepAliveRequest.");
                 sendPlain(session, new KeepAliveResponse(serverIdentity));
@@ -144,11 +139,6 @@ public class CollarServer {
                         services.sessions.stopSession(session, SessionStopReason.UNAUTHORISED, "Identity " + request.identity.id() + " was not found", null, null);
                     });
                 }
-            } else if (req instanceof SendPreKeysRequest) {
-                SendPreKeysRequest request = (SendPreKeysRequest) req;
-                services.identityStore.trustIdentity(request);
-                SendPreKeysResponse response = services.identityStore.createSendPreKeysResponse();
-                sendPlain(session, response);
             } else if (req instanceof StartSessionRequest) {
                 LOGGER.info("Starting session with " + req.identity);
                 StartSessionRequest request = (StartSessionRequest)req;
@@ -168,7 +158,7 @@ public class CollarServer {
                     CheckTrustRelationshipResponse response = new IsTrustedRelationshipResponse(serverIdentity);
                     sendPlain(session, response);
                     services.sessions.findPlayer(req.identity).ifPresent(player -> {
-                        sessionStarted.accept(req.identity, new Player(req.identity.id(), player.minecraftPlayer));
+                        sessionStarted.accept(req.identity, new Player(player.identity, player.minecraftPlayer));
                     });
                 } else {
                     LOGGER.info(req.identity + " is NOT trusted. Signaling client to restart registration.");
@@ -208,7 +198,7 @@ public class CollarServer {
 
     @Nonnull
     public Optional<ProtocolRequest> read(@Nonnull Session session, @Nonnull InputStream message) {
-        PacketIO packetIO = new PacketIO(services.packetMapper, services.identityStore.createCypher());
+        PacketIO packetIO = new PacketIO(services.packetMapper, services.identityStore.cipher());
         ClientIdentity identity = services.sessions.getIdentity(session).orElse(null);
         try {
             Optional<ProtocolRequest> packet = packetIO.decode(identity, message, ProtocolRequest.class);
@@ -216,10 +206,7 @@ public class CollarServer {
                 throw new IllegalStateException("Identity associated with this session was different to decoded packet");
             }
             return packet;
-        } catch (InvalidCipherSessionException e) {
-            send(session, new ResendPreKeysResponse(services.identityStore.getIdentity()));
-            return Optional.empty();
-        } catch (IOException|CipherException e) {
+        } catch (IOException | CipherException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -240,7 +227,7 @@ public class CollarServer {
             if (session == null) {
                 throw new IllegalStateException("Session cannot be null");
             }
-            PacketIO packetIO = new PacketIO(services.packetMapper, services.identityStore.createCypher());
+            PacketIO packetIO = new PacketIO(services.packetMapper, services.identityStore.cipher());
             byte[] bytes;
             if (services.sessions.isIdentified(session)) {
                 try {

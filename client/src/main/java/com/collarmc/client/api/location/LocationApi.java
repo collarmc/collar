@@ -8,6 +8,7 @@ import com.collarmc.client.sdht.SDHTApi;
 import com.collarmc.client.sdht.SDHTListener;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.location.*;
+import com.collarmc.security.discrete.GroupMessage;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.Hashing;
 import com.collarmc.api.entities.Entity;
@@ -25,7 +26,7 @@ import com.collarmc.protocol.waypoints.GetWaypointsResponse;
 import com.collarmc.protocol.waypoints.RemoveWaypointRequest;
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.Key;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.discrete.CipherException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -193,7 +194,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
         byte[] bytes = waypoint.serialize();
         byte[] encryptedBytes;
         try {
-            encryptedBytes = identityStore().createCypher().crypt(bytes);
+            encryptedBytes = identityStore().cipher().encrypt(bytes);
         } catch (CipherException e) {
             throw new IllegalStateException(e);
         }
@@ -228,7 +229,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                 collar.groups().findGroupById(groupId).ifPresent(group -> {
                     byte[] encryptedBytes;
                     try {
-                        encryptedBytes = identityStore().createCypher().crypt(identity(), group, bytes);
+                        encryptedBytes = identityStore().groupSessions().session(group).encrypt(bytes);
                     } catch (CipherException e) {
                         throw new IllegalStateException(e);
                     }
@@ -242,6 +243,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
         Set<String> nearbyHashes = entities.stream().filter(entity -> entity.isTypeOf(EntityType.PLAYER))
                 .limit(200)
                 .map(entity -> Hashing.sha256().hashString(entity.id.toString(), StandardCharsets.UTF_8).toString())
+                .sorted()
                 .collect(Collectors.toSet());
         sender.accept(new UpdateNearbyRequest(identity(), nearbyHashes));
     }
@@ -258,8 +260,8 @@ public class LocationApi extends AbstractApi<LocationListener> {
                         location = Location.UNKNOWN;
                     } else {
                         try {
-                            byte[] decryptedBytes = identityStore().createCypher().decrypt(response.sender, group, response.location);
-                            location = new Location(decryptedBytes);
+                            GroupMessage message = identityStore().groupSessions().session(group).decrypt(response.location, response.sender);
+                            location = new Location(message.contents);
                         } catch (IOException | CipherException e) {
                             LOGGER.error("could not decrypt location sent by " + response.sender);
                             return;
@@ -282,7 +284,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                 Map<UUID, Waypoint> waypoints = response.waypoints.stream()
                         .map(encryptedWaypoint -> {
                             try {
-                                return identityStore().createCypher().decrypt(encryptedWaypoint.waypoint);
+                                return identityStore().cipher().decrypt(encryptedWaypoint.waypoint);
                             } catch (CipherException e) {
                                 throw new IllegalStateException("Unable to decrypt private waypoint", e);
                             }

@@ -1,10 +1,9 @@
 package com.collarmc.server;
 
-import com.collarmc.api.authentication.AuthenticationService;
 import com.collarmc.api.authentication.AuthenticationService.*;
 import com.collarmc.api.http.*;
-import com.collarmc.api.http.HttpException.*;
 import com.collarmc.api.profiles.ProfileService;
+import com.collarmc.security.ClientIdentity;
 import com.collarmc.server.common.ServerStatus;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.ApiToken;
@@ -57,7 +56,7 @@ public class WebServer {
         this.configuration = configuration;
     }
 
-    public void start(Consumer<Services> callback) {
+    public void start(Consumer<Services> callback) throws Exception {
         LOGGER.info("Reticulating splines...");
         // Set http port
         port(configuration.httpPort);
@@ -146,7 +145,7 @@ public class WebServer {
                     }, services.jsonMapper::writeValueAsString);
                     get("/groups", (request, response) -> {
                         RequestContext context = from(request);
-                        return services.groupStore.findGroupsContaining(new Player(context.owner, null)).collect(Collectors.toList());
+                        return services.groupStore.findGroupsContaining(new Player(new ClientIdentity(context.owner, null), null)).collect(Collectors.toList());
                     }, services.jsonMapper::writeValueAsString);
                     post("/reset", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
@@ -167,7 +166,7 @@ public class WebServer {
                         DeviceService.TrustDeviceRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.TrustDeviceRequest.class);
                         DeviceService.CreateDeviceResponse device = services.devices.createDevice(context, new CreateDeviceRequest(context.owner, req.deviceName));
                         PublicProfile profile = services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile.toPublic();
-                        services.deviceRegistration.onDeviceRegistered(services.identityStore.getIdentity(), profile, req.token, device);
+                        services.deviceRegistration.onDeviceRegistered(services.identityStore.identity(), profile, req.token, device);
                         return new TrustDeviceResponse();
                     }, services.jsonMapper::writeValueAsString);
                     delete("/devices/:id", (request, response) -> {
@@ -193,7 +192,7 @@ public class WebServer {
                         TextureService.CreateTextureRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), TextureService.CreateTextureRequest.class);
                         if (req.group != null) {
                             Group group = services.groups.findGroup(req.group).orElseThrow(() -> new NotFoundException("could not find group " + req.group));
-                            if (group.members.stream().noneMatch(member -> member.player.profile.equals(context.owner) && member.membershipRole == MembershipRole.OWNER)) {
+                            if (group.members.stream().noneMatch(member -> member.player.identity.profile.equals(context.owner) && member.membershipRole == MembershipRole.OWNER)) {
                                 throw new NotFoundException("could not find group " + req.group);
                             }
                         }

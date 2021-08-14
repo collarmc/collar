@@ -53,7 +53,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                         }
                         // otherwise fall back to fetching any cape cape the player owns
                         if (texture == null) {
-                            texture = textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null, sessionState.identity.owner, request.group, request.type)).texture;
+                            texture = textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null, sessionState.identity.profile, request.group, request.type)).texture;
                         }
                         response = new GetTextureResponse(serverIdentity, texture.id, null, sessionState.toPlayer(), texture.url, texture.type);
                     } catch (NotFoundException ignored) {
@@ -63,7 +63,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                     sender.accept(request.identity, response);
                 }, () -> {
                     sessions.findPlayer(req.identity).ifPresent(player -> {
-                        Player requestedPlayer = new Player(null, new MinecraftPlayer(request.player, player.minecraftPlayer.server, player.minecraftPlayer.networkId));
+                        Player requestedPlayer = new Player(player.identity, new MinecraftPlayer(request.player, player.minecraftPlayer.server, player.minecraftPlayer.networkId));
                         // Send this back to complete any futures on the client
                         sender.accept(req.identity, new GetTextureResponse(serverIdentity, null, null, requestedPlayer, null, request.type));
                         LOGGER.info("Could not find player " + request.player + " when fetching texture " + request.type);
@@ -87,7 +87,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
 
     private TextureService.Texture findDefaultCape(GetTextureRequest request, SessionManager.SessionState sessionState) {
         TextureService.Texture texture;
-        PublicProfile playerProfile = profiles.getById(sessionState.identity.owner).orElseThrow(() -> new IllegalStateException("could not find profile " + sessionState.identity.owner)).toPublic();
+        PublicProfile playerProfile = profiles.getById(sessionState.identity.profile).orElseThrow(() -> new IllegalStateException("could not find profile " + sessionState.identity.profile)).toPublic();
         if (playerProfile.cape != null) {
             try {
                 texture = textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(playerProfile.cape.texture, null, null, null)).texture;

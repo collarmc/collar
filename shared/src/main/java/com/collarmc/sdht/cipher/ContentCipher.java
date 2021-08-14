@@ -3,7 +3,7 @@ package com.collarmc.sdht.cipher;
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.DistributedHashTable;
 import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.discrete.CipherException;
 
 import java.util.UUID;
 

@@ -37,7 +37,7 @@ public class SDHTApi extends AbstractApi<SDHTListener> implements Ticks.TickList
         };
         table = new DefaultDistributedHashTable(
                 publisher,
-                () -> identityStoreSupplier.get().currentIdentity(),
+                () -> identityStoreSupplier.get().identity(),
                 cipher,
                 new DHTNamespaceState(dhtDir),
                 new DistributedHashTableListenerImpl(this)

@@ -83,7 +83,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 identityOptional = Optional.empty();
             }
-            return identityOptional.map(identity -> new Player(identity.owner, new MinecraftPlayer(
+            return identityOptional.map(identity -> new Player(identity, new MinecraftPlayer(
                     playerId,
                     collar.player().minecraftPlayer.server,
                     collar.player().minecraftPlayer.networkId)
@@ -98,13 +98,13 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
      * @return profile
      */
     public CompletableFuture<Optional<PublicProfile>> resolveProfile(Player player) {
-        Optional<PublicProfile> profile = profileCache.asMap().getOrDefault(player.profile, Optional.empty());
+        Optional<PublicProfile> profile = profileCache.asMap().getOrDefault(player.identity.profile, Optional.empty());
         if (profile.isPresent()) {
             return CompletableFuture.completedFuture(profile);
         } else {
             CompletableFuture<Optional<PublicProfile>> future = new CompletableFuture<>();
-            profileFutures.put(player.profile, future);
-            sender.accept(new GetProfileRequest(identity(), player.profile));
+            profileFutures.put(player.identity.profile, future);
+            sender.accept(new GetProfileRequest(identity(), player.identity.profile));
             return future;
         }
     }
@@ -165,7 +165,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             return true;
         } else if (resp instanceof CreateTrustResponse) {
             CreateTrustResponse response = (CreateTrustResponse) resp;
-            identityStore().trustIdentity(response.sender, response.preKeyBundle);
+            identityStore().trustIdentity(response.sender);
             fireListener("onIdentityTrusted", listener -> {
                 listener.onIdentityTrusted(collar, this, identityStore(), response.sender);
             });

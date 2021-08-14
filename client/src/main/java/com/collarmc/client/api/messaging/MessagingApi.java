@@ -2,6 +2,8 @@ package com.collarmc.client.api.messaging;
 
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.security.ClientIdentityStore;
+import com.collarmc.security.discrete.Cipher;
+import com.collarmc.security.discrete.GroupMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,8 +16,7 @@ import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
-import com.collarmc.security.cipher.Cipher;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.discrete.CipherException;
 import com.collarmc.utils.Utils;
 
 import java.io.IOException;
@@ -41,10 +42,10 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                 .thenCompose(identityApi::createTrust)
                 .thenAccept(sender -> {
                     if (sender.isPresent()) {
-                        Cipher cipher = identityStore().createCypher();
+                        Cipher cipher = identityStore().cipher();
                         byte[] messageBytes;
                         try {
-                            messageBytes = cipher.crypt(sender.get(), Utils.messagePackMapper().writeValueAsBytes(message));
+                            messageBytes = cipher.encrypt(Utils.messagePackMapper().writeValueAsBytes(message), sender.get());
                         } catch (JsonProcessingException | CipherException e) {
                             throw new IllegalStateException(collar.identity() + " could not process private message from " + sender, e);
                         }
@@ -68,10 +69,9 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
      */
     public void sendGroupMessage(Group group, Message message) {
         LOGGER.info(identity() + " sending message to group " + group.id);
-        Cipher cipher = identityStore().createCypher();
         byte[] messageBytes;
         try {
-            messageBytes = cipher.crypt(identity(), group, Utils.messagePackMapper().writeValueAsBytes(message));
+            messageBytes = identityStore().createSession(group).encrypt(Utils.messagePackMapper().writeValueAsBytes(message));
         } catch (Throwable e) {
             // If the client cant send a message to the group, something is seriously wrong
             throw new IllegalStateException(collar.identity() + " could not encrypt group message sent to " + group.id, e);
@@ -99,8 +99,8 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                 collar.groups().findGroupById(response.group).ifPresent(group -> {
                     Message message;
                     try {
-                        byte[] decryptedBytes = identityStore().createCypher().decrypt(response.sender, group, response.message);
-                        message = Utils.messagePackMapper().readValue(decryptedBytes, Message.class);
+                        GroupMessage groupMessage = identityStore().groupSessions().session(group).decrypt(response.message, response.sender);
+                        message = Utils.messagePackMapper().readValue(groupMessage.contents, Message.class);
                     } catch (IOException | CipherException e) {
                         // We don't throw an exception here in case someone is doing something naughty to disrupt the group and cause the client to exit
                         LOGGER.error(collar.identity() + "could not read group message from group " + group.id, e);
@@ -116,7 +116,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
             } else if (response.sender != null) {
                 Message message;
                 try {
-                    byte[] decryptedBytes = identityStore().createCypher().decrypt(response.sender, response.message);
+                    byte[] decryptedBytes = identityStore().cipher().decrypt(response.message, response.sender);
                     message = Utils.messagePackMapper().readValue(decryptedBytes, Message.class);
                 } catch (IOException | CipherException e) {
                     throw new IllegalStateException(collar.identity() + "Could not read private message from " + response.sender, e);

@@ -4,7 +4,6 @@ import com.collarmc.protocol.location.*;
 import com.collarmc.server.protocol.BatchProtocolResponse;
 import com.collarmc.server.services.groups.GroupService;
 import com.collarmc.server.services.profiles.ProfileCache;
-import com.google.common.collect.ArrayListMultimap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.collarmc.api.groups.Group;
@@ -106,7 +105,7 @@ public class PlayerLocationService {
         if (player.isEmpty()) {
             return Optional.empty();
         }
-        PublicProfile profile = profiles.getById(player.get().profile).orElseThrow(() -> new IllegalStateException("could not find profile " + player.get().profile)).toPublic();
+        PublicProfile profile = profiles.getById(player.get().identity.profile).orElseThrow(() -> new IllegalStateException("could not find profile " + player.get().identity.profile)).toPublic();
         NearbyGroups.Result result = this.nearbyGroups.updateNearbyGroups(new MemberSource(player.get(), profile), req.nearbyHashes);
         return groups.updateNearbyGroups(result);
     }

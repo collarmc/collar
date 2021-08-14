@@ -25,11 +25,6 @@ public final class ServerIdentity implements Identity {
     }
 
     @Override
-    public Integer deviceId() {
-        return 1;
-    }
-
-    @Override
     public PublicKey publicKey() {
         return publicKey;
     }
@@ -49,6 +44,6 @@ public final class ServerIdentity implements Identity {
 
     @Override
     public String toString() {
-        return "_server_@" + id() + ":" + deviceId();
+        return "_server_@" + id().toString();
     }
 }

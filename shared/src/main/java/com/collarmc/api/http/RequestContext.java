@@ -27,7 +27,7 @@ public final class RequestContext {
     }
 
     public static RequestContext from(ClientIdentity identity) {
-        return new RequestContext(identity.owner, ImmutableSet.of(Role.PLAYER));
+        return new RequestContext(identity.profile, ImmutableSet.of(Role.PLAYER));
     }
 
     public void assertAnonymous() {

@@ -13,7 +13,7 @@ import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.session.SessionFailedResponse.SessionErrorResponse;
 import com.collarmc.security.ClientIdentity;
 import com.collarmc.security.mojang.MinecraftPlayer;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.discrete.CipherException;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -76,7 +76,7 @@ public final class SessionManager {
         if (sessionState != null) {
             if (session.isOpen()) {
                 try {
-                    send(session, sessionState.identity, new SessionErrorResponse(store.getIdentity(), reason, message));
+                    send(session, sessionState.identity, new SessionErrorResponse(store.identity(), reason, message));
                 } catch (IOException | CipherException ex) {
                     throw new IllegalStateException("Couldn't send SessionErrorResponse", ex);
                 }
@@ -87,7 +87,7 @@ public final class SessionManager {
     }
 
     public void send(Session session, ClientIdentity recipient, ProtocolResponse resp) throws IOException, CipherException {
-        PacketIO packetIO = new PacketIO(messagePack, store.createCypher());
+        PacketIO packetIO = new PacketIO(messagePack, store.cipher());
         ByteBuffer buffer;
         if (isIdentified(session)) {
             buffer = ByteBuffer.wrap(packetIO.encodeEncrypted(recipient, resp));
@@ -158,7 +158,7 @@ public final class SessionManager {
 
     public Optional<SessionState> getSessionStateByOwner(UUID owner) {
         return sessions.values().stream()
-                .filter(sessionState -> sessionState.identity.owner.equals(owner))
+                .filter(sessionState -> sessionState.identity.profile.equals(owner))
                 .findFirst();
     }
 
@@ -169,7 +169,7 @@ public final class SessionManager {
     }
 
     public Optional<ClientIdentity> getIdentity(Player player) {
-        return sessions.values().stream().filter(sessionState -> sessionState.identity.owner.equals(player.profile))
+        return sessions.values().stream().filter(sessionState -> sessionState.identity.profile.equals(player.identity.profile))
                 .findAny()
                 .map(sessionState -> sessionState.identity);
     }
@@ -181,7 +181,7 @@ public final class SessionManager {
     }
 
     public Optional<Player> findPlayerByProfile(UUID profile) {
-        return sessions.values().stream().filter(sessionState -> sessionState.identity.owner.equals(profile))
+        return sessions.values().stream().filter(sessionState -> sessionState.identity.profile.equals(profile))
                 .findFirst()
                 .map(SessionState::toPlayer);
     }
@@ -202,7 +202,7 @@ public final class SessionManager {
         }
 
         public Player toPlayer() {
-            return new Player(identity.id(), minecraftPlayer);
+            return new Player(identity, minecraftPlayer);
         }
     }
 }

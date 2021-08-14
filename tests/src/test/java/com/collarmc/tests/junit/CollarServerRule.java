@@ -40,10 +40,14 @@ public final class CollarServerRule implements TestRule {
                 stopServer();
                 serverThread = new Thread(() -> {
                     webServer = new WebServer(configuration);
-                    webServer.start(services -> {
-                        setupState.accept(services);
-                        started.set(true);
-                    });
+                    try {
+                        webServer.start(services -> {
+                            setupState.accept(services);
+                            started.set(true);
+                        });
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                     while (true) {
                         try {
                             Thread.sleep(100);

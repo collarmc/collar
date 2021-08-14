@@ -70,6 +70,20 @@ public final class IO {
         return new UUID(is.readLong(), is.readLong());
     }
 
+    public static byte[] writeUUIDToBytes(UUID uuid) {
+        ByteBuffer buffer = ByteBuffer.allocate(16);
+        buffer.putLong(uuid.getMostSignificantBits());
+        buffer.putLong(uuid.getLeastSignificantBits());
+        return buffer.array();
+    }
+
+    public static UUID readUUIDFromBytes(byte[] bytes) {
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        long most = buffer.getLong();
+        long least = buffer.getLong();
+        return new UUID(most, least);
+    }
+
     /**
      * Write all bytes to file
      * @param file to write to

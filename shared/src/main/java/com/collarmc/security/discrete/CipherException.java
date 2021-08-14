@@ -1,6 +1,4 @@
-package com.collarmc.security.cipher;
-
-import com.collarmc.security.signal.PreKeys;
+package com.collarmc.security.discrete;
 
 public abstract class CipherException extends Exception {
 
@@ -41,7 +39,6 @@ public abstract class CipherException extends Exception {
 
     /**
      * Thrown when there was a recoverable problem with the cipher state.
-     * Usually exchanging {@link PreKeys} will fix the problem when this occurs
      * on the client
      */
     public static class InvalidCipherSessionException extends CipherException {

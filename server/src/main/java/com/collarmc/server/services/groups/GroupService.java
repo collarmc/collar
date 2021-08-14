@@ -61,13 +61,13 @@ public final class GroupService {
         }
 
         List<MemberSource> players = sessions.findPlayers(req.identity, req.players).stream().map(player -> {
-            PublicProfile profile = profiles.getById(player.profile).orElseThrow(() -> new IllegalStateException("cannot find profile " + player.profile)).toPublic();
+            PublicProfile profile = profiles.getById(player.identity.id()).orElseThrow(() -> new IllegalStateException("cannot find profile " + player.identity.id())).toPublic();
             return new MemberSource(player, profile);
         }).collect(Collectors.toList());
 
         return sessions.findPlayer(req.identity)
                 .map(player -> {
-                    Profile profile = profiles.getById(player.profile).orElseThrow(() -> new IllegalStateException("cant find player with profile " + player.profile));
+                    Profile profile = profiles.getById(player.identity.id()).orElseThrow(() -> new IllegalStateException("cant find player with profile " + player.identity.id()));
                     Group group = Group.newGroup(req.groupId, req.name, req.type, new MemberSource(player, profile.toPublic()), players);
                     List<Member> members = group.members.stream()
                             .filter(member -> member.membershipRole.equals(MembershipRole.MEMBER))
@@ -131,7 +131,7 @@ public final class GroupService {
     public Optional<ProtocolResponse> playerIsOffline(Player player) {
         BatchProtocolResponse response = new BatchProtocolResponse(serverIdentity);
         store.findGroupsContaining(player).forEach(group -> {
-            PublicProfile profile = profiles.getById(player.profile).orElseThrow(() -> new IllegalStateException("could not load profile " + player.profile)).toPublic();
+            PublicProfile profile = profiles.getById(player.identity.id()).orElseThrow(() -> new IllegalStateException("could not load profile " + player.identity.id())).toPublic();
             group = group.updatePlayer(new MemberSource(player, profile));
             // Let everyone else in the group know that this identity has gone offline
             Group finalGroup = group;
@@ -140,7 +140,7 @@ public final class GroupService {
                     member -> member.membershipState.equals(MembershipState.ACCEPTED) && !member.player.equals(player),
                     ((memberIdentity, memberPlayer, updatedMember) -> {
                         // As they are not playing any more, we need to clear their minecraft player and send it to all members
-                        Player clearedPlayer = new Player(player.profile, null);
+                        Player clearedPlayer = new Player(player.identity, null);
                         return new UpdateGroupMemberResponse(serverIdentity, finalGroup.id, clearedPlayer, profile, Status.OFFLINE, null);
                     }));
             response.concat(updates);
@@ -163,7 +163,7 @@ public final class GroupService {
             BatchProtocolResponse response = new BatchProtocolResponse(serverIdentity);
             MembershipState state = req.state;
             MembershipRole role = group.getRole(sendingPlayer.get());
-            group = store.updateMember(group.id, sendingPlayer.get().profile, role, state).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
+            group = store.updateMember(group.id, sendingPlayer.get().identity.profile, role, state).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
             // Let everyone in the group (including sender) know that they have accepted
             Group finalGroup = group;
             BatchProtocolResponse updates = createMemberMessages(
@@ -189,7 +189,7 @@ public final class GroupService {
         return store.findGroup(req.groupId).map(group -> {
             Group finalGroup = group;
             BatchProtocolResponse response = createMemberMessages(group, member -> true, (identity, player, member) -> new LeaveGroupResponse(serverIdentity, finalGroup.id, req.identity, sender.get()));
-            group = store.removeMember(group.id, sender.get().profile).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
+            group = store.removeMember(group.id, sender.get().identity.profile).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
             updateState(group);
             return response;
         });
@@ -211,7 +211,7 @@ public final class GroupService {
                     .orElseThrow(() -> new IllegalStateException("requester is not owner of group"));
             Map<Group, List<Member>> groupToMembers = new HashMap<>();
             List<MemberSource> players = sessions.findPlayers(req.identity, req.players).stream().map(thePlayer -> {
-                PublicProfile profile = profiles.getById(thePlayer.profile).orElseThrow(() -> new IllegalStateException("cannot find profile " + thePlayer.profile)).toPublic();
+                PublicProfile profile = profiles.getById(thePlayer.identity.id()).orElseThrow(() -> new IllegalStateException("cannot find profile " + thePlayer.identity.profile)).toPublic();
                 return new MemberSource(thePlayer, profile);
             }).collect(Collectors.toList());
             // TODO: replace line below with a method that can do the diff of existing players and new players invited
@@ -246,7 +246,7 @@ public final class GroupService {
                 return null;
             }
             BatchProtocolResponse response = createMemberMessages(group, member -> true, (identity, thePlayer, member) -> new LeaveGroupResponse(serverIdentity, req.groupId, identityToRemove.get(), playerToRemove));
-            group = store.removeMember(group.id, playerToRemove.profile).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
+            group = store.removeMember(group.id, playerToRemove.identity.profile).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
             updateState(group);
             return response;
         });
@@ -342,7 +342,7 @@ public final class GroupService {
                 throw new IllegalStateException(req.identity + " is not owner of group " + groupId);
             }
             Member newOwner = group.members.stream()
-                    .filter(member -> member.player.profile.equals(req.profile)).findFirst()
+                    .filter(member -> member.player.identity.id().equals(req.profile)).findFirst()
                     .orElseThrow(() -> new IllegalStateException(req.profile + " is not member of group " + req.group));
 
             if (newOwner.membershipState != MembershipState.ACCEPTED) {
@@ -355,18 +355,18 @@ public final class GroupService {
                     group,
                     member -> true,
                     (identity, player, updatedMember) -> {
-                        PublicProfile profile = profiles.getById(player.profile).orElseThrow(() -> new IllegalStateException("cannot find profile " + player.profile)).toPublic();
+                        PublicProfile profile = profiles.getById(player.identity.id()).orElseThrow(() -> new IllegalStateException("cannot find profile " + player.identity.id())).toPublic();
                         return new UpdateGroupMemberResponse(serverIdentity, groupId, newOwner.player, profile, null, MembershipRole.OWNER);
                     }
             );
 
             // Set original owner as member
-            group = store.updateMember(groupId, currentPlayer.get().profile, MembershipRole.MEMBER, MembershipState.ACCEPTED).orElseThrow(() -> new IllegalStateException("cant find group " + groupId));
+            group = store.updateMember(groupId, currentPlayer.get().identity.profile, MembershipRole.MEMBER, MembershipState.ACCEPTED).orElseThrow(() -> new IllegalStateException("cant find group " + groupId));
             BatchProtocolResponse addNewOwnerMessages = createMemberMessages(
                     group,
                     member -> true,
                     (identity, player, updatedMember) -> {
-                        PublicProfile profile = profiles.getById(player.profile).orElseThrow(() -> new IllegalStateException("cannot find profile " + player.profile)).toPublic();
+                        PublicProfile profile = profiles.getById(player.identity.id()).orElseThrow(() -> new IllegalStateException("cannot find profile " + player.identity.id())).toPublic();
                         return new UpdateGroupMemberResponse(serverIdentity, groupId, currentPlayer.get(), profile, null, MembershipRole.MEMBER);
                     });
 

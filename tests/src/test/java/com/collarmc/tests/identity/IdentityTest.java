@@ -51,12 +51,12 @@ public class IdentityTest extends CollarTest {
         Assert.assertTrue("Alice should be trusted by Bob", bobListener.identityStore.isTrustedIdentity(alicePlayer.collar.identity()));
 
         // Round trip some bytes so we know we are all setup :)
-        byte[] bobBytes = bobListener.identityStore.createCypher().crypt(alicePlayer.collar.identity(), "UwU".getBytes(StandardCharsets.UTF_8));
-        String messageFromBob = new String(aliceListener.identityStore.createCypher().decrypt(bobPlayer.collar.identity(), bobBytes), StandardCharsets.UTF_8);
+        byte[] bobBytes = bobListener.identityStore.cipher().encrypt("UwU".getBytes(StandardCharsets.UTF_8), alicePlayer.collar.identity());
+        String messageFromBob = new String(aliceListener.identityStore.cipher().decrypt(bobBytes, bobPlayer.collar.identity()), StandardCharsets.UTF_8);
         Assert.assertEquals("UwU", messageFromBob);
 
-        byte[] aliceBytes = aliceListener.identityStore.createCypher().crypt(bobPlayer.collar.identity(), "OwO".getBytes(StandardCharsets.UTF_8));
-        String messageFromAlice = new String(bobListener.identityStore.createCypher().decrypt(alicePlayer.collar.identity(), aliceBytes), StandardCharsets.UTF_8);
+        byte[] aliceBytes = aliceListener.identityStore.cipher().encrypt("OwO".getBytes(StandardCharsets.UTF_8), bobPlayer.collar.identity());
+        String messageFromAlice = new String(bobListener.identityStore.cipher().decrypt(aliceBytes, alicePlayer.collar.identity()), StandardCharsets.UTF_8);
         Assert.assertEquals("OwO", messageFromAlice);
     }
 

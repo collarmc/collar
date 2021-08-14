@@ -1,6 +1,7 @@
 package com.collarmc.server.services.groups;
 
 import com.collarmc.api.groups.*;
+import com.collarmc.security.ClientIdentity;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -70,7 +71,7 @@ public final class GroupStore {
     }
 
     public Stream<Group> findGroupsContaining(Player player) {
-        MongoCursor<Group> iterator = docs.find(eq(FIELD_MEMBERS + "." + FIELD_MEMBER_PROFILE_ID, player.profile)).map(this::mapFromDocument).batchSize(100).iterator();
+        MongoCursor<Group> iterator = docs.find(eq(FIELD_MEMBERS + "." + FIELD_MEMBER_PROFILE_ID, player.identity.profile)).map(this::mapFromDocument).batchSize(100).iterator();
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
     }
 
@@ -158,7 +159,7 @@ public final class GroupStore {
 
     private Member mapMemberFrom(Document document) {
         UUID profileId = document.get(FIELD_MEMBER_PROFILE_ID, UUID.class);
-        Player player = sessions.findPlayerByProfile(profileId).orElse(new Player(profileId, null));
+        Player player = sessions.findPlayerByProfile(profileId).orElse(new Player(new ClientIdentity(profileId, null), null));
         MembershipRole role = MembershipRole.valueOf(document.getString(FIELD_MEMBER_ROLE));
         MembershipState state = MembershipState.valueOf(document.getString(FIELD_MEMBER_STATE));
         PublicProfile profile = profiles.getById(profileId).orElseThrow(() -> new IllegalStateException("could not find profile " + profileId)).toPublic();
@@ -169,7 +170,7 @@ public final class GroupStore {
         return Map.of(
                 FIELD_MEMBER_ROLE, member.membershipRole.name(),
                 FIELD_MEMBER_STATE, member.membershipState.name(),
-                FIELD_MEMBER_PROFILE_ID, member.player.profile
+                FIELD_MEMBER_PROFILE_ID, member.player.identity.profile
         );
     }
 

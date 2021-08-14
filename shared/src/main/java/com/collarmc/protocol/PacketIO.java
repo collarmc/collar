@@ -1,11 +1,11 @@
 package com.collarmc.protocol;
 
+import com.collarmc.security.discrete.Cipher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.collarmc.io.ByteBufferInputStream;
 import com.collarmc.security.Identity;
-import com.collarmc.security.cipher.Cipher;
 import com.collarmc.io.IO;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.discrete.CipherException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -61,7 +61,7 @@ public final class PacketIO {
                     LOGGER.error("Cannot read encrypted packets with no sender");
                     decoded = null;
                 } else {
-                    remainingBytes = cipher.decrypt(sender, remainingBytes);
+                    remainingBytes = cipher.decrypt(remainingBytes, sender);
                     checkPacketSize(remainingBytes);
                     decoded = mapper.readValue(remainingBytes, type);
                 }
@@ -98,7 +98,7 @@ public final class PacketIO {
                 if (recipient == null) {
                     throw new IllegalArgumentException("recipient cannot be null when sending MODE_ENCRYPTED packets");
                 }
-                objectStream.write(cipher.crypt(recipient, rawBytes));
+                objectStream.write(cipher.encrypt(rawBytes, recipient));
             }
             byte[] bytes = outputStream.toByteArray();
             checkPacketSize(bytes);

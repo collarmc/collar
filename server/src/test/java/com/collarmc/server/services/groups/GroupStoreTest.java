@@ -1,6 +1,7 @@
 package com.collarmc.server.services.groups;
 
 import com.collarmc.api.groups.*;
+import com.collarmc.security.ClientIdentity;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.junit.MongoDatabaseTestRule;
 import com.collarmc.server.services.profiles.ProfileCache;
@@ -32,7 +33,7 @@ public class GroupStoreTest {
         GroupStore store = new GroupStore(profileCache, new SessionManager(Utils.messagePackMapper(), null), dbRule.db);
 
         UUID groupId = UUID.randomUUID();
-        Player owner = new Player(ownerProfile.id, new MinecraftPlayer(UUID.randomUUID(), "2b2t.org", 1));
+        Player owner = new Player(new ClientIdentity(ownerProfile.id, null), new MinecraftPlayer(UUID.randomUUID(), "2b2t.org", 1));
 
         store.upsert(Group.newGroup(groupId, "The Spawnmasons", GroupType.GROUP, new MemberSource(owner, null), List.of()));
 
@@ -44,34 +45,34 @@ public class GroupStoreTest {
         Assert.assertTrue(group.members.stream().anyMatch(member -> member.player.equals(owner)));
 
         Profile player1Profile = profiles.createProfile(RequestContext.ANON, new CreateProfileRequest("player1@example.com", "cute", "player1")).profile;
-        Player player1 = new Player(player1Profile.id, null);
+        Player player1 = new Player(new ClientIdentity(player1Profile.id, null), null);
         Profile player2Profile = profiles.createProfile(RequestContext.ANON, new CreateProfileRequest("player2@example.com", "cute", "player2")).profile;
-        Player player2 = new Player(player2Profile.id, null);
+        Player player2 = new Player(new ClientIdentity(player2Profile.id, null), null);
 
         group = store.addMembers(groupId, List.of(new MemberSource(player1, null), new MemberSource(player2, null)), MembershipRole.MEMBER, MembershipState.ACCEPTED).orElse(null);
         Assert.assertNotNull(group);
 
         Member member1 = group.members.stream().filter(member -> member.player.equals(player1)).findFirst().orElseThrow();
-        Assert.assertEquals(player1.profile, member1.player.profile);
+        Assert.assertEquals(player1.identity.profile, member1.player.identity.profile);
         Assert.assertEquals(MembershipRole.MEMBER, member1.membershipRole);
         Assert.assertEquals(MembershipState.ACCEPTED, member1.membershipState);
 
         Member member2 = group.members.stream().filter(member -> member.player.equals(player2)).findFirst().orElseThrow();
-        Assert.assertEquals(player2.profile, member2.player.profile);
+        Assert.assertEquals(player2.identity.profile, member2.player.identity.profile);
         Assert.assertEquals(MembershipRole.MEMBER, member2.membershipRole);
         Assert.assertEquals(MembershipState.ACCEPTED, member2.membershipState);
 
         Assert.assertEquals(groupId, store.findGroupsContaining(player1).findFirst().map(group1 -> group1.id).orElse(null));
 
-        group = store.updateMember(groupId, player1.profile, MembershipRole.MEMBER, MembershipState.DECLINED).orElse(null);
+        group = store.updateMember(groupId, player1.identity.profile, MembershipRole.MEMBER, MembershipState.DECLINED).orElse(null);
         Assert.assertNotNull(group);
         member1 = group.members.stream().filter(member -> member.player.equals(player1)).findFirst().orElseThrow();
-        Assert.assertEquals(player1.profile, member1.player.profile);
+        Assert.assertEquals(player1.identity.profile, member1.player.identity.profile);
         Assert.assertEquals(MembershipRole.MEMBER, member1.membershipRole);
         Assert.assertEquals(MembershipState.DECLINED, member1.membershipState);
         Assert.assertEquals(3, group.members.size());
 
-        group = store.removeMember(groupId, player1.profile).orElse(null);
+        group = store.removeMember(groupId, player1.identity.profile).orElse(null);
         Assert.assertNotNull(group);
         Assert.assertEquals(2, group.members.size());
         Assert.assertFalse(group.members.stream().anyMatch(member -> member.player.equals(player1)));

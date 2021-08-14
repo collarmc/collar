@@ -1,5 +1,6 @@
 package com.collarmc.api.session;
 
+import com.collarmc.security.ClientIdentity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.security.mojang.MinecraftPlayer;
 
@@ -10,14 +11,14 @@ import java.util.UUID;
  * Represents a Collar player
  */
 public final class Player {
-    @JsonProperty("profile")
-    public final UUID profile;
+    @JsonProperty("identity")
+    public final ClientIdentity identity;
     @JsonProperty("minecraftPlayer")
     public final MinecraftPlayer minecraftPlayer;
 
-    public Player(@JsonProperty("profile") UUID profile,
+    public Player(@JsonProperty("identity") ClientIdentity identity,
                   @JsonProperty("minecraftPlayer") MinecraftPlayer minecraftPlayer) {
-        this.profile = profile;
+        this.identity = identity;
         this.minecraftPlayer = minecraftPlayer;
     }
 
@@ -26,16 +27,16 @@ public final class Player {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Player player = (Player) o;
-        return profile.equals(player.profile);
+        return identity.profile.equals(identity.profile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(profile);
+        return Objects.hash(identity.profile);
     }
 
     @Override
     public String toString() {
-        return profile + ":" + minecraftPlayer;
+        return identity.profile + ":" + minecraftPlayer;
     }
 }

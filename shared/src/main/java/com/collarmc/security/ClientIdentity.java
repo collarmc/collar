@@ -10,19 +10,15 @@ import java.util.UUID;
  */
 public final class ClientIdentity implements Identity {
 
-    @JsonProperty("owner")
-    public final UUID owner;
+    @JsonProperty("profile")
+    public final UUID profile;
     @JsonProperty("publicKey")
     public final PublicKey publicKey;
-    @JsonProperty("deviceId")
-    public final Integer deviceId;
 
-    public ClientIdentity(@JsonProperty("owner") UUID owner,
-                          @JsonProperty("publicKey") PublicKey publicKey,
-                          @JsonProperty("deviceId") Integer deviceId) {
-        this.owner = owner;
+    public ClientIdentity(@JsonProperty("profile") UUID profile,
+                          @JsonProperty("publicKey") PublicKey publicKey) {
+        this.profile = profile;
         this.publicKey = publicKey;
-        this.deviceId = deviceId;
     }
 
     @Override
@@ -32,12 +28,7 @@ public final class ClientIdentity implements Identity {
 
     @Override
     public UUID id() {
-        return owner;
-    }
-
-    @Override
-    public Integer deviceId() {
-        return deviceId;
+        return profile;
     }
 
     @Override
@@ -45,18 +36,17 @@ public final class ClientIdentity implements Identity {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ClientIdentity that = (ClientIdentity) o;
-        return owner.equals(that.owner) &&
-                publicKey.equals(that.publicKey) &&
-                deviceId.equals(that.deviceId);
+        return profile.equals(that.profile) &&
+                publicKey.equals(that.publicKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(owner, publicKey, deviceId);
+        return Objects.hash(profile, publicKey);
     }
 
     @Override
     public String toString() {
-        return id() + ":" + deviceId;
+        return id().toString();
     }
 }

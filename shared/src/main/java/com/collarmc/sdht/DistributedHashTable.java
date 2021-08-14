@@ -3,7 +3,7 @@ package com.collarmc.sdht;
 import com.collarmc.sdht.cipher.ContentCipher;
 import com.collarmc.sdht.events.*;
 import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.discrete.CipherException;
 import com.collarmc.utils.Utils;
 
 import java.util.*;

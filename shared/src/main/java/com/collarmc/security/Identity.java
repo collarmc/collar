@@ -11,8 +11,5 @@ public interface Identity {
     UUID id();
 
     @JsonIgnore
-    Integer deviceId();
-
-    @JsonIgnore
     PublicKey publicKey();
 }

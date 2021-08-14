@@ -1,79 +1,32 @@
 package com.collarmc.client.security;
 
+import com.collarmc.api.groups.Group;
 import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.identity.CreateTrustRequest;
-import com.collarmc.protocol.signal.ResendPreKeysResponse;
-import com.collarmc.protocol.signal.SendPreKeysRequest;
 import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.Identity;
-import com.collarmc.security.ServerIdentity;
-import com.collarmc.security.cipher.Cipher;
+import com.collarmc.security.discrete.GroupSession;
+import com.collarmc.security.discrete.IdentityStore;
 
 import java.io.IOException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
-public interface ClientIdentityStore {
-    /**
-     * This token is stored by the server on first register and is used to check
-     * if the private identity of the client has changed. If it has changed, we
-     * the user has willingly generated a new token and forfeits any privately
-     * encrypted state on the server
-     * @return the players private identity token
-     */
-    byte[] privateIdentityToken();
-
+public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
     /**
      * @return the players identity
      */
-    ClientIdentity currentIdentity();
+    ClientIdentity identity();
 
-    /**
-     * Tests if the server identity is trusted
-     * @param identity to test
-     * @return trusted or not
-     */
-    boolean isTrustedIdentity(Identity identity);
+    GroupSession createSession(Group group);
 
-    /**
-     * Trusts the identity
-     * @param owner identity
-     * @param preKeyBundle belonging to the owner
-     */
-    void trustIdentity(Identity owner, byte[] preKeyBundle);
-
-    /**
-     * @return creates a new {@link Cipher}
-     */
-    Cipher createCypher();
+    GroupSessionManager groupSessions();
 
     /**
      * @param response of the registered device
      */
     void processDeviceRegisteredResponse(DeviceRegisteredResponse response);
-
-    /**
-     * @return device id of this client
-     */
-    int getDeviceId();
-
-    /**
-     * @param response of the device registration
-     * @return SendPreKeyRequest to send to the server
-     */
-    SendPreKeysRequest createPreKeyRequest(DeviceRegisteredResponse response);
-
-    /**
-     * @param identity of the server
-     * @return SendPreKeyRequest to send to the server
-     */
-    SendPreKeysRequest createPreKeyRequest(ServerIdentity identity);
-
-    /**
-     * @param response of the resend request
-     * @return SendPreKeyRequest to send to the server
-     */
-    SendPreKeysRequest createPreKeyRequest(ResendPreKeysResponse response);
 
     /**
      * @param identity joining group

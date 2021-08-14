@@ -8,10 +8,10 @@ import java.util.Arrays;
  * Represents a {@link Identity}'s public key
  */
 public final class PublicKey {
-    @JsonProperty("bytes")
+    @JsonProperty("b")
     public final byte[] key;
 
-    public PublicKey(@JsonProperty("key") byte[] key) {
+    public PublicKey(@JsonProperty("k") byte[] key) {
         this.key = key;
     }
 

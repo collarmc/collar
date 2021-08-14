@@ -33,7 +33,7 @@ public abstract class AbstractApi<T extends ApiListener> {
         if (clientIdentityStore == null) {
             throw new IllegalStateException("Client is not ready");
         }
-        return identityStoreSupplier.get().currentIdentity();
+        return identityStoreSupplier.get().identity();
     }
 
     protected ClientIdentityStore identityStore() {

@@ -7,7 +7,7 @@ import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.security.ServerIdentity;
 import com.collarmc.security.TokenGenerator;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.discrete.CipherException;
 import com.collarmc.server.services.devices.DeviceService.CreateDeviceResponse;
 
 import javax.annotation.Nonnull;

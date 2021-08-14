@@ -39,6 +39,10 @@
             <artifactId>log4j-api</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.google.crypto.tink</groupId>
+            <artifactId>tink</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.mikael</groupId>
             <artifactId>urlbuilder</artifactId>
         </dependency>

@@ -11,9 +11,9 @@ import com.collarmc.api.session.Player;
 import com.collarmc.protocol.PacketIO;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.session.SessionFailedResponse.SessionErrorResponse;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.security.mojang.MinecraftPlayer;
-import com.collarmc.security.discrete.CipherException;
+import com.collarmc.security.messages.CipherException;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;

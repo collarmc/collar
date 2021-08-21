@@ -1,7 +1,7 @@
 package com.collarmc.protocol.identity;
 
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.profiles.PublicProfile;
@@ -13,20 +13,23 @@ public final class IdentifyResponse extends ProtocolResponse {
     /**
      * The Collar servers emulated Mojang server id
      */
-    @JsonProperty("serverPublicKey")
-    public final String serverPublicKey;
+    @JsonProperty("minecraftServerId")
+    public final String minecraftServerId;
 
-    @JsonProperty("sharedSecret")
-    public final byte[] sharedSecret;
+    /**
+     * The collar servers emulated Mojang shared secret
+     */
+    @JsonProperty("minecraftSharedSecret")
+    public final byte[] minecraftSharedSecret;
 
     @JsonCreator
     public IdentifyResponse(@JsonProperty("identity") ServerIdentity identity,
                             @JsonProperty("profile") PublicProfile profile,
-                            @JsonProperty("serverPublicKey") String serverPublicKey,
-                            @JsonProperty("sharedSecret") byte[] sharedSecret) {
+                            @JsonProperty("minecraftServerId") String minecraftServerId,
+                            @JsonProperty("sharedSecret") byte[] minecraftSharedSecret) {
         super(identity);
         this.profile = profile;
-        this.serverPublicKey = serverPublicKey;
-        this.sharedSecret = sharedSecret;
+        this.minecraftServerId = minecraftServerId;
+        this.minecraftSharedSecret = minecraftSharedSecret;
     }
 }

@@ -3,7 +3,7 @@ package com.collarmc.api.http;
 import com.google.common.collect.ImmutableSet;
 import com.collarmc.api.http.HttpException.UnauthorisedException;
 import com.collarmc.api.profiles.Role;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 
 import java.util.Objects;
 import java.util.Set;

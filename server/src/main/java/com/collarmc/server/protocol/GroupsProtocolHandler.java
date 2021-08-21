@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.server.CollarServer;
 
 import java.util.Optional;

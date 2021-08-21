@@ -14,8 +14,8 @@ import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.server.services.location.NearbyGroups;
 import com.collarmc.server.session.SessionManager;
 
@@ -169,7 +169,7 @@ public final class GroupService {
             BatchProtocolResponse updates = createMemberMessages(
                     group,
                     member -> member.membershipState.equals(MembershipState.ACCEPTED),
-                    ((identity, player, updatedMember) -> new JoinGroupResponse(serverIdentity, finalGroup.id, req.identity, player, req.keys)));
+                    ((identity, player, updatedMember) -> new JoinGroupResponse(serverIdentity, finalGroup, req.identity, player)));
             response.concat(updates);
             updateState(group);
             return response;
@@ -280,7 +280,7 @@ public final class GroupService {
             if (!group.containsPlayer(player)) {
                 throw new IllegalStateException(player + " is not a member of group " + group.id);
             }
-            return BatchProtocolResponse.one(req.recipient, new AcknowledgedGroupJoinedResponse(serverIdentity, req.identity, player, group, req.keys));
+            return BatchProtocolResponse.one(req.recipient, new AcknowledgedGroupJoinedResponse(serverIdentity, req.identity, player, group));
         });
     }
 

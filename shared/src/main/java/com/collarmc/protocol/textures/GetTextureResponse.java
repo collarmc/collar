@@ -1,7 +1,7 @@
 package com.collarmc.protocol.textures;
 
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.textures.TextureType;

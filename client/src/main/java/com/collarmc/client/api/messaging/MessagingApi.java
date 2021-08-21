@@ -2,8 +2,8 @@ package com.collarmc.client.api.messaging;
 
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.security.ClientIdentityStore;
-import com.collarmc.security.discrete.Cipher;
-import com.collarmc.security.discrete.GroupMessage;
+import com.collarmc.security.messages.Cipher;
+import com.collarmc.security.messages.GroupMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,7 +16,7 @@ import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
-import com.collarmc.security.discrete.CipherException;
+import com.collarmc.security.messages.CipherException;
 import com.collarmc.utils.Utils;
 
 import java.io.IOException;

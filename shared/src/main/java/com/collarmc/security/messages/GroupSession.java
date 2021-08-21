@@ -1,32 +1,31 @@
-package com.collarmc.security.discrete;
+package com.collarmc.security.messages;
 
 import com.collarmc.io.IO;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.Identity;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.security.CollarIdentity;
+import com.collarmc.api.identity.Identity;
 import com.collarmc.utils.Utils;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.crypto.tink.KeysetHandle;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public final class GroupSession {
     private final UUID group;
-    private final Cipher cipher;
+    private final Cipher<ClientIdentity> cipher;
     private final IdentityStore<ClientIdentity> store;
     private final Set<ClientIdentity> recipients;
 
-    public GroupSession(Identity self, UUID group, IdentityStore<ClientIdentity> store, KeysetHandle messagingPublicKey, KeysetHandle identityPublicKey, Set<ClientIdentity> recipients) {
+    public GroupSession(Identity self, UUID group, IdentityStore<ClientIdentity> store, CollarIdentity collarIdentity, Set<ClientIdentity> recipients) {
         this.group = group;
-        this.cipher = new Cipher(self, store, messagingPublicKey, identityPublicKey);
+        this.cipher = new Cipher<ClientIdentity>(self, store, collarIdentity);
         this.store = store;
         this.recipients = recipients;
     }
 
-    public GroupSession(Identity self, UUID group, IdentityStore<ClientIdentity> store, Cipher cipher, Set<ClientIdentity> recipients) {
+    public GroupSession(Identity self, UUID group, IdentityStore<ClientIdentity> store, Cipher<ClientIdentity> cipher, Set<ClientIdentity> recipients) {
         this.group = group;
         this.cipher = cipher;
         this.store = store;

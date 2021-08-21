@@ -4,7 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.collarmc.http.WebSocket;
 import com.collarmc.protocol.keepalive.KeepAliveRequest;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;

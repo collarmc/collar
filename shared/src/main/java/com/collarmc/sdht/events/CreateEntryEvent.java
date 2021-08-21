@@ -2,7 +2,7 @@ package com.collarmc.sdht.events;
 
 import com.collarmc.sdht.Record;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 
 public final class CreateEntryEvent extends AbstractSDHTEvent {
     @JsonProperty("recipient")

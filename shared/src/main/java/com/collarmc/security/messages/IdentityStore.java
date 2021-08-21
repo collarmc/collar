@@ -1,6 +1,6 @@
-package com.collarmc.security.discrete;
+package com.collarmc.security.messages;
 
-import com.collarmc.security.Identity;
+import com.collarmc.api.identity.Identity;
 
 public interface IdentityStore<T extends Identity> {
     /**

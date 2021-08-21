@@ -2,9 +2,8 @@ package com.collarmc.client.security;
 
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.session.Player;
-import com.collarmc.security.discrete.GroupSession;
+import com.collarmc.security.messages.GroupSession;
 
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -26,8 +25,8 @@ public final class GroupSessionManager {
         return sessions.compute(group.id, (uuid, groupSession) -> store.createSession(group));
     }
 
-    public GroupSession delete(Group group) {
-        return sessions.remove(group.id);
+    public GroupSession delete(UUID group) {
+        return sessions.remove(group);
     }
 
     public GroupSession addPlayer(Group group, Player player) {
@@ -46,5 +45,9 @@ public final class GroupSessionManager {
             }
             return groupSession.remove(player.identity);
         });
+    }
+
+    public void clear() {
+        sessions.clear();
     }
 }

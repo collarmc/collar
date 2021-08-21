@@ -6,7 +6,7 @@ import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.sdht.SDHTApi;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.groups.*;
-import com.collarmc.security.discrete.GroupSession;
+import com.collarmc.security.messages.GroupSession;
 import com.google.common.collect.ImmutableList;
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.session.Player;

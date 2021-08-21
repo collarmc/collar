@@ -1,5 +1,6 @@
-package com.collarmc.security;
+package com.collarmc.api.identity;
 
+import com.collarmc.security.PublicKey;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -14,16 +15,25 @@ public final class ClientIdentity implements Identity {
     public final UUID profile;
     @JsonProperty("publicKey")
     public final PublicKey publicKey;
+    @JsonProperty("signatureKey")
+    public final PublicKey signatureKey;
 
     public ClientIdentity(@JsonProperty("profile") UUID profile,
-                          @JsonProperty("publicKey") PublicKey publicKey) {
+                          @JsonProperty("publicKey") PublicKey publicKey,
+                          @JsonProperty("signatureKey") PublicKey signatureKey) {
         this.profile = profile;
         this.publicKey = publicKey;
+        this.signatureKey = signatureKey;
     }
 
     @Override
     public PublicKey publicKey() {
         return publicKey;
+    }
+
+    @Override
+    public PublicKey signatureKey() {
+        return signatureKey;
     }
 
     @Override

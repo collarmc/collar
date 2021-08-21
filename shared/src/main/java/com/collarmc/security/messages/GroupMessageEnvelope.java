@@ -1,8 +1,11 @@
-package com.collarmc.security.discrete;
+package com.collarmc.security.messages;
 
-import com.collarmc.security.Identity;
+import com.collarmc.api.identity.Identity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Message envelope for group messages
+ */
 public final class GroupMessageEnvelope {
     @JsonProperty("r")
     public final Identity recipient;

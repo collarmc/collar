@@ -2,7 +2,7 @@ package com.collarmc.protocol.friends;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 
 import java.util.UUID;
 

@@ -1,25 +1,26 @@
 package com.collarmc.client.security;
 
 import com.collarmc.api.groups.Group;
+import com.collarmc.api.groups.MembershipState;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.Identity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.client.HomeDirectory;
 import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.identity.CreateTrustRequest;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.Identity;
-import com.collarmc.security.PublicKey;
-import com.collarmc.security.discrete.Cipher;
-import com.collarmc.security.discrete.CipherException.UnknownCipherException;
-import com.collarmc.security.discrete.GroupSession;
+import com.collarmc.protocol.identity.IdentifyRequest;
+import com.collarmc.security.*;
+import com.collarmc.security.messages.Cipher;
+import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.CipherException.UnknownCipherException;
+import com.collarmc.security.CollarIdentity;
+import com.collarmc.security.messages.GroupSession;
 import com.collarmc.utils.Utils;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.crypto.tink.*;
-import com.google.crypto.tink.signature.SignatureKeyTemplates;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,40 +29,19 @@ import java.util.stream.Collectors;
 
 public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
-    private static final int VERSION = 1;
     private final GroupSessionManager groupSessionManager = new GroupSessionManager(this);
-
-    final KeysetHandle messagingPrivateKey;
-    final KeysetHandle messagingPublicKey;
-
-    final KeysetHandle identityPrivateKey;
-    final KeysetHandle identityPublicKey;
+    private final CollarIdentity collarIdentity;
 
     private State state;
     private final File file;
 
     public ClientIdentityStoreImpl(HomeDirectory directory) throws IOException, UnknownCipherException {
+        this.collarIdentity = CollarIdentity.getOrCreate(directory.profile());
         this.file = filePath(directory);
         if (file.exists()) {
             state = Utils.messagePackMapper().readValue(file, State.class);
-            try {
-                messagingPrivateKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(state.messagingPrivateKey));
-                messagingPublicKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(state.messagingPublicKey));
-                identityPrivateKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(state.identityPrivateKey));
-                identityPublicKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(state.identityPublicKey));
-            } catch (GeneralSecurityException e) {
-                throw new UnknownCipherException("could not read keys", e);
-            }
         } else {
-            try {
-                messagingPrivateKey = KeysetHandle.generateNew(KeyTemplates.get("ECIES_P256_HKDF_HMAC_SHA256_AES128_CTR_HMAC_SHA256"));
-                messagingPublicKey = messagingPrivateKey.getPublicKeysetHandle();
-                identityPrivateKey = KeysetHandle.generateNew(SignatureKeyTemplates.ED25519);
-                identityPublicKey = identityPrivateKey.getPublicKeysetHandle();
-            } catch (GeneralSecurityException e) {
-                throw new UnknownCipherException("could not create keys", e);
-            }
-            state = new State(null, serializeKey(messagingPrivateKey), serializeKey(messagingPublicKey), serializeKey(identityPrivateKey), serializeKey(identityPublicKey), new ConcurrentHashMap<>());
+            state = new State(null, new ConcurrentHashMap<>(), null);
             save();
         }
     }
@@ -71,12 +51,30 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
         if (state.profile == null) {
             throw new IllegalStateException("profile not set");
         }
-        return new ClientIdentity(null, new PublicKey(serializeKey(identityPublicKey)));
+        return new ClientIdentity(state.profile, collarIdentity.publicKey(), collarIdentity.signatureKey());
+    }
+
+    @Override
+    public ServerIdentity serverIdentity() {
+        return state.serverIdentity;
+    }
+
+    @Override
+    public IdentifyRequest createIdentifyRequest() {
+        if (isValid()) {
+            try {
+                return new IdentifyRequest(identity(), cipher().encrypt(TokenGenerator.byteToken(256), state.serverIdentity));
+            } catch (CipherException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return IdentifyRequest.unknown();
+        }
     }
 
     @Override
     public GroupSession createSession(Group group) {
-        return new GroupSession(identity(), group.id, this, messagingPublicKey, identityPrivateKey, group.members.stream().map(member -> member.player.identity).collect(Collectors.toSet()));
+        return new GroupSession(identity(), group.id, this, collarIdentity, group.members.stream().map(member -> member.player.identity).collect(Collectors.toSet()));
     }
 
     @Override
@@ -97,51 +95,56 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public Cipher<ClientIdentity> cipher() {
-        return new Cipher<>(identity(), this, messagingPrivateKey, identityPrivateKey);
+        return new Cipher<>(identity(), this, collarIdentity);
     }
 
     @Override
-    public void processDeviceRegisteredResponse(DeviceRegisteredResponse response) {
-        state = new State(response.profile.id, state.messagingPrivateKey, state.messagingPublicKey, state.identityPrivateKey, state.identityPublicKey, state.keys);
+    public IdentifyRequest processDeviceRegisteredResponse(DeviceRegisteredResponse response) {
+        trustIdentity(response.identity);
+        state = new State(response.profile.id, state.keys, response.identity);
         try {
             save();
         } catch (IOException e) {
             throw new IllegalStateException("state update failed", e);
         }
+        return createIdentifyRequest();
     }
 
     @Override
     public JoinGroupRequest createJoinGroupRequest(ClientIdentity identity, UUID groupId) {
-        return null;
+        return new JoinGroupRequest(identity, groupId, MembershipState.PENDING, null);
     }
 
     @Override
-    public CreateTrustRequest createPreKeyRequest(ClientIdentity identity, long id) {
-        return null;
+    public CreateTrustRequest createCreateTrustRequest(ClientIdentity identity, long id) {
+        return new CreateTrustRequest(identity(), id, identity);
     }
 
     @Override
     public AcknowledgedGroupJoinedRequest processJoinGroupResponse(JoinGroupResponse resp) {
-        return null;
+        groupSessionManager.create(resp.group);
+        return new AcknowledgedGroupJoinedRequest(identity(), resp.sender, resp.group.id);
     }
 
     @Override
     public void processAcknowledgedGroupJoinedResponse(AcknowledgedGroupJoinedResponse response) {
-
+        groupSessionManager.create(response.group);
     }
 
     @Override
     public void processLeaveGroupResponse(LeaveGroupResponse response) {
-
+        groupSessionManager.delete(response.groupId);
     }
 
     @Override
     public void clearAllGroupSessions() {
-
+        groupSessionManager.clear();
     }
 
     @Override
     public void reset() throws IOException {
+        state = new State(null, new ConcurrentHashMap<>(), null);
+        save();
     }
 
     @Override
@@ -149,22 +152,8 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
         Utils.messagePackMapper().writeValue(file, state);
     }
 
-    private static byte[] serializeKey(KeysetHandle handle) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            CleartextKeysetHandle.write(handle, BinaryKeysetWriter.withOutputStream(bos));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-        return bos.toByteArray();
-    }
-
-    public static boolean exists(HomeDirectory homeDirectory) {
-        try {
-            return filePath(homeDirectory).exists();
-        } catch (IOException e) {
-            return false;
-        }
+    public boolean isValid() {
+        return state != null && state.profile != null && state.serverIdentity != null;
     }
 
     private static File filePath(HomeDirectory directory) throws IOException {
@@ -176,33 +165,17 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
         @JsonProperty("profile")
         public final UUID profile;
 
-        @JsonProperty("messagingPrivateKey")
-        public final byte[] messagingPrivateKey;
-
-        @JsonProperty("messagingPublicKey")
-        public final byte[] messagingPublicKey;
-
-        @JsonProperty("identityPrivateKey")
-        public final byte[] identityPrivateKey;
-
-        @JsonProperty("identityPublicKey")
-        public final byte[] identityPublicKey;
-
         @JsonProperty("keys")
         public final ConcurrentMap<UUID, PublicKey> keys;
 
+        public final ServerIdentity serverIdentity;
+
         public State(@JsonProperty("profile") UUID profile,
-                     @JsonProperty("messagingPrivateKey") byte[] messagingPrivateKey,
-                     @JsonProperty("messagingPublicKey") byte[] messagingPublicKey,
-                     @JsonProperty("identityPrivateKey") byte[] identityPrivateKey,
-                     @JsonProperty("identityPublicKey") byte[] identityPublicKey,
-                     @JsonProperty("keys") ConcurrentMap<UUID, PublicKey> keys) {
+                     @JsonProperty("keys") ConcurrentMap<UUID, PublicKey> keys,
+                     @JsonProperty("serverIdentity") ServerIdentity serverIdentity) {
             this.profile = profile;
-            this.messagingPrivateKey = messagingPrivateKey;
-            this.messagingPublicKey = messagingPublicKey;
-            this.identityPrivateKey = identityPrivateKey;
-            this.identityPublicKey = identityPublicKey;
             this.keys = keys;
+            this.serverIdentity = serverIdentity;
         }
     }
 }

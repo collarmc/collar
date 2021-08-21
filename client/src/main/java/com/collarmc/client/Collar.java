@@ -1,5 +1,6 @@
 package com.collarmc.client;
 
+import com.collarmc.client.CollarException.ConnectionException;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.api.friends.FriendsApi;
 import com.collarmc.client.api.identity.IdentityApi;
@@ -13,7 +14,8 @@ import com.collarmc.client.security.ClientIdentityStoreImpl;
 import com.collarmc.client.utils.Crypto;
 import com.collarmc.client.utils.Http;
 import com.collarmc.protocol.SessionStopReason;
-import com.collarmc.security.discrete.CipherException.InvalidCipherSessionException;
+import com.collarmc.protocol.devices.DeviceRegisteredResponse;
+import com.collarmc.security.messages.CipherException.InvalidCipherSessionException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.mikael.urlbuilder.UrlBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -35,7 +37,6 @@ import com.collarmc.protocol.PacketIO;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.devices.RegisterDeviceResponse;
-import com.collarmc.protocol.identity.IdentifyRequest;
 import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.protocol.keepalive.KeepAliveResponse;
 import com.collarmc.protocol.session.SessionFailedResponse;
@@ -47,11 +48,11 @@ import com.collarmc.protocol.session.StartSessionResponse;
 import com.collarmc.protocol.trust.CheckTrustRelationshipRequest;
 import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsTrustedRelationshipResponse;
 import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsUntrustedRelationshipResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.security.mojang.MinecraftSession;
 import com.collarmc.security.mojang.Mojang;
-import com.collarmc.security.discrete.CipherException;
+import com.collarmc.security.messages.CipherException;
 import com.collarmc.utils.Utils;
 
 import java.io.IOException;
@@ -148,7 +149,7 @@ public final class Collar {
             throw e;
         } catch (Throwable e) {
             changeState(State.DISCONNECTED);
-            throw new CollarException.ConnectionException("Failed to connect", e);
+            throw new ConnectionException("Failed to connect", e);
         }
     }
 
@@ -293,7 +294,7 @@ public final class Collar {
         try {
             response = Http.client().execute(url(UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/discover")).get(), Response.json(DiscoverResponse.class));
         } catch (HttpException e) {
-            throw new CollarException.ConnectionException("Problem connecting to collar", e);
+            throw new ConnectionException("Problem connecting to collar", e);
         }
         StringJoiner versions = new StringJoiner(",");
         response.versions.stream()
@@ -365,15 +366,13 @@ public final class Collar {
                 sendRequest(webSocket, request);
             };
             LOGGER.info("Connection established");
-            if (ClientIdentityStoreImpl.exists(configuration.homeDirectory)) {
-                try {
-                    identityStore = new ClientIdentityStoreImpl(configuration.homeDirectory);
-                } catch (IOException | CipherException.UnknownCipherException e) {
-                    throw new IllegalStateException("");
-                }
-            } else {
-                sendRequest(webSocket, IdentifyRequest.unknown());
+            try {
+                identityStore = new ClientIdentityStoreImpl(configuration.homeDirectory);
+            } catch (IOException | CipherException.UnknownCipherException e) {
+                throw new IllegalStateException("could not load identity store");
             }
+            // Start protocol
+            sendRequest(webSocket, identityStore.createIdentifyRequest());
             // Start the keep alive
             this.keepAlive = new KeepAlive(this, webSocket);
             this.keepAlive.start(null);
@@ -406,18 +405,22 @@ public final class Collar {
             Optional<ProtocolResponse> responseOptional = readResponse(messageBuffer);
             responseOptional.ifPresent(resp -> {
                 LOGGER.info(resp.getClass().getSimpleName() + " from " + resp.identity);
-                ClientIdentity identity = identityStore == null ? null : identityStore.identity();
                 if (resp instanceof IdentifyResponse) {
+                    ClientIdentity identity = identityStore.identity();
+                    ServerIdentity storedServerIdentity = identityStore.serverIdentity();
                     IdentifyResponse response = (IdentifyResponse) resp;
+                    if (!response.identity.equals(storedServerIdentity)) {
+                        throw new ConnectionException("server identity " + response.identity + " does not match " + storedServerIdentity);
+                    }
                     MinecraftSession session = configuration.sessionSupplier.get();
                     String serverId;
                     if (session.mode == MinecraftSession.Mode.MOJANG) {
                         Mojang authentication = new Mojang(Http.client());
-                        Optional<Mojang.JoinServerResponse> joinServerResponse = authentication.joinServer(session, response.serverPublicKey, response.sharedSecret);
+                        Optional<Mojang.JoinServerResponse> joinServerResponse = authentication.joinServer(session, response.minecraftServerId, response.minecraftSharedSecret);
                         if (joinServerResponse.isPresent()) {
                             serverId = joinServerResponse.get().serverId;
                         } else {
-                            throw new CollarException.ConnectionException("Couldn't verify your client session with Mojang");
+                            throw new ConnectionException("Couldn't verify your client session with Mojang");
                         }
                     } else {
                         serverId = null;
@@ -429,12 +432,15 @@ public final class Collar {
                 } else if (resp instanceof KeepAliveResponse) {
                     LOGGER.info("KeepAliveResponse received");
                 } else if (resp instanceof RegisterDeviceResponse) {
-                    RegisterDeviceResponse registerDeviceResponse = (RegisterDeviceResponse)resp;
+                    RegisterDeviceResponse registerDeviceResponse = (RegisterDeviceResponse) resp;
                     LOGGER.info("RegisterDeviceResponse received with registration url " + ((RegisterDeviceResponse) resp).approvalUrl);
                     configuration.listener.onConfirmDeviceRegistration(collar, registerDeviceResponse.approvalToken, registerDeviceResponse.approvalUrl);
+                } else if (resp instanceof DeviceRegisteredResponse) {
+                    DeviceRegisteredResponse response = (DeviceRegisteredResponse) resp;
+                    sendRequest(webSocket, identityStore.processDeviceRegisteredResponse(response));
                 } else if (resp instanceof StartSessionResponse) {
                     LOGGER.info("Session has started. Checking if the client and server are in a trusted relationship");
-                    sendRequest(webSocket, new CheckTrustRelationshipRequest(identity));
+                    sendRequest(webSocket, new CheckTrustRelationshipRequest(identityStore.identity()));
                 } else if (resp instanceof SessionFailedResponse) {
                     LOGGER.info("SessionFailedResponse received");
                     if (resp instanceof MojangVerificationFailedResponse) {
@@ -476,7 +482,7 @@ public final class Collar {
         }
 
         private Optional<ProtocolResponse> readResponse(ByteBuffer buffer) {
-            PacketIO packetIO = new PacketIO(mapper, identityStore == null ? null : identityStore.cipher());
+            PacketIO packetIO = new PacketIO(mapper, identityStore.isValid() ? identityStore.cipher() : null);
             try {
                 return packetIO.decode(serverIdentity, buffer, ProtocolResponse.class);
             } catch (CipherException e) {
@@ -487,12 +493,12 @@ public final class Collar {
         }
 
         public void sendRequest(WebSocket webSocket, ProtocolRequest req) {
-            PacketIO packetIO = identityStore == null ? new PacketIO(mapper, null) : new PacketIO(mapper, identityStore.cipher());
+            PacketIO packetIO = identityStore.isValid() ? new PacketIO(mapper, identityStore.cipher()) : new PacketIO(mapper, null);
             byte[] bytes;
             if (state == State.CONNECTED) {
                 try {
                     if (identityStore == null) {
-                        throw new IllegalStateException("identity store should be available by the time the client is CONNECTED");
+                        throw new IllegalStateException("identity store should be available by the time the client is " + State.CONNECTED);
                     }
                     bytes = packetIO.encodeEncrypted(serverIdentity, req);
                 } catch (InvalidCipherSessionException e) {

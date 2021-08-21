@@ -13,8 +13,8 @@ import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.session.SessionManager;
 

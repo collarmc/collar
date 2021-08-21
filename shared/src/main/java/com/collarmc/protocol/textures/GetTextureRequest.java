@@ -3,7 +3,7 @@ package com.collarmc.protocol.textures;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.textures.TextureType;
 import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 
 import java.util.UUID;
 

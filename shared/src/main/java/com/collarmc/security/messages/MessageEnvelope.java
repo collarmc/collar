@@ -1,8 +1,11 @@
-package com.collarmc.security.discrete;
+package com.collarmc.security.messages;
 
 import java.nio.ByteBuffer;
 
-public class MessageEnvelope {
+/**
+ * Holds a message signed with the sender's signature key
+ */
+public final class MessageEnvelope {
     public final byte[] signature;
     public final byte[] contents;
 

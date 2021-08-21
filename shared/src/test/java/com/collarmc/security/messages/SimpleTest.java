@@ -1,10 +1,4 @@
-package com.collarmc.security.discrete;
-
-import com.collarmc.security.Identity;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.nio.charset.StandardCharsets;
+package com.collarmc.security.messages;
 
 public class SimpleTest {
 //

@@ -5,10 +5,10 @@ import com.collarmc.api.groups.Group;
 import com.collarmc.client.api.groups.GroupsApi;
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.cipher.ContentCipher;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.discrete.CipherException;
-import com.collarmc.security.discrete.CipherException.UnavailableCipherException;
-import com.collarmc.security.discrete.GroupMessage;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.CipherException.UnavailableCipherException;
+import com.collarmc.security.messages.GroupMessage;
 
 import java.util.UUID;
 import java.util.function.Supplier;

@@ -1,11 +1,10 @@
 package com.collarmc.api.session;
 
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.security.mojang.MinecraftPlayer;
 
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Represents a Collar player
@@ -27,7 +26,7 @@ public final class Player {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Player player = (Player) o;
-        return identity.profile.equals(identity.profile);
+        return identity.profile.equals(player.identity.profile);
     }
 
     @Override

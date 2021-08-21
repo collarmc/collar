@@ -1,15 +1,4 @@
-package com.collarmc.security.discrete;
-
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.Identity;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+package com.collarmc.security.messages;
 
 public class GroupTest {
 

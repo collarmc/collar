@@ -1,7 +1,7 @@
 package com.collarmc.server.services.groups;
 
 import com.collarmc.api.groups.*;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -159,7 +159,8 @@ public final class GroupStore {
 
     private Member mapMemberFrom(Document document) {
         UUID profileId = document.get(FIELD_MEMBER_PROFILE_ID, UUID.class);
-        Player player = sessions.findPlayerByProfile(profileId).orElse(new Player(new ClientIdentity(profileId, null), null));
+        // TODO: does this query still work??
+        Player player = sessions.findPlayerByProfile(profileId).orElse(new Player(new ClientIdentity(profileId, null, null), null));
         MembershipRole role = MembershipRole.valueOf(document.getString(FIELD_MEMBER_ROLE));
         MembershipState state = MembershipState.valueOf(document.getString(FIELD_MEMBER_STATE));
         PublicProfile profile = profiles.getById(profileId).orElseThrow(() -> new IllegalStateException("could not find profile " + profileId)).toPublic();

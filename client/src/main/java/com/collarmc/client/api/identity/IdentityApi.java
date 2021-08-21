@@ -17,7 +17,7 @@ import com.collarmc.api.session.Player;
 import com.collarmc.client.Collar;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.security.TokenGenerator;
 import com.collarmc.security.mojang.MinecraftPlayer;
 
@@ -137,7 +137,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
         if (clientIdentity == null || identityStore().isTrustedIdentity(clientIdentity)) {
             return CompletableFuture.completedFuture(identity);
         } else {
-            CreateTrustRequest request = identityStore().createPreKeyRequest(clientIdentity, TokenGenerator.longToken());
+            CreateTrustRequest request = identityStore().createCreateTrustRequest(clientIdentity, TokenGenerator.longToken());
             CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
             LOGGER.info("Creating trust future with " + identity + " and id " + request.id);
             identifyFutures.put(request.id, future);
@@ -172,7 +172,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             CompletableFuture<Optional<ClientIdentity>> removed = identifyFutures.remove(response.id);
             if (removed == null) {
                 LOGGER.info("Sending back a CreateTrustRequest to " + response.sender + " and id " + response.id);
-                sender.accept(identityStore().createPreKeyRequest(response.sender, response.id));
+                sender.accept(identityStore().createCreateTrustRequest(response.sender, response.id));
             } else {
                 LOGGER.info("Finished creating trust with " + response.sender + " and id " + response.id);
                 removed.complete(Optional.ofNullable(response.sender));

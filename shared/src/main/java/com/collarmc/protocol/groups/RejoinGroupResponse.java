@@ -2,7 +2,7 @@ package com.collarmc.protocol.groups;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 
 import java.util.UUID;
 

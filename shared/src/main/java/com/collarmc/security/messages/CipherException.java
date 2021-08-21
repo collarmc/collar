@@ -1,4 +1,4 @@
-package com.collarmc.security.discrete;
+package com.collarmc.security.messages;
 
 public abstract class CipherException extends Exception {
 

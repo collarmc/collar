@@ -2,9 +2,9 @@ package com.collarmc.client.sdht.cipher;
 
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.cipher.ContentCipher;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.discrete.CipherException;
-import com.collarmc.security.discrete.CipherException.UnavailableCipherException;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.CipherException.UnavailableCipherException;
 
 import java.util.ArrayList;
 import java.util.List;

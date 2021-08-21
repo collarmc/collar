@@ -1,8 +1,8 @@
 package com.collarmc.protocol.location;
 
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.session.Player;
 

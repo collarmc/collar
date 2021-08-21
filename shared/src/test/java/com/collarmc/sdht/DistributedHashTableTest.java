@@ -13,7 +13,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import com.collarmc.sdht.impl.DefaultDistributedHashTable;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
@@ -44,7 +44,7 @@ public class DistributedHashTableTest {
         PublisherImpl publisher = new PublisherImpl();
         DistributedHashTableListenerImpl dhtListener = new DistributedHashTableListenerImpl();
         DHTNamespaceState state = new DHTNamespaceState(Files.createTempDir());
-        table = new DefaultDistributedHashTable(publisher, () -> new ClientIdentity(UUID.randomUUID(), null), cipher, state, dhtListener);
+        table = new DefaultDistributedHashTable(publisher, () -> new ClientIdentity(UUID.randomUUID(), null, null), cipher, state, dhtListener);
     }
 
     @Test

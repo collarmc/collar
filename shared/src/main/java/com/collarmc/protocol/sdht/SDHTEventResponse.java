@@ -2,7 +2,7 @@ package com.collarmc.protocol.sdht;
 
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.sdht.events.AbstractSDHTEvent;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class SDHTEventResponse extends ProtocolResponse {

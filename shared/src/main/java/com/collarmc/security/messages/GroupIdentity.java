@@ -1,4 +1,4 @@
-package com.collarmc.security.discrete;
+package com.collarmc.security.messages;
 
 import java.util.UUID;
 

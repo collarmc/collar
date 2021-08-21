@@ -1,6 +1,6 @@
 package com.collarmc.server.services.location;
 
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import org.junit.Assert;
 import org.junit.Test;
 import com.collarmc.api.groups.MemberSource;
@@ -13,9 +13,9 @@ import java.util.UUID;
 public class NearbyGroupsTest {
     @Test
     public void calculateGroup() {
-        Player alice = new Player(new ClientIdentity(UUID.randomUUID(), null), new MinecraftPlayer(UUID.randomUUID(), "cute", 1));
-        Player bob = new Player(new ClientIdentity(UUID.randomUUID(), null), new MinecraftPlayer(UUID.randomUUID(), "cute", 1));
-        Player eve = new Player(new ClientIdentity(UUID.randomUUID(), null), new MinecraftPlayer(UUID.randomUUID(), "cute", 1));
+        Player alice = new Player(new ClientIdentity(UUID.randomUUID(), null, null), new MinecraftPlayer(UUID.randomUUID(), "cute", 1));
+        Player bob = new Player(new ClientIdentity(UUID.randomUUID(), null, null), new MinecraftPlayer(UUID.randomUUID(), "cute", 1));
+        Player eve = new Player(new ClientIdentity(UUID.randomUUID(), null, null), new MinecraftPlayer(UUID.randomUUID(), "cute", 1));
 
         NearbyGroups groups = new NearbyGroups();
         NearbyGroups.Result result = groups.updateNearbyGroups(new MemberSource(alice, null), Set.of("alice", "bob"));

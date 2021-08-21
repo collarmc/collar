@@ -1,5 +1,6 @@
-package com.collarmc.security;
+package com.collarmc.api.identity;
 
+import com.collarmc.security.PublicKey;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
@@ -11,11 +12,16 @@ import java.util.UUID;
 public final class ServerIdentity implements Identity {
     @JsonProperty("publicKey")
     public final PublicKey publicKey;
+    @JsonProperty("signatureKey")
+    public final PublicKey signatureKey;
     @JsonProperty("serverId")
     public final UUID serverId;
 
-    public ServerIdentity(@JsonProperty("publicKey") PublicKey publicKey, @JsonProperty("serverId") UUID serverId) {
+    public ServerIdentity(@JsonProperty("publicKey") PublicKey publicKey,
+                          @JsonProperty("signatureKey") PublicKey signatureKey,
+                          @JsonProperty("serverId") UUID serverId) {
         this.publicKey = publicKey;
+        this.signatureKey = signatureKey;
         this.serverId = serverId;
     }
 
@@ -27,6 +33,11 @@ public final class ServerIdentity implements Identity {
     @Override
     public PublicKey publicKey() {
         return publicKey;
+    }
+
+    @Override
+    public PublicKey signatureKey() {
+        return signatureKey;
     }
 
     @Override
@@ -44,6 +55,6 @@ public final class ServerIdentity implements Identity {
 
     @Override
     public String toString() {
-        return "_server_@" + id().toString();
+        return id().toString();
     }
 }

@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Logger;
 import com.collarmc.client.Collar;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 
 import java.util.HashSet;
 import java.util.Set;

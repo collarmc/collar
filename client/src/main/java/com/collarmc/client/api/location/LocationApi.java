@@ -8,7 +8,7 @@ import com.collarmc.client.sdht.SDHTApi;
 import com.collarmc.client.sdht.SDHTListener;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.location.*;
-import com.collarmc.security.discrete.GroupMessage;
+import com.collarmc.security.messages.GroupMessage;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.Hashing;
 import com.collarmc.api.entities.Entity;
@@ -26,7 +26,7 @@ import com.collarmc.protocol.waypoints.GetWaypointsResponse;
 import com.collarmc.protocol.waypoints.RemoveWaypointRequest;
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.Key;
-import com.collarmc.security.discrete.CipherException;
+import com.collarmc.security.messages.CipherException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

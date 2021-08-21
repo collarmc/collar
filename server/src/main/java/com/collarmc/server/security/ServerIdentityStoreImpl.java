@@ -1,22 +1,14 @@
 package com.collarmc.server.security;
 
-import com.collarmc.security.Identity;
-import com.collarmc.security.PublicKey;
-import com.collarmc.security.ServerIdentity;
-import com.collarmc.security.discrete.Cipher;
-import com.google.crypto.tink.BinaryKeysetWriter;
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.hybrid.HybridConfig;
-import com.google.crypto.tink.signature.SignatureConfig;
-import com.google.crypto.tink.signature.SignatureKeyTemplates;
+import com.collarmc.api.identity.Identity;
+import com.collarmc.api.identity.ServerIdentity;
+import com.collarmc.security.messages.Cipher;
+import com.collarmc.security.CollarIdentity;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 import java.util.UUID;
@@ -29,24 +21,18 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
     private final MongoCollection<Document> identities;
     private final MongoCollection<Document> serverIdentity;
     private final UUID serverId = UUID.randomUUID();
-    private final KeysetHandle identityPrivateKey;
-    private final KeysetHandle identityPublicKey;
+    private final CollarIdentity collarIdentity;
 
     public ServerIdentityStoreImpl(MongoDatabase database) throws GeneralSecurityException {
         this.identities = database.getCollection("discrete_identities");
         this.identities.createIndex(new Document(Map.of("profile", 1)));
         this.serverIdentity = database.getCollection("discrete_server_identity");
-        this.identityPrivateKey = KeysetHandle.generateNew(SignatureKeyTemplates.ECDSA_P256);
-        this.identityPublicKey = identityPrivateKey.getPublicKeysetHandle();
+        this.collarIdentity = new CollarIdentity();
     }
 
     @Override
     public ServerIdentity identity() {
-        try {
-            return new ServerIdentity(new PublicKey(serializeKey(identityPrivateKey.getPublicKeysetHandle())), serverId);
-        } catch (GeneralSecurityException e) {
-            throw new IllegalStateException(e);
-        }
+        return new ServerIdentity(collarIdentity.publicKey(), collarIdentity.signatureKey(), serverId);
     }
 
     @Override
@@ -68,25 +54,6 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
 
     @Override
     public Cipher<ServerIdentity> cipher() {
-        return new Cipher<>(this.identity(), this, null, identityPrivateKey);
-    }
-
-    private static byte[] serializeKey(KeysetHandle handle) {
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        try {
-            CleartextKeysetHandle.write(handle, BinaryKeysetWriter.withOutputStream(bos));
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
-        return bos.toByteArray();
-    }
-
-    static {
-        try {
-            HybridConfig.register();
-            SignatureConfig.register();
-        } catch (GeneralSecurityException e) {
-            throw new IllegalStateException(e);
-        }
+        return new Cipher<>(this.identity(), this, collarIdentity);
     }
 }

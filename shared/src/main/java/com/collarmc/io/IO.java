@@ -132,7 +132,8 @@ public final class IO {
      * @throws IOException if stream failed to be read
      */
     public static ByteBuffer toByteBuffer(InputStream input) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(Short.MAX_VALUE);
+        // TODO buffer size
+        ByteBuffer buffer = ByteBuffer.allocate(Short.MAX_VALUE * 4);
         byte[] buf = new byte[1024];
         for (int n = input.read(buf); n != -1; n = input.read(buf)) {
             buffer.put(buf, 0, n);

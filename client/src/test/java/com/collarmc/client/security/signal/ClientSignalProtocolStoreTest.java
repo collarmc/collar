@@ -1,29 +1,5 @@
 package com.collarmc.client.security.signal;
 
-import com.collarmc.client.HomeDirectory;
-import com.google.common.io.Files;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.whispersystems.libsignal.IdentityKeyPair;
-import org.whispersystems.libsignal.InvalidKeyException;
-import org.whispersystems.libsignal.InvalidKeyIdException;
-import org.whispersystems.libsignal.SignalProtocolAddress;
-import org.whispersystems.libsignal.groups.GroupSessionBuilder;
-import org.whispersystems.libsignal.groups.SenderKeyName;
-import org.whispersystems.libsignal.protocol.SenderKeyDistributionMessage;
-import org.whispersystems.libsignal.state.PreKeyRecord;
-import org.whispersystems.libsignal.state.SessionRecord;
-import org.whispersystems.libsignal.state.SignedPreKeyRecord;
-import org.whispersystems.libsignal.util.KeyHelper;
-import com.collarmc.security.ClientIdentity;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
 public class ClientSignalProtocolStoreTest {
 //    private ClientSignalProtocolStore store;
 //    File tempDir;

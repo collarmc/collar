@@ -1,8 +1,10 @@
 package com.collarmc.server;
 
 import com.collarmc.protocol.SessionStopReason;
+import com.collarmc.protocol.devices.RegisterDeviceResponse;
+import com.collarmc.protocol.identity.IdentifyResponse;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.server.protocol.*;
-import com.collarmc.server.services.profiles.ProfileCache;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
@@ -17,9 +19,7 @@ import com.collarmc.api.session.Player;
 import com.collarmc.protocol.PacketIO;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.protocol.devices.RegisterDeviceResponse;
 import com.collarmc.protocol.identity.IdentifyRequest;
-import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.protocol.keepalive.KeepAliveRequest;
 import com.collarmc.protocol.keepalive.KeepAliveResponse;
 import com.collarmc.protocol.session.SessionFailedResponse.MojangVerificationFailedResponse;
@@ -30,10 +30,9 @@ import com.collarmc.protocol.trust.CheckTrustRelationshipRequest;
 import com.collarmc.protocol.trust.CheckTrustRelationshipResponse;
 import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsTrustedRelationshipResponse;
 import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsUntrustedRelationshipResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.security.TokenGenerator;
-import com.collarmc.security.discrete.CipherException;
+import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.security.mojang.Mojang;
 
@@ -59,11 +58,9 @@ public class CollarServer {
     private final BiConsumer<ClientIdentity, Player> sessionStopped;
     private final ConcurrentMap<Session, Bucket> buckets = new ConcurrentHashMap<>();
     private final Services services;
-    private final ProfileCache profileCache;
 
     public CollarServer(Services services) {
         this.services = services;
-        this.profileCache = services.profileCache;
         this.protocolHandlers = new ArrayList<>();
         this.sessionStarted = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStarted(identity, player, this::send));
         this.sessionStopped = (identity, player) -> protocolHandlers.forEach(protocolHandler -> protocolHandler.onSessionStopping(identity, player, this::send));
@@ -126,9 +123,13 @@ public class CollarServer {
                     String url = services.urlProvider.deviceVerificationUrl(token);
                     sendPlain(session, new RegisterDeviceResponse(serverIdentity, url, token));
                 } else {
-                    profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
+                    services.profileCache.getById(req.identity.id()).ifPresentOrElse(profile -> {
                         if (processPrivateIdentityToken(profile, request)) {
                             LOGGER.debug("Profile found for " + req.identity.id());
+                            // TODO: is this the right place?
+                            if (!services.identityStore.isTrustedIdentity(req.identity)) {
+                                services.identityStore.trustIdentity(req.identity);
+                            }
                             sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), TokenGenerator.byteToken(16)));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(serverIdentity, services.urlProvider.resetPrivateIdentity()));
@@ -178,10 +179,10 @@ public class CollarServer {
 
     private boolean processPrivateIdentityToken(Profile profile, IdentifyRequest req) {
         if (profile.privateIdentityToken == null || profile.privateIdentityToken.length == 0) {
-            services.profiles.updateProfile(RequestContext.SERVER, UpdateProfileRequest.privateIdentityToken(profile.id, req.privateIdentityToken));
+            services.profiles.updateProfile(RequestContext.SERVER, UpdateProfileRequest.privateIdentityToken(profile.id, req.token));
             return true;
         }
-        return Arrays.equals(profile.privateIdentityToken, req.privateIdentityToken);
+        return Arrays.equals(profile.privateIdentityToken, req.token);
     }
 
     private BiConsumer<ClientIdentity, ProtocolResponse> createSender() {

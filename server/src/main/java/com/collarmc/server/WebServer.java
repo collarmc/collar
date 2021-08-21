@@ -3,7 +3,7 @@ package com.collarmc.server;
 import com.collarmc.api.authentication.AuthenticationService.*;
 import com.collarmc.api.http.*;
 import com.collarmc.api.profiles.ProfileService;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.server.common.ServerStatus;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.ApiToken;
@@ -145,7 +145,8 @@ public class WebServer {
                     }, services.jsonMapper::writeValueAsString);
                     get("/groups", (request, response) -> {
                         RequestContext context = from(request);
-                        return services.groupStore.findGroupsContaining(new Player(new ClientIdentity(context.owner, null), null)).collect(Collectors.toList());
+                        // TODO: does this search still work???
+                        return services.groupStore.findGroupsContaining(new Player(new ClientIdentity(context.owner, null, null), null)).collect(Collectors.toList());
                     }, services.jsonMapper::writeValueAsString);
                     post("/reset", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
@@ -166,7 +167,7 @@ public class WebServer {
                         DeviceService.TrustDeviceRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.TrustDeviceRequest.class);
                         DeviceService.CreateDeviceResponse device = services.devices.createDevice(context, new CreateDeviceRequest(context.owner, req.deviceName));
                         PublicProfile profile = services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile.toPublic();
-                        services.deviceRegistration.onDeviceRegistered(services.identityStore.identity(), profile, req.token, device);
+                        services.deviceRegistration.onDeviceRegistered(profile, req.token, device);
                         return new TrustDeviceResponse();
                     }, services.jsonMapper::writeValueAsString);
                     delete("/devices/:id", (request, response) -> {

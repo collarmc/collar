@@ -4,7 +4,7 @@ import com.collarmc.protocol.SessionStopReason;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.security.mojang.MinecraftSession;
 
 /**

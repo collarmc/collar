@@ -1,8 +1,9 @@
-package com.collarmc.security.discrete;
+package com.collarmc.security.messages;
 
 import com.collarmc.io.IO;
-import com.collarmc.security.Identity;
-import com.collarmc.security.discrete.CipherException.UnknownCipherException;
+import com.collarmc.security.CollarIdentity;
+import com.collarmc.api.identity.Identity;
+import com.collarmc.security.messages.CipherException.UnknownCipherException;
 import com.google.crypto.tink.*;
 
 import java.io.IOException;
@@ -12,18 +13,14 @@ public final class Cipher<T extends Identity> {
 
     private final Identity self;
     private final IdentityStore<T> identityStore;
-    private final KeysetHandle messagingPrivateKey;
-
-    private final KeysetHandle identityPrivateKey;
+    private final CollarIdentity identity;
 
     public Cipher(Identity self,
                   IdentityStore<T> identityStore,
-                  KeysetHandle messagingPrivateKey,
-                  KeysetHandle identityPrivateKey) {
+                  CollarIdentity identity) {
         this.self = self;
         this.identityStore = identityStore;
-        this.messagingPrivateKey = messagingPrivateKey;
-        this.identityPrivateKey = identityPrivateKey;
+        this.identity = identity;
     }
 
     public byte[] encrypt(byte[] plain, Identity receiver) throws CipherException {
@@ -33,7 +30,7 @@ public final class Cipher<T extends Identity> {
     byte[] encrypt(byte[] plain, Identity receiver, byte[] contextInfo) throws CipherException {
         try {
             HybridEncrypt hybridEncrypt = KeysetHandle.readNoSecret(receiver.publicKey().key).getPrimitive(HybridEncrypt.class);
-            PublicKeySign sign = identityPrivateKey.getPrimitive(PublicKeySign.class);
+            PublicKeySign sign = identity.signatureKey.getPrimitive(PublicKeySign.class);
             MessageEnvelope messageEnvelope = new MessageEnvelope(sign.sign(plain), plain);
             return hybridEncrypt.encrypt(messageEnvelope.serialize(), contextInfo);
         } catch (GeneralSecurityException e) {
@@ -48,10 +45,10 @@ public final class Cipher<T extends Identity> {
     byte[] decrypt(byte[] content, Identity sender, byte[] contextInfo) throws CipherException {
         if (identityStore.isTrustedIdentity(sender)) {
             try {
-                HybridDecrypt hybridDecrypt = messagingPrivateKey.getPrimitive(HybridDecrypt.class);
+                HybridDecrypt hybridDecrypt = identity.dataKey.getPrimitive(HybridDecrypt.class);
                 byte[] bytes = hybridDecrypt.decrypt(content, contextInfo);
                 MessageEnvelope messageEnvelope = new MessageEnvelope(bytes);
-                KeysetHandle handle = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(sender.publicKey().key));
+                KeysetHandle handle = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(sender.signatureKey().key));
                 PublicKeyVerify verify = handle.getPrimitive(PublicKeyVerify.class);
                 verify.verify(messageEnvelope.signature, messageEnvelope.contents);
                 return messageEnvelope.contents;
@@ -65,11 +62,18 @@ public final class Cipher<T extends Identity> {
 
     /**
      * Encrypt for self storage
-     * @param bytes to encrypt
+     * @param plain to encrypt
      * @return cipher text
      */
-    public byte[] encrypt(byte[] bytes) throws CipherException {
-        throw new IllegalStateException("not implemented");
+    public byte[] encrypt(byte[] plain) throws CipherException {
+        try {
+            HybridEncrypt hybridEncrypt = identity.dataKey.getPublicKeysetHandle().getPrimitive(HybridEncrypt.class);
+            PublicKeySign sign = identity.signatureKey.getPrimitive(PublicKeySign.class);
+            MessageEnvelope messageEnvelope = new MessageEnvelope(sign.sign(plain), plain);
+            return hybridEncrypt.encrypt(messageEnvelope.serialize(), IO.writeUUIDToBytes(identityStore.identity().id()));
+        } catch (GeneralSecurityException e) {
+            throw new UnknownCipherException("failed to encrypt data", e);
+        }
     }
 
     /**

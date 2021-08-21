@@ -53,7 +53,7 @@ public final class Services {
         this.urlProvider = configuration.appUrlProvider;
         this.identityStore = new ServerIdentityStoreImpl(configuration.database);
         this.sessions = new SessionManager(packetMapper, identityStore);
-        this.deviceRegistration = new DeviceRegistrationService(sessions);
+        this.deviceRegistration = new DeviceRegistrationService(sessions, identityStore);
         this.passwordHashing = configuration.passwordHashing;
         this.profiles = new ProfileServiceServer(configuration.database, passwordHashing);
         this.profileCache = new ProfileCache(profiles);

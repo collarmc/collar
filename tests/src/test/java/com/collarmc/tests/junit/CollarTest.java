@@ -138,7 +138,7 @@ public abstract class CollarTest {
             Profile profile = this.profile.get();
             Services services = this.services.get();
             DeviceService.CreateDeviceResponse resp = new DeviceService.CreateDeviceResponse(new Device(profile.id, 1, "Cool Computer Beep Boop"));
-            services.deviceRegistration.onDeviceRegistered(services.identityStore.identity(), profile.toPublic(), token, resp);
+            services.deviceRegistration.onDeviceRegistered(profile.toPublic(), token, resp);
             devicesConfirmed.incrementAndGet();
         }
     }

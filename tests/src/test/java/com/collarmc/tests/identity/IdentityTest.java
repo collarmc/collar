@@ -6,7 +6,7 @@ import com.collarmc.client.Collar;
 import com.collarmc.client.api.identity.IdentityApi;
 import com.collarmc.client.api.identity.IdentityListener;
 import com.collarmc.client.security.ClientIdentityStore;
-import com.collarmc.security.ClientIdentity;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.tests.junit.CollarTest;
 
 import java.nio.charset.StandardCharsets;

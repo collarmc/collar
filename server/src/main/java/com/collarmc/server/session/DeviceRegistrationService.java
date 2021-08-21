@@ -1,13 +1,13 @@
 package com.collarmc.server.session;
 
+import com.collarmc.server.security.ServerIdentityStore;
 import org.eclipse.jetty.websocket.api.Session;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.ServerErrorException;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.protocol.devices.DeviceRegisteredResponse;
-import com.collarmc.security.ServerIdentity;
 import com.collarmc.security.TokenGenerator;
-import com.collarmc.security.discrete.CipherException;
+import com.collarmc.security.messages.CipherException;
 import com.collarmc.server.services.devices.DeviceService.CreateDeviceResponse;
 
 import javax.annotation.Nonnull;
@@ -22,9 +22,11 @@ public final class DeviceRegistrationService {
     private final ConcurrentMap<String, Session> devicesWaitingToRegister = new ConcurrentHashMap<>();
     private final ConcurrentMap<Session, String> sessionToRegistrationToken = new ConcurrentHashMap<>();
     private final SessionManager sessions;
+    private final ServerIdentityStore identityStore;
 
-    public DeviceRegistrationService(SessionManager sessions) {
+    public DeviceRegistrationService(SessionManager sessions, ServerIdentityStore identityStore) {
         this.sessions = sessions;
+        this.identityStore = identityStore;
     }
 
     /**
@@ -41,13 +43,11 @@ public final class DeviceRegistrationService {
 
     /**
      * Called when the device has finished registering
-     * @param identity being registered
      * @param profile owner of the device
      * @param token token being claimed
      * @param resp of the device being created
      */
-    public void onDeviceRegistered(@Nonnull ServerIdentity identity,
-                                   @Nonnull PublicProfile profile,
+    public void onDeviceRegistered(@Nonnull PublicProfile profile,
                                    @Nonnull String token,
                                    @Nonnull CreateDeviceResponse resp) {
         Session session = devicesWaitingToRegister.get(token);
@@ -55,7 +55,7 @@ public final class DeviceRegistrationService {
             throw new HttpException.NotFoundException("session does not exist");
         }
         try {
-            sessions.send(session, null, new DeviceRegisteredResponse(identity, profile, resp.device.deviceId));
+            sessions.send(session, null, new DeviceRegisteredResponse(identityStore.identity(), profile, resp.device.deviceId));
         } catch (IOException | CipherException e) {
             throw new ServerErrorException("could not send DeviceRegisteredResponse", e);
         }

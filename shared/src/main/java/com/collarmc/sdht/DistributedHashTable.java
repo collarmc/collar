@@ -2,8 +2,8 @@ package com.collarmc.sdht;
 
 import com.collarmc.sdht.cipher.ContentCipher;
 import com.collarmc.sdht.events.*;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.discrete.CipherException;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.security.messages.CipherException;
 import com.collarmc.utils.Utils;
 
 import java.util.*;

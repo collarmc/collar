@@ -4,13 +4,13 @@ import com.collarmc.api.groups.Group;
 import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.identity.CreateTrustRequest;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.discrete.GroupSession;
-import com.collarmc.security.discrete.IdentityStore;
+import com.collarmc.protocol.identity.IdentifyRequest;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
+import com.collarmc.security.messages.GroupSession;
+import com.collarmc.security.messages.IdentityStore;
 
 import java.io.IOException;
-import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
@@ -19,14 +19,18 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
      */
     ClientIdentity identity();
 
+    ServerIdentity serverIdentity();
+
     GroupSession createSession(Group group);
 
     GroupSessionManager groupSessions();
 
+    IdentifyRequest createIdentifyRequest();
+
     /**
      * @param response of the registered device
      */
-    void processDeviceRegisteredResponse(DeviceRegisteredResponse response);
+    IdentifyRequest processDeviceRegisteredResponse(DeviceRegisteredResponse response);
 
     /**
      * @param identity joining group
@@ -40,7 +44,7 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
      * @param id unique for this request
      * @return SendPreKeyRequest to send to the provided client identity
      */
-    CreateTrustRequest createPreKeyRequest(ClientIdentity identity, long id);
+    CreateTrustRequest createCreateTrustRequest(ClientIdentity identity, long id);
 
     /**
      * Used to distribute keys back to the client who joined
@@ -74,4 +78,6 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
      * Save state
      */
     void save() throws IOException;
+
+    boolean isValid();
 }

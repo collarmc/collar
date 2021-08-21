@@ -1,10 +1,13 @@
-package com.collarmc.security.discrete;
+package com.collarmc.security.messages;
 
 import com.collarmc.io.IO;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
 
+/**
+ * A single group message. Packed inside a {@link GroupMessageEnvelope}.
+ */
 public final class GroupMessage {
     public final UUID group;
     public final byte[] sessionId;

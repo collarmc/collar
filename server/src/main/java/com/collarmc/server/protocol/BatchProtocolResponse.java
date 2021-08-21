@@ -2,8 +2,8 @@ package com.collarmc.server.protocol;
 
 import com.google.common.collect.ImmutableMap;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

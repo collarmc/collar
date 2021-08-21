@@ -9,8 +9,8 @@ import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.session.SessionManager;
 
@@ -44,7 +44,7 @@ public class IdentityProtocolHandler extends ProtocolHandler {
             return true;
         } else if (req instanceof CreateTrustRequest) {
             CreateTrustRequest request = (CreateTrustRequest) req;
-            sender.accept(request.recipient, new CreateTrustResponse(serverIdentity, request.id, request.preKeyBundle, request.identity));
+            sender.accept(request.recipient, new CreateTrustResponse(serverIdentity, request.id, request.identity));
             return true;
         } else if (req instanceof GetProfileRequest) {
             GetProfileRequest request = (GetProfileRequest) req;

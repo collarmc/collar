@@ -74,7 +74,8 @@ public final class HttpClient implements Closeable {
                 null,
                 false,
                 headers,
-                Short.MAX_VALUE);
+                Short.MAX_VALUE * 4);
+        // TODO: frame size max
         WebSocketClientHandler handler = new WebSocketClientHandler(request, handshaker, listener);
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(group)

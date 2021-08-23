@@ -24,7 +24,6 @@ import com.collarmc.protocol.waypoints.RemoveWaypointRequest;
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.Key;
 import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.messages.GroupMessage;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.Hashing;
 import org.apache.logging.log4j.LogManager;
@@ -233,7 +232,8 @@ public class LocationApi extends AbstractApi<LocationListener> {
                             try {
                                 encryptedBytes = groupSession.encrypt(bytes);
                             } catch (CipherException e) {
-                                throw new IllegalStateException(e);
+                                LOGGER.error("Could not share location with group " + groupId, e);
+                                return;
                             }
                             sender.accept(new UpdateLocationRequest(groupId, encryptedBytes));
                         });
@@ -257,22 +257,25 @@ public class LocationApi extends AbstractApi<LocationListener> {
             synchronized (this) {
                 collar.groups().findGroupById(response.group).ifPresent(group -> {
                     Optional<Location> location = identityStore().groupSessions().session(group).map(groupSession -> {
+                        if (response.location == null) {
+                            return null;
+                        }
                         try {
-                            byte[] contents = groupSession.decrypt(response.location, response.sender);
+                            byte[] contents = groupSession.decrypt(response.location, response.sender.identity);
                             return new Location(contents);
                         } catch (IOException | CipherException e) {
-                            LOGGER.error("could not decrypt location sent by " + response.sender);
+                            LOGGER.error("could not decrypt location sent by " + response.sender.identity);
                             return null;
                         }
                     });
                     if (location.isPresent()) {
                         // Update the location
-                        playerLocations.put(response.player, location.get());
+                        playerLocations.put(response.sender, location.get());
                     } else {
                         // Remove if stooped sharing
-                        playerLocations.remove(response.player);
+                        playerLocations.remove(response.sender);
                     }
-                    fireListener("onLocationUpdated", listener -> listener.onLocationUpdated(collar, this, response.player, location.orElse(Location.UNKNOWN)));
+                    fireListener("onLocationUpdated", listener -> listener.onLocationUpdated(collar, this, response.sender, location.orElse(Location.UNKNOWN)));
                 });
             }
             return true;

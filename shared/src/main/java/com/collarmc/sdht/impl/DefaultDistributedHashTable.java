@@ -109,7 +109,8 @@ public final class DefaultDistributedHashTable extends DistributedHashTable {
         });
         if (computedContent.get() != null) {
             try {
-                publisher.publish(new CreateEntryEvent(owner.get(), null, record, this.cipher.crypt(owner.get(), key.namespace, computedContent.get())));
+                byte[] cipherText = this.cipher.crypt(owner.get(), key.namespace, computedContent.get());
+                publisher.publish(new CreateEntryEvent(owner.get(), null, record, cipherText));
             } catch (CipherException e) {
                 throw new IllegalStateException(e);
             }

@@ -434,7 +434,7 @@ public final class Collar {
                     keepAlive.stop();
                     keepAlive.start();
                 } else if (resp instanceof KeepAliveResponse) {
-                    LOGGER.info("KeepAliveResponse received");
+                    LOGGER.trace("KeepAliveResponse received");
                 } else if (resp instanceof RegisterDeviceResponse) {
                     RegisterDeviceResponse registerDeviceResponse = (RegisterDeviceResponse) resp;
                     LOGGER.info("RegisterDeviceResponse received with registration url " + ((RegisterDeviceResponse) resp).approvalUrl);

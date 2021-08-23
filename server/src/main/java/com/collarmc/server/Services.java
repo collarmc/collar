@@ -64,7 +64,7 @@ public final class Services {
         this.minecraftSessionVerifier = configuration.minecraftSessionVerifier;
         this.groupStore = new GroupStore(profileCache, sessions, configuration.database);
         this.groups = new GroupService(groupStore, profileCache, sessions);
-        this.playerLocations = new PlayerLocationService(sessions, profileCache, groups);
+        this.playerLocations = new PlayerLocationService(this);
         this.textures = new TextureService(configuration.database);
         this.friends = new FriendsService(configuration.database, profileCache, sessions);
         this.waypoints = new WaypointService(profileStorage);

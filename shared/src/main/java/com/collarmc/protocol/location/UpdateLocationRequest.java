@@ -11,8 +11,10 @@ import java.util.UUID;
  * There is no response sent back to the sender for this request as this would be too noisy.
  */
 public final class UpdateLocationRequest extends ProtocolRequest {
+    /** Group to share location with **/
     @JsonProperty("group")
     public final UUID group;
+    /** Location **/
     @JsonProperty("location")
     public final byte[] location;
 

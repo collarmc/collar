@@ -26,10 +26,9 @@ public class GroupMessageEnvelope {
             if (version != VERSION) {
                 throw new IllegalStateException("unknown version " + VERSION);
             }
-            int count = dis.readInt();
-            for (int i = 0; i < count; i++) {
-                GroupMessage message = new GroupMessage(IO.readBytes(dis));
-                messages.add(message);
+            int messageCount = dis.readInt();
+            for (int i = 0; i < messageCount; i++) {
+                messages.add(new GroupMessage(IO.readBytes(dis)));
             }
         } catch (IOException e) {
             throw new IllegalStateException(e);

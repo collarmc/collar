@@ -124,7 +124,7 @@ public class CollarServer {
                         if (token != null) {
                             services.identityStore.trustIdentity(request.identity);
                             services.sessions.identify(session, request.identity, null);
-                            byte[] cipherToken = services.identityStore.cipher().encrypt(token, serverIdentity);
+                            byte[] cipherToken = services.identityStore.cipher().encrypt(token, request.identity);
                             sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), Mojang.generateSharedSecret(), cipherToken));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(services.urlProvider.resetPrivateIdentity()));

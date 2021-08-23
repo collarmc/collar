@@ -402,17 +402,19 @@ public final class Collar {
 
         @Override
         public void onMessage(WebSocket webSocket, ByteBuffer messageBuffer) {
-            Optional<ProtocolResponse> responseOptional = readResponse(messageBuffer);
-            responseOptional.ifPresent(resp -> {
+            readResponse(messageBuffer).ifPresent(resp -> {
                 if (resp instanceof IdentifyResponse) {
                     ServerIdentity storedServerIdentity = identityStore.serverIdentity();
                     IdentifyResponse response = (IdentifyResponse) resp;
                     if (!response.identity.equals(storedServerIdentity)) {
-                        throw new ConnectionException("server identity " + response.identity + " does not match " + storedServerIdentity);
+                        configuration.listener.onClientUntrusted(collar, identityStore);
+                        disconnect();
+                        return;
                     }
                     if (!identityStore.verifyIdentityResponse(response)) {
                         configuration.listener.onClientUntrusted(collar, identityStore);
                         disconnect();
+                        return;
                     }
                     MinecraftSession session = configuration.sessionSupplier.get();
                     String serverId;
@@ -473,9 +475,8 @@ public final class Collar {
         }
 
         private Optional<ProtocolResponse> readResponse(ByteBuffer buffer) {
-            PacketIO packetIO = new PacketIO(mapper, identityStore.isValid() ? identityStore.cipher() : null);
             try {
-                return packetIO.decode(serverIdentity, buffer, ProtocolResponse.class);
+                return packets().decode(serverIdentity, buffer, ProtocolResponse.class);
             } catch (CipherException e) {
                 throw new IllegalStateException("Could not recover from cipher error", e);
             } catch (IOException e) {
@@ -484,14 +485,14 @@ public final class Collar {
         }
 
         public void sendRequest(WebSocket webSocket, ProtocolRequest req) {
-            PacketIO packetIO = identityStore.isValid() ? new PacketIO(mapper, identityStore.cipher()) : new PacketIO(mapper, null);
+            PacketIO packetIO = packets();
             byte[] bytes;
             if (state == State.CONNECTED) {
                 try {
                     if (identityStore == null) {
                         throw new IllegalStateException("identity store should be available by the time the client is " + State.CONNECTED);
                     }
-                    bytes = packetIO.encodeEncrypted(serverIdentity, req);
+                    bytes = packets().encodeEncrypted(serverIdentity, req);
                 } catch (InvalidCipherSessionException e) {
                     collar.configuration.listener.onClientUntrusted(collar, identityStore);
                     return;
@@ -506,6 +507,10 @@ public final class Collar {
                 }
             }
             webSocket.send(ByteBuffer.wrap(bytes));
+        }
+
+        private PacketIO packets() {
+            return identityStore.isValid() ? new PacketIO(mapper, identityStore.cipher()) : new PacketIO(mapper, null);
         }
     }
 

@@ -72,7 +72,7 @@ public final class Cipher<T extends Identity> {
     }
 
     /**
-     * Decrypts message with trust verification
+     * Decrypts message
      * @param content to decrypt
      * @param sender identity
      * @param contextInfo of message
@@ -80,15 +80,11 @@ public final class Cipher<T extends Identity> {
      * @throws CipherException if decryption fails
      */
     byte[] decrypt(byte[] content, Identity sender, byte[] contextInfo) throws CipherException {
-        if (identityStore.isTrustedIdentity(sender)) {
-            return decrypt(content, sender.signatureKey(), contextInfo);
-        } else {
-            throw new UnknownCipherException("untrusted identity " + sender);
-        }
+        return decrypt(content, sender.signatureKey(), contextInfo);
     }
 
     /**
-     * Decrypts message without trust verification
+     * Decrypts message
      * @param content to decrypt
      * @param sender id
      * @param signatureKey of sender
@@ -100,7 +96,7 @@ public final class Cipher<T extends Identity> {
     }
 
     /**
-     * Decrypts message without trust verification
+     * Decrypts message
      * @param content to decrypt
      * @param signatureKey of sender
      * @param contextInfo of message

@@ -115,7 +115,6 @@ public final class Collar {
         this.apis.add(identityApi);
         this.apis.add(messagingApi);
         this.apis.add(sdhtApi);
-        addStateSavingShutdownHook(this);
     }
 
     /**
@@ -168,13 +167,6 @@ public final class Collar {
                 return;
             }
             changeState(State.DISCONNECTED);
-            if (identityStore != null) {
-                try {
-                    identityStore.save();
-                } catch (IOException e) {
-                    LOGGER.error("Could not save Collar signal state", e);
-                }
-            }
         }
     }
 
@@ -324,26 +316,6 @@ public final class Collar {
         return response.features.stream()
                 .filter(collarFeature -> feature.equals(collarFeature.name))
                 .findFirst();
-    }
-
-    /**
-     * Saves signal store state on shutdown
-     * @param collar instance
-     */
-    private static void addStateSavingShutdownHook(Collar collar) {
-        WeakReference<Collar> collarWeakRef = new WeakReference<>(collar);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Collar instance = collarWeakRef.get();
-            if (instance != null && instance.identityStore != null) {
-                try {
-                    instance.identityStore.save();
-                } catch (IOException e) {
-                    LOGGER.error("Could not save Collar signal state to disk", e);
-                }
-                // Unlock
-                instance.configuration.homeDirectory.getLock().unlock();
-            }
-        }));
     }
 
     class CollarWebSocket implements WebSocketListener {

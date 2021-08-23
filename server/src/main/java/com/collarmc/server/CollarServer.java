@@ -65,7 +65,7 @@ public class CollarServer {
         protocolHandlers.add(new GroupsProtocolHandler(services));
         protocolHandlers.add(new LocationProtocolHandler(services.playerLocations, services.waypoints, services.identityStore.identity()));
         protocolHandlers.add(new TexturesProtocolHandler(services.profileCache, services.sessions, services.textures));
-        protocolHandlers.add(new IdentityProtocolHandler(services.sessions, services.profiles, services.identityStore.identity()));
+        protocolHandlers.add(new IdentityProtocolHandler(services));
         protocolHandlers.add(new MessagingProtocolHandler(services.sessions, services.groups, services.identityStore.identity()));
         protocolHandlers.add(new SDHTProtocolHandler(services.groups, services.sessions, services.identityStore.identity()));
         protocolHandlers.add(new FriendsProtocolHandler(services.profileCache, services.friends, services.sessions));
@@ -122,7 +122,6 @@ public class CollarServer {
                         LOGGER.debug("Profile found for " + request.identity.id());
                         byte[] token = processIdentityRequestToken(profile, request);
                         if (token != null) {
-                            services.identityStore.trustIdentity(request.identity);
                             services.sessions.identify(session, request.identity, null);
                             byte[] cipherToken = services.identityStore.cipher().encrypt(token, request.identity);
                             sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), Mojang.generateSharedSecret(), cipherToken));

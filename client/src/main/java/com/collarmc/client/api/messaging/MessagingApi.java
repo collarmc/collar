@@ -39,7 +39,6 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
     public void sendPrivateMessage(Player player, Message message) {
         IdentityApi identityApi = collar.identities();
         identityApi.identify(player.minecraftPlayer.id)
-                .thenCompose(identityApi::createTrust)
                 .thenAccept(sender -> {
                     if (sender.isPresent()) {
                         Cipher cipher = identityStore().cipher();

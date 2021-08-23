@@ -5,7 +5,6 @@ import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.protocol.groups.*;
-import com.collarmc.protocol.identity.CreateTrustRequest;
 import com.collarmc.protocol.identity.IdentifyRequest;
 import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.security.messages.GroupSession;
@@ -16,16 +15,30 @@ import java.util.UUID;
 
 public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
     /**
-     * @return the players identity
+     * @return this players identity
      */
     ClientIdentity identity();
 
+    /**
+     * @return verified identity of the server
+     */
     ServerIdentity serverIdentity();
 
+    /**
+     * Create a new group session
+     * @param group to create session for
+     * @return session
+     */
     GroupSession createSession(Group group);
 
+    /**
+     * @return groups message sessions
+     */
     GroupSessionManager groupSessions();
 
+    /**
+     * @return create the identify request to send to server
+     */
     IdentifyRequest createIdentifyRequest();
 
     /**
@@ -45,12 +58,6 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
      * @return join request
      */
     JoinGroupRequest createJoinGroupRequest(UUID groupId);
-
-    /**
-     * @param id unique for this request
-     * @return SendPreKeyRequest to send to the provided client identity
-     */
-    CreateTrustRequest createCreateTrustRequest(ClientIdentity recipient, long id);
 
     /**
      * Used to distribute keys back to the client who joined
@@ -79,11 +86,6 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
      * @throws IOException when store could not be recreated
      */
     void reset() throws IOException;
-
-    /**
-     * Save state
-     */
-    void save() throws IOException;
 
     boolean isValid();
 }

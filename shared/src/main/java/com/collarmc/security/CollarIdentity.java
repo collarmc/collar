@@ -1,14 +1,14 @@
 package com.collarmc.security;
 
-import com.collarmc.io.AtomicFile;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.io.IO;
-import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.CipherException.UnavailableCipherException;
 import com.google.crypto.tink.*;
 import com.google.crypto.tink.config.TinkConfig;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
+import java.util.UUID;
 
 /**
  * Identity representing a client or server on the Collar protocol
@@ -18,10 +18,14 @@ import java.security.GeneralSecurityException;
 public final class CollarIdentity {
     private static final int VERSION = 2;
 
+    public final UUID profile;
+    public final ServerIdentity serverIdentity;
     public final KeysetHandle signatureKey;
     public final KeysetHandle dataKey;
 
-    public CollarIdentity() throws UnavailableCipherException {
+    public CollarIdentity(UUID profile, ServerIdentity serverIdentity) throws UnavailableCipherException {
+        this.profile = profile;
+        this.serverIdentity = serverIdentity;
         try {
             this.signatureKey = KeysetHandle.generateNew(KeyTemplates.get("ECDSA_P256"));
             this.dataKey = KeysetHandle.generateNew(KeyTemplates.get("ECIES_P256_HKDF_HMAC_SHA256_AES128_CTR_HMAC_SHA256"));
@@ -37,8 +41,13 @@ public final class CollarIdentity {
                 if (VERSION != version) {
                     throw new IllegalStateException("invalid version " + version);
                 }
+                profile = IO.readUUID(dataStream);
                 signatureKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(IO.readBytes(dataStream)));
                 dataKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(IO.readBytes(dataStream)));
+                UUID serverId = IO.readUUID(dataStream);
+                byte[] serverSigKey = IO.readBytes(dataStream);
+                byte[] serverDataKey = IO.readBytes(dataStream);
+                serverIdentity = new ServerIdentity(new PublicKey(serverDataKey), new PublicKey(serverSigKey), serverId);
             }
         } catch (IOException|GeneralSecurityException e) {
             throw new IllegalStateException("could not read identity.cif", e);
@@ -71,33 +80,16 @@ public final class CollarIdentity {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream dataStream = new DataOutputStream(outputStream)) {
                 dataStream.writeInt(VERSION);
+                IO.writeUUID(dataStream, profile);
                 IO.writeBytes(dataStream, serializeKey(signatureKey));
                 IO.writeBytes(dataStream, serializeKey(dataKey));
+                IO.writeUUID(dataStream, serverIdentity.serverId);
+                IO.writeBytes(dataStream, serverIdentity.signatureKey.key);
+                IO.writeBytes(dataStream, serverIdentity.publicKey.key);
             }
             return outputStream.toByteArray();
         } catch (IOException e) {
             throw new IllegalStateException("could not serialize identity.cif");
-        }
-    }
-
-    /**
-     * Creates or generates a new private identity for a client
-     * @param profileDirectory in collar client home
-     * @return private identity
-     */
-    public static CollarIdentity getOrCreate(File profileDirectory) throws CipherException {
-        File file = new File(profileDirectory, "identity.cif");
-        if (file.exists()) {
-            byte[] bytes = IO.readBytesFromFile(file);
-            return new CollarIdentity(bytes);
-        } else {
-            CollarIdentity collarIdentity = new CollarIdentity();
-            try {
-                AtomicFile.write(file, theFile -> IO.writeBytesToFile(theFile, collarIdentity.serialize()));
-            } catch (IOException e) {
-                throw new IllegalStateException("could not write private identity", e);
-            }
-            return collarIdentity;
         }
     }
 

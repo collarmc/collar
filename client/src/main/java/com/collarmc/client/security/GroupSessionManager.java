@@ -22,30 +22,12 @@ public final class GroupSessionManager {
         return Optional.ofNullable(sessions.get(group.id));
     }
 
-    public GroupSession create(Group group) {
+    public GroupSession createOrUpdate(Group group) {
         return sessions.compute(group.id, (uuid, groupSession) -> store.createSession(group));
     }
 
     public GroupSession delete(UUID group) {
         return sessions.remove(group);
-    }
-
-    public GroupSession addPlayer(Group group, Player player) {
-        return sessions.compute(group.id, (uuid, groupSession) -> {
-            if (groupSession == null) {
-                throw new IllegalStateException("no session for group " + group.id);
-            }
-            return groupSession.add(player.identity);
-        });
-    }
-
-    public GroupSession removePlayer(Group group, Player player) {
-        return sessions.compute(group.id, (uuid, groupSession) -> {
-            if (groupSession == null) {
-                throw new IllegalStateException("no session for group " + group.id);
-            }
-            return groupSession.remove(player.identity);
-        });
     }
 
     public void clear() {

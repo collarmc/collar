@@ -130,25 +130,6 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
         }
     }
 
-    /**
-     * Creates a bi-directional trust between the clients identity and a remote client identity
-     * @param identity to create bi-directional trust with
-     * @return future for when trust relationship has been created
-     */
-    public CompletableFuture<Optional<ClientIdentity>> createTrust(Optional<ClientIdentity> identity) {
-        ClientIdentity clientIdentity = identity.orElse(null);
-        if (clientIdentity == null || identityStore().isTrustedIdentity(clientIdentity)) {
-            return CompletableFuture.completedFuture(identity);
-        } else {
-            CreateTrustRequest request = identityStore().createCreateTrustRequest(identity.get(), TokenGenerator.longToken());
-            CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
-            LOGGER.info("Creating trust future with " + identity + " and id " + request.id);
-            identifyFutures.put(request.id, future);
-            sender.accept(request);
-            return future;
-        }
-    }
-
     @Override
     public void onStateChanged(Collar.State state) {
         if (state == Collar.State.DISCONNECTED) {
@@ -165,21 +146,6 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             Optional<ClientIdentity> identity = Optional.ofNullable(response.found);
             identityCache.put(response.player, identity);
             future.complete(identity);
-            return true;
-        } else if (resp instanceof CreateTrustResponse) {
-            CreateTrustResponse response = (CreateTrustResponse) resp;
-            identityStore().trustIdentity(response.sender);
-            fireListener("onIdentityTrusted", listener -> {
-                listener.onIdentityTrusted(collar, this, identityStore(), response.sender);
-            });
-            CompletableFuture<Optional<ClientIdentity>> removed = identifyFutures.remove(response.id);
-            if (removed == null) {
-                LOGGER.info("Sending back a CreateTrustRequest to " + response.sender + " and id " + response.id);
-                sender.accept(identityStore().createCreateTrustRequest(response.sender, response.id));
-            } else {
-                LOGGER.info("Finished creating trust with " + response.sender + " and id " + response.id);
-                removed.complete(Optional.ofNullable(response.sender));
-            }
             return true;
         } else if (resp instanceof GetProfileResponse) {
             GetProfileResponse response = (GetProfileResponse) resp;

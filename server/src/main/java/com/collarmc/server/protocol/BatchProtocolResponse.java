@@ -1,9 +1,8 @@
 package com.collarmc.server.protocol;
 
-import com.google.common.collect.ImmutableMap;
-import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
+import com.collarmc.protocol.ProtocolResponse;
+import com.google.common.collect.ImmutableMap;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -12,13 +11,12 @@ import java.util.Optional;
 public final class BatchProtocolResponse extends ProtocolResponse {
     public final Map<ProtocolResponse, ClientIdentity> responses;
 
-    public BatchProtocolResponse(ServerIdentity identity, Map<ProtocolResponse, ClientIdentity> responses) {
-        super(identity);
+    public BatchProtocolResponse(Map<ProtocolResponse, ClientIdentity> responses) {
         this.responses = responses;
     }
 
-    public BatchProtocolResponse(ServerIdentity identity) {
-        this(identity, new LinkedHashMap<>());
+    public BatchProtocolResponse() {
+        this(new LinkedHashMap<>());
     }
 
     public BatchProtocolResponse add(ClientIdentity identity, ProtocolResponse response) {
@@ -32,7 +30,7 @@ public final class BatchProtocolResponse extends ProtocolResponse {
     }
 
     public static BatchProtocolResponse one(ClientIdentity identity, ProtocolResponse response) {
-        return new BatchProtocolResponse(response.identity, ImmutableMap.of(response, identity));
+        return new BatchProtocolResponse(ImmutableMap.of(response, identity));
     }
 
     public Optional<BatchProtocolResponse> optional() {

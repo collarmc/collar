@@ -1,12 +1,12 @@
 package com.collarmc.sdht.impl;
 
-import com.collarmc.sdht.*;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.sdht.Record;
+import com.collarmc.sdht.*;
 import com.collarmc.sdht.cipher.ContentCipher;
 import com.collarmc.sdht.events.CreateEntryEvent;
 import com.collarmc.sdht.events.DeleteRecordEvent;
 import com.collarmc.sdht.events.Publisher;
-import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.security.messages.CipherException;
 import com.google.common.collect.ImmutableSet;
 import org.apache.logging.log4j.LogManager;

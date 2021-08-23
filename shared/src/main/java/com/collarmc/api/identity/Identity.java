@@ -11,11 +11,7 @@ public interface Identity {
     @JsonIgnore
     UUID id();
 
-    // TODO: move this to the identify packet to reduce size of frame
-    @JsonIgnore
     PublicKey publicKey();
 
-    // TODO: move this to the identify packet to reduce size of frame
-    @JsonIgnore
     PublicKey signatureKey();
 }

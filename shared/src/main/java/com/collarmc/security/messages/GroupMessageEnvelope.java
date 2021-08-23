@@ -1,19 +1,57 @@
 package com.collarmc.security.messages;
 
-import com.collarmc.api.identity.Identity;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.collarmc.io.IO;
 
-/**
- * Message envelope for group messages
- */
-public final class GroupMessageEnvelope {
-    @JsonProperty("r")
-    public final Identity recipient;
-    @JsonProperty("m")
-    public final byte[] message;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-    public GroupMessageEnvelope(@JsonProperty("r") Identity recipient, @JsonProperty("m") byte[] message) {
-        this.recipient = recipient;
-        this.message = message;
+public class GroupMessageEnvelope {
+    private static final int VERSION = 1;
+
+    public final Map<UUID, GroupMessage> messages;
+
+    public GroupMessageEnvelope(List<GroupMessage> messages) {
+        this.messages = map(messages);
+    }
+
+    public GroupMessageEnvelope(byte[] bytes) {
+        List<GroupMessage> messages = new ArrayList<>();
+        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        try (DataInputStream dis = new DataInputStream(bis)) {
+            int version = dis.readInt();
+            if (version != VERSION) {
+                throw new IllegalStateException("unknown version " + VERSION);
+            }
+            int count = dis.readInt();
+            for (int i = 0; i < count; i++) {
+                GroupMessage message = new GroupMessage(IO.readBytes(dis));
+                messages.add(message);
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        this.messages = map(messages);
+    }
+
+    public byte[] serialize() {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (DataOutputStream dos = new DataOutputStream(bos)) {
+            dos.writeInt(VERSION);
+            dos.writeInt(messages.size());
+            for (GroupMessage groupMessage : messages.values()) {
+                IO.writeBytes(dos, groupMessage.serialize());
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
+        return bos.toByteArray();
+    }
+
+    private static Map<UUID, GroupMessage> map(List<GroupMessage> messages) {
+        return messages.stream().collect(Collectors.toMap(groupMessage -> groupMessage.recipient, groupMessage -> groupMessage));
     }
 }

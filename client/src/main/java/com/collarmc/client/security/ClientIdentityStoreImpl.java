@@ -10,14 +10,18 @@ import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.identity.CreateTrustRequest;
 import com.collarmc.protocol.identity.IdentifyRequest;
-import com.collarmc.security.*;
+import com.collarmc.protocol.identity.IdentifyResponse;
+import com.collarmc.security.CollarIdentity;
+import com.collarmc.security.PublicKey;
+import com.collarmc.security.TokenGenerator;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.messages.CipherException.UnknownCipherException;
-import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.messages.GroupSession;
 import com.collarmc.utils.Utils;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,13 +33,15 @@ import java.util.stream.Collectors;
 
 public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
+    private static final Logger LOGGER = LogManager.getLogger(ClientIdentityStoreImpl.class);
     private final GroupSessionManager groupSessionManager = new GroupSessionManager(this);
     private final CollarIdentity collarIdentity;
 
     private State state;
     private final File file;
+    private final byte[] token = TokenGenerator.byteToken(256);
 
-    public ClientIdentityStoreImpl(HomeDirectory directory) throws IOException, UnknownCipherException {
+    public ClientIdentityStoreImpl(HomeDirectory directory) throws IOException, CipherException {
         this.collarIdentity = CollarIdentity.getOrCreate(directory.profile());
         this.file = filePath(directory);
         if (file.exists()) {
@@ -63,13 +69,29 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     public IdentifyRequest createIdentifyRequest() {
         if (isValid()) {
             try {
-                return new IdentifyRequest(identity(), cipher().encrypt(TokenGenerator.byteToken(256), state.serverIdentity));
+                return new IdentifyRequest(identity(), cipher().encrypt(token, state.serverIdentity));
             } catch (CipherException e) {
+                LOGGER.log(Level.ERROR, "could not encrypt token", e);
                 throw new RuntimeException(e);
             }
         } else {
             return IdentifyRequest.unknown();
         }
+    }
+
+    @Override
+    public boolean verifyIdentityResponse(IdentifyResponse response) {
+        // Decrypt the token received from the server
+        byte[] token;
+        try {
+            ServerIdentity serverIdentity = serverIdentity();
+            token = cipher().decrypt(response.token, serverIdentity.id(), serverIdentity.signatureKey());
+        } catch (CipherException e) {
+            LOGGER.log(Level.ERROR, "could not decrypt token", e);
+            return false;
+        }
+        // Check that the token from server matches the token we initially sent
+        return Arrays.equals(this.token, token);
     }
 
     @Override
@@ -91,6 +113,11 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     @Override
     public void trustIdentity(Identity identity) {
         state.keys.compute(identity.id(), (uuid, publicKey) -> identity.publicKey());
+        try {
+            save();
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     @Override
@@ -100,8 +127,8 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public IdentifyRequest processDeviceRegisteredResponse(DeviceRegisteredResponse response) {
-        trustIdentity(response.identity);
-        state = new State(response.profile.id, state.keys, response.identity);
+        trustIdentity(response.serverIdentity);
+        state = new State(response.profile.id, state.keys, response.serverIdentity);
         try {
             save();
         } catch (IOException e) {
@@ -111,23 +138,26 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     }
 
     @Override
-    public JoinGroupRequest createJoinGroupRequest(ClientIdentity identity, UUID groupId) {
-        return new JoinGroupRequest(identity, groupId, MembershipState.PENDING, null);
+    public JoinGroupRequest createJoinGroupRequest(UUID groupId) {
+        return new JoinGroupRequest(groupId, MembershipState.ACCEPTED);
     }
 
     @Override
-    public CreateTrustRequest createCreateTrustRequest(ClientIdentity identity, long id) {
-        return new CreateTrustRequest(identity(), id, identity);
+    public CreateTrustRequest createCreateTrustRequest(ClientIdentity recipient, long id) {
+        return new CreateTrustRequest(id, recipient);
     }
 
     @Override
     public AcknowledgedGroupJoinedRequest processJoinGroupResponse(JoinGroupResponse resp) {
         groupSessionManager.create(resp.group);
-        return new AcknowledgedGroupJoinedRequest(identity(), resp.sender, resp.group.id);
+        resp.group.members.stream().map(member -> member.player.identity).forEach(this::trustIdentity);
+        return new AcknowledgedGroupJoinedRequest(resp.sender, resp.group.id);
     }
 
     @Override
     public void processAcknowledgedGroupJoinedResponse(AcknowledgedGroupJoinedResponse response) {
+        // Trust members
+        response.group.members.stream().map(member -> member.player.identity).forEach(this::trustIdentity);
         groupSessionManager.create(response.group);
     }
 

@@ -1,7 +1,6 @@
 package com.collarmc.protocol.location;
 
 import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.api.identity.ClientIdentity;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -18,10 +17,8 @@ public final class UpdateLocationRequest extends ProtocolRequest {
     public final byte[] location;
 
     @JsonCreator
-    public UpdateLocationRequest(@JsonProperty("identity") ClientIdentity identity,
-                                 @JsonProperty("group") UUID group,
+    public UpdateLocationRequest(@JsonProperty("group") UUID group,
                                  @JsonProperty("location") byte[] location) {
-        super(identity);
         this.group = group;
         this.location = location;
     }

@@ -1,9 +1,5 @@
 package com.collarmc.tests.server;
 
-import com.collarmc.tests.junit.CollarServerRule;
-import com.google.common.io.Files;
-import org.junit.Rule;
-import org.junit.Test;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.client.Collar;
@@ -14,7 +10,11 @@ import com.collarmc.server.mongo.Mongo;
 import com.collarmc.server.security.mojang.NojangMinecraftSessionVerifier;
 import com.collarmc.server.services.profiles.ProfileServiceServer;
 import com.collarmc.tests.junit.CollarClientRule;
+import com.collarmc.tests.junit.CollarServerRule;
 import com.collarmc.tests.junit.CollarTest;
+import com.google.common.io.Files;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Set;

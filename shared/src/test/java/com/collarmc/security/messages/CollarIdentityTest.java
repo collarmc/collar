@@ -10,21 +10,11 @@ import java.security.GeneralSecurityException;
 
 public class CollarIdentityTest {
     @Test
-    public void encryptDecrypt() throws Exception {
-        CollarIdentity identity = new CollarIdentity();
-        byte[] cipherText = identity.encrypt("cute".getBytes(StandardCharsets.UTF_8));
-        Assert.assertEquals("cute", new String(identity.decrypt(cipherText), StandardCharsets.UTF_8));
-    }
-
-    @Test
     public void roundTrip() throws Exception {
         CollarIdentity identity = new CollarIdentity();
-        byte[] cipherText = identity.encrypt("cute".getBytes(StandardCharsets.UTF_8));
         byte[] identityBytes = identity.serialize();
         identity = new CollarIdentity(identityBytes);
-        Assert.assertEquals("cute", new String(identity.decrypt(cipherText), StandardCharsets.UTF_8));
     }
-
 
     static {
         try {

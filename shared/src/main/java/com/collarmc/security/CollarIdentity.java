@@ -3,10 +3,9 @@ package com.collarmc.security;
 import com.collarmc.io.AtomicFile;
 import com.collarmc.io.IO;
 import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.messages.CipherException.UnknownCipherException;
+import com.collarmc.security.messages.CipherException.UnavailableCipherException;
 import com.google.crypto.tink.*;
 import com.google.crypto.tink.config.TinkConfig;
-import com.google.crypto.tink.signature.SignatureKeyTemplates;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
@@ -14,6 +13,7 @@ import java.security.GeneralSecurityException;
 /**
  * Identity representing a client or server on the Collar protocol
  * For crypto purposes, use {@link com.collarmc.security.messages.Cipher<?>}
+ * This class represents the identity.cif
  */
 public final class CollarIdentity {
     private static final int VERSION = 2;
@@ -21,12 +21,12 @@ public final class CollarIdentity {
     public final KeysetHandle signatureKey;
     public final KeysetHandle dataKey;
 
-    public CollarIdentity() {
+    public CollarIdentity() throws UnavailableCipherException {
         try {
-            this.signatureKey = KeysetHandle.generateNew(SignatureKeyTemplates.ED25519);
+            this.signatureKey = KeysetHandle.generateNew(KeyTemplates.get("ECDSA_P256"));
             this.dataKey = KeysetHandle.generateNew(KeyTemplates.get("ECIES_P256_HKDF_HMAC_SHA256_AES128_CTR_HMAC_SHA256"));
         } catch (GeneralSecurityException e) {
-            throw new IllegalStateException("could not generate new collar identity", e);
+            throw new UnavailableCipherException("could not generate new collar identity", e);
         }
     }
 
@@ -85,7 +85,7 @@ public final class CollarIdentity {
      * @param profileDirectory in collar client home
      * @return private identity
      */
-    public static CollarIdentity getOrCreate(File profileDirectory) {
+    public static CollarIdentity getOrCreate(File profileDirectory) throws CipherException {
         File file = new File(profileDirectory, "identity.cif");
         if (file.exists()) {
             byte[] bytes = IO.readBytesFromFile(file);
@@ -98,24 +98,6 @@ public final class CollarIdentity {
                 throw new IllegalStateException("could not write private identity", e);
             }
             return collarIdentity;
-        }
-    }
-
-    public byte[] encrypt(byte[] bytes) throws CipherException {
-        try {
-            HybridEncrypt hybridEncrypt = dataKey.getPublicKeysetHandle().getPrimitive(HybridEncrypt.class);
-            return hybridEncrypt.encrypt(bytes, null);
-        } catch (GeneralSecurityException e) {
-            throw new UnknownCipherException("could not encrypt data", e);
-        }
-    }
-
-    public byte[] decrypt(byte[] bytes) throws CipherException {
-        try {
-            HybridDecrypt hybridDecrypt = dataKey.getPrimitive(HybridDecrypt.class);
-            return hybridDecrypt.decrypt(bytes, null);
-        } catch (GeneralSecurityException e) {
-            throw new UnknownCipherException("could not encrypt data", e);
         }
     }
 

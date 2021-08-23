@@ -2,8 +2,9 @@ package com.collarmc.server.security;
 
 import com.collarmc.api.identity.Identity;
 import com.collarmc.api.identity.ServerIdentity;
-import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.CollarIdentity;
+import com.collarmc.security.messages.Cipher;
+import com.collarmc.security.messages.CipherException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -23,7 +24,7 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
     private final UUID serverId = UUID.randomUUID();
     private final CollarIdentity collarIdentity;
 
-    public ServerIdentityStoreImpl(MongoDatabase database) throws GeneralSecurityException {
+    public ServerIdentityStoreImpl(MongoDatabase database) throws CipherException {
         this.identities = database.getCollection("discrete_identities");
         this.identities.createIndex(new Document(Map.of("profile", 1)));
         this.serverIdentity = database.getCollection("discrete_server_identity");

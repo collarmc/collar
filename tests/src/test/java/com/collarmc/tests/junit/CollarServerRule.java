@@ -1,10 +1,5 @@
 package com.collarmc.tests.junit;
 
-import com.mongodb.client.MongoDatabase;
-import org.junit.rules.TestRule;
-import org.junit.runner.Description;
-import org.junit.runners.model.Statement;
-import spark.Spark;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.http.HttpClient;
 import com.collarmc.http.Request;
@@ -13,6 +8,11 @@ import com.collarmc.server.Services;
 import com.collarmc.server.WebServer;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.mongo.Mongo;
+import com.mongodb.client.MongoDatabase;
+import org.junit.rules.TestRule;
+import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
+import spark.Spark;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;

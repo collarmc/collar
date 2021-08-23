@@ -1,9 +1,9 @@
 package com.collarmc.server.services.location;
 
 import com.collarmc.api.groups.Group;
-import com.google.common.collect.Sets;
 import com.collarmc.api.groups.MemberSource;
 import com.collarmc.api.session.Player;
+import com.google.common.collect.Sets;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

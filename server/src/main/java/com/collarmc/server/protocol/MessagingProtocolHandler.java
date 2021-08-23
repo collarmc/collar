@@ -1,18 +1,18 @@
 package com.collarmc.server.protocol;
 
-import org.eclipse.jetty.websocket.api.Session;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
-import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.services.groups.GroupService;
 import com.collarmc.server.session.SessionManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.websocket.api.Session;
 
 import java.util.function.BiConsumer;
 
@@ -31,19 +31,19 @@ public class MessagingProtocolHandler extends ProtocolHandler {
     }
 
     @Override
-    public boolean handleRequest(CollarServer collar, ProtocolRequest req, BiConsumer<ClientIdentity, ProtocolResponse> sender) {
+    public boolean handleRequest(CollarServer collar, ClientIdentity identity, ProtocolRequest req, BiConsumer<ClientIdentity, ProtocolResponse> sender) {
         if (req instanceof SendMessageRequest) {
             SendMessageRequest request = (SendMessageRequest) req;
             if (request.group != null) {
-                groups.createMessages(request).ifPresent(response -> sender.accept(null, response));
+                groups.createMessages(identity, request).ifPresent(response -> sender.accept(null, response));
             } else if (request.recipient != null) {
-                sessions.findPlayer(request.identity).ifPresentOrElse(player -> {
-                    sender.accept(request.recipient, new SendMessageResponse(this.serverIdentity, req.identity, null, player, request.message));
+                sessions.findPlayer(identity).ifPresentOrElse(player -> {
+                    sender.accept(request.recipient, new SendMessageResponse(identity, null, player, request.message));
                 }, () -> {
-                    LOGGER.info("could not find player for " + req.identity);
+                    LOGGER.info("could not find player for " + identity);
                 });
             } else {
-                LOGGER.warn( "sent a malformed SendMessageRequest by " + req.identity);
+                LOGGER.warn( "sent a malformed SendMessageRequest by " + identity);
             }
             return true;
         }

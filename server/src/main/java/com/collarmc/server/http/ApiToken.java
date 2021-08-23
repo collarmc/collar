@@ -1,9 +1,9 @@
 package com.collarmc.server.http;
 
-import com.google.common.io.BaseEncoding;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.profiles.Role;
 import com.collarmc.server.services.authentication.TokenCrypter;
+import com.google.common.io.BaseEncoding;
 
 import java.io.*;
 import java.util.Date;

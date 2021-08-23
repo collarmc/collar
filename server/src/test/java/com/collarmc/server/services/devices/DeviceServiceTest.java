@@ -1,12 +1,12 @@
 package com.collarmc.server.services.devices;
 
+import com.collarmc.api.http.RequestContext;
+import com.collarmc.api.profiles.Role;
 import com.collarmc.server.junit.MongoDatabaseTestRule;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import com.collarmc.api.http.RequestContext;
-import com.collarmc.api.profiles.Role;
 
 import java.util.List;
 import java.util.Set;

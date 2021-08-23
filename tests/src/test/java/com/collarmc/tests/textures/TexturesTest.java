@@ -1,24 +1,24 @@
 package com.collarmc.tests.textures;
 
-import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.security.mojang.MinecraftPlayer;
-import com.google.common.io.ByteSource;
-import com.google.common.io.Resources;
-import org.junit.Ignore;
-import org.junit.Test;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.groups.MemberSource;
 import com.collarmc.api.http.RequestContext;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.textures.TextureType;
 import com.collarmc.client.api.textures.Texture;
+import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.server.Services;
 import com.collarmc.server.services.profiles.ProfileServiceServer;
 import com.collarmc.server.services.textures.TextureService.CreateTextureRequest;
 import com.collarmc.tests.junit.CollarAssert;
 import com.collarmc.tests.junit.CollarTest;
+import com.google.common.io.ByteSource;
+import com.google.common.io.Resources;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;

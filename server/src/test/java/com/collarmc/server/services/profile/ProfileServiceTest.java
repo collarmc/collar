@@ -1,11 +1,5 @@
 package com.collarmc.server.services.profile;
 
-import com.collarmc.server.junit.MongoDatabaseTestRule;
-import com.collarmc.server.security.hashing.PasswordHashing;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.ConflictException;
 import com.collarmc.api.http.HttpException.NotFoundException;
@@ -13,7 +7,13 @@ import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.GetProfileRequest;
+import com.collarmc.server.junit.MongoDatabaseTestRule;
+import com.collarmc.server.security.hashing.PasswordHashing;
 import com.collarmc.server.services.profiles.ProfileServiceServer;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import static org.junit.Assert.fail;
 

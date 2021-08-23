@@ -2,7 +2,10 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.groups.*;
 import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.profiles.PublicProfile;
+import com.collarmc.api.session.Player;
 import com.collarmc.server.services.profiles.ProfileCache;
+import com.collarmc.server.session.SessionManager;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -11,9 +14,6 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
-import com.collarmc.api.profiles.PublicProfile;
-import com.collarmc.api.session.Player;
-import com.collarmc.server.session.SessionManager;
 
 import java.util.*;
 import java.util.stream.Collectors;

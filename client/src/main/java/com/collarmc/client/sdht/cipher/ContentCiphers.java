@@ -1,8 +1,8 @@
 package com.collarmc.client.sdht.cipher;
 
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.cipher.ContentCipher;
-import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.CipherException.UnavailableCipherException;
 

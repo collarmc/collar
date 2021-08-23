@@ -1,7 +1,7 @@
 package com.collarmc.sdht.events;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.identity.ClientIdentity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 

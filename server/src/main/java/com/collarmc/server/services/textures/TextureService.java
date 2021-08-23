@@ -1,5 +1,11 @@
 package com.collarmc.server.services.textures;
 
+import com.collarmc.api.http.HttpException.BadRequestException;
+import com.collarmc.api.http.HttpException.ConflictException;
+import com.collarmc.api.http.HttpException.NotFoundException;
+import com.collarmc.api.http.HttpException.ServerErrorException;
+import com.collarmc.api.http.RequestContext;
+import com.collarmc.api.textures.TextureType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -10,12 +16,6 @@ import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
-import com.collarmc.api.http.HttpException.BadRequestException;
-import com.collarmc.api.http.HttpException.ConflictException;
-import com.collarmc.api.http.HttpException.NotFoundException;
-import com.collarmc.api.http.HttpException.ServerErrorException;
-import com.collarmc.api.http.RequestContext;
-import com.collarmc.api.textures.TextureType;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,14 +1,17 @@
 package com.collarmc.http;
 
+import com.collarmc.utils.Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.io.BaseEncoding;
 import io.mikael.urlbuilder.UrlBuilder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.handler.codec.http.*;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.multipart.HttpPostRequestEncoder;
 import io.netty.handler.codec.http.multipart.HttpPostRequestEncoder.ErrorDataEncoderException;
-import com.collarmc.utils.Utils;
 
 import java.net.URI;
 import java.net.URISyntaxException;

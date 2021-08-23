@@ -1,9 +1,8 @@
 package com.collarmc.protocol.identity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
+import com.collarmc.protocol.ProtocolResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
@@ -22,11 +21,9 @@ public final class GetIdentityResponse extends ProtocolResponse {
     @JsonProperty("player")
     public final UUID player;
 
-    public GetIdentityResponse(@JsonProperty("identity") ServerIdentity identity,
-                               @JsonProperty("id") Long id,
+    public GetIdentityResponse(@JsonProperty("id") Long id,
                                @JsonProperty("found") ClientIdentity found,
                                @JsonProperty("player") UUID player) {
-        super(identity);
         this.id = id;
         this.found = found;
         this.player = player;

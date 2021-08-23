@@ -1,38 +1,38 @@
 package com.collarmc.server;
 
 import com.collarmc.api.authentication.AuthenticationService.*;
-import com.collarmc.api.http.*;
-import com.collarmc.api.profiles.ProfileService;
-import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.server.common.ServerStatus;
-import com.collarmc.server.configuration.Configuration;
-import com.collarmc.server.http.ApiToken;
-import com.collarmc.server.services.authentication.TokenCrypter;
-import com.collarmc.server.services.textures.TextureService;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableList;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import spark.Request;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.groups.MembershipRole;
+import com.collarmc.api.http.*;
 import com.collarmc.api.http.HttpException.BadRequestException;
 import com.collarmc.api.http.HttpException.NotFoundException;
 import com.collarmc.api.http.HttpException.UnauthorisedException;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.GetProfileRequest;
 import com.collarmc.api.profiles.ProfileService.UpdateProfileRequest;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.api.profiles.Role;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.textures.TextureType;
+import com.collarmc.server.common.ServerStatus;
 import com.collarmc.server.common.ServerVersion;
+import com.collarmc.server.configuration.Configuration;
+import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.http.HandlebarsTemplateEngine;
+import com.collarmc.server.services.authentication.TokenCrypter;
 import com.collarmc.server.services.devices.DeviceService;
 import com.collarmc.server.services.devices.DeviceService.CreateDeviceRequest;
 import com.collarmc.server.services.devices.DeviceService.DeleteDeviceRequest;
 import com.collarmc.server.services.devices.DeviceService.TrustDeviceResponse;
+import com.collarmc.server.services.textures.TextureService;
 import com.collarmc.utils.Utils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.google.common.collect.ImmutableList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import spark.Request;
 
 import javax.servlet.ServletOutputStream;
 import java.io.IOException;
@@ -156,7 +156,7 @@ public class WebServer {
                             throw new BadRequestException("user mismatch");
                         }
                         services.profileStorage.delete(context.owner);
-                        services.profiles.updateProfile(context, UpdateProfileRequest.privateIdentityToken(loginResp.profile.id, new byte[0]));
+                        services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(loginResp.profile.id));
                         return new Object();
                     }, services.jsonMapper::writeValueAsString);
                     get("/devices", (request, response) -> {
@@ -211,7 +211,7 @@ public class WebServer {
                     post("/reset", (request, response) -> {
                         RequestContext context = from(request);
                         services.profileStorage.delete(context.owner);
-                        services.profiles.updateProfile(context, UpdateProfileRequest.privateIdentityToken(context.owner, new byte[0]));
+                        services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(context.owner));
                         response.status(204);
                         return null;
                     }, services.jsonMapper::writeValueAsString);

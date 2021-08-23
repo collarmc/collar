@@ -1,21 +1,22 @@
 package com.collarmc.server.session;
 
 
-import com.collarmc.protocol.SessionStopReason;
-import com.collarmc.server.security.ServerIdentityStore;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.eclipse.jetty.websocket.api.Session;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.PacketIO;
 import com.collarmc.protocol.ProtocolResponse;
+import com.collarmc.protocol.SessionStopReason;
 import com.collarmc.protocol.session.SessionFailedResponse.SessionErrorResponse;
-import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.server.security.ServerIdentityStore;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.websocket.api.Session;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -44,8 +45,8 @@ public final class SessionManager {
     public void identify(Session session, ClientIdentity identity, MinecraftPlayer player) {
         SessionState state = new SessionState(session, identity, player);
         sessions.compute(session, (theSession, sessionState) -> {
-            if (sessionState != null) {
-                throw new IllegalStateException("session cannot be identified more than once");
+            if (sessionState != null && sessionState.minecraftPlayer != null) {
+                throw new IllegalStateException("session cannot be identified with a single player more than once");
             }
             return state;
         });
@@ -76,7 +77,7 @@ public final class SessionManager {
         if (sessionState != null) {
             if (session.isOpen()) {
                 try {
-                    send(session, sessionState.identity, new SessionErrorResponse(store.identity(), reason, message));
+                    send(session, sessionState.identity, new SessionErrorResponse(reason, message));
                 } catch (IOException | CipherException ex) {
                     throw new IllegalStateException("Couldn't send SessionErrorResponse", ex);
                 }
@@ -191,11 +192,14 @@ public final class SessionManager {
     }
 
     public static final class SessionState {
+        @Nonnull
         public final Session session;
+        @Nonnull
         public final ClientIdentity identity;
+        @Nullable
         public final MinecraftPlayer minecraftPlayer;
 
-        public SessionState(Session session, ClientIdentity identity, MinecraftPlayer minecraftPlayer) {
+        public SessionState(@Nonnull Session session, @Nonnull ClientIdentity identity, @Nullable MinecraftPlayer minecraftPlayer) {
             this.session = session;
             this.identity = identity;
             this.minecraftPlayer = minecraftPlayer;

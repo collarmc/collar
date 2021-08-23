@@ -182,12 +182,6 @@
                 <version>4.1.63.Final</version>
                 <scope>provided</scope>
             </dependency>
-            <!-- signal stuff -->
-            <dependency>
-                <groupId>org.whispersystems</groupId>
-                <artifactId>signal-protocol-java</artifactId>
-                <version>${log4j.version}</version>
-            </dependency>
             <!-- a database -->
             <dependency>
                 <groupId>org.mongodb</groupId>

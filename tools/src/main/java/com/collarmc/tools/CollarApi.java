@@ -1,7 +1,5 @@
 package com.collarmc.tools;
 
-import com.collarmc.http.Request;
-import io.mikael.urlbuilder.UrlBuilder;
 import com.collarmc.api.authentication.AuthenticationService.LoginRequest;
 import com.collarmc.api.authentication.AuthenticationService.LoginResponse;
 import com.collarmc.api.authentication.AuthenticationService.RequestPasswordResetRequest;
@@ -9,7 +7,9 @@ import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.GetProfileRequest;
 import com.collarmc.api.profiles.ProfileService.GetProfileResponse;
 import com.collarmc.http.HttpClient;
+import com.collarmc.http.Request;
 import com.collarmc.http.Response;
+import io.mikael.urlbuilder.UrlBuilder;
 
 public final class CollarApi {
 

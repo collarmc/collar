@@ -1,8 +1,8 @@
 package com.collarmc.server;
 
+import com.collarmc.server.configuration.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.collarmc.server.configuration.Configuration;
 
 public class Main {
 

@@ -1,7 +1,7 @@
 package com.collarmc.client.api.friends;
 
-import com.collarmc.client.Collar;
 import com.collarmc.api.friends.Friend;
+import com.collarmc.client.Collar;
 import com.collarmc.client.api.ApiListener;
 
 public interface FriendsListener extends ApiListener {

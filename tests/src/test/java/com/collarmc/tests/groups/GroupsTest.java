@@ -1,8 +1,5 @@
 package com.collarmc.tests.groups;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.groups.Member;
@@ -17,6 +14,9 @@ import com.collarmc.client.api.groups.GroupsListener;
 import com.collarmc.client.api.messaging.MessagingApi;
 import com.collarmc.client.api.messaging.MessagingListener;
 import com.collarmc.tests.junit.CollarTest;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

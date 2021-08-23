@@ -1,12 +1,13 @@
 package com.collarmc.client.security;
 
 import com.collarmc.api.groups.Group;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.identity.CreateTrustRequest;
 import com.collarmc.protocol.identity.IdentifyRequest;
-import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
+import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.security.messages.GroupSession;
 import com.collarmc.security.messages.IdentityStore;
 
@@ -28,23 +29,28 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
     IdentifyRequest createIdentifyRequest();
 
     /**
+     * Checks that the token sent in {@link IdentifyRequest#token} can be decrypted and verified using the stored ServerIdentity
+     * @param response to verify
+     * @return verified or not
+     */
+    boolean verifyIdentityResponse(IdentifyResponse response);
+
+    /**
      * @param response of the registered device
      */
     IdentifyRequest processDeviceRegisteredResponse(DeviceRegisteredResponse response);
 
     /**
-     * @param identity joining group
      * @param groupId of the group being joined
      * @return join request
      */
-    JoinGroupRequest createJoinGroupRequest(ClientIdentity identity, UUID groupId);
+    JoinGroupRequest createJoinGroupRequest(UUID groupId);
 
     /**
-     * @param identity client identity to exchange keys with
      * @param id unique for this request
      * @return SendPreKeyRequest to send to the provided client identity
      */
-    CreateTrustRequest createCreateTrustRequest(ClientIdentity identity, long id);
+    CreateTrustRequest createCreateTrustRequest(ClientIdentity recipient, long id);
 
     /**
      * Used to distribute keys back to the client who joined

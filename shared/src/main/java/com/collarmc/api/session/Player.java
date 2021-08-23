@@ -1,9 +1,13 @@
 package com.collarmc.api.session;
 
+import com.collarmc.api.friends.Status;
 import com.collarmc.api.identity.ClientIdentity;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.security.mojang.MinecraftPlayer;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Objects;
 
 /**
@@ -11,14 +15,20 @@ import java.util.Objects;
  */
 public final class Player {
     @JsonProperty("identity")
+    @Nonnull
     public final ClientIdentity identity;
     @JsonProperty("minecraftPlayer")
+    @Nullable
     public final MinecraftPlayer minecraftPlayer;
+    @Nonnull
+    @JsonIgnore
+    public final Status status;
 
-    public Player(@JsonProperty("identity") ClientIdentity identity,
-                  @JsonProperty("minecraftPlayer") MinecraftPlayer minecraftPlayer) {
+    public Player(@Nonnull @JsonProperty("identity") ClientIdentity identity,
+                  @Nullable @JsonProperty("minecraftPlayer") MinecraftPlayer minecraftPlayer) {
         this.identity = identity;
         this.minecraftPlayer = minecraftPlayer;
+        this.status = minecraftPlayer == null ? Status.OFFLINE : Status.ONLINE;
     }
 
     @Override
@@ -36,6 +46,7 @@ public final class Player {
 
     @Override
     public String toString() {
-        return identity.profile + ":" + minecraftPlayer;
+        String player = minecraftPlayer == null ? "<none>" : minecraftPlayer.toString();
+        return identity.profile + ":" + player;
     }
 }

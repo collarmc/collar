@@ -1,8 +1,7 @@
 package com.collarmc.protocol.groups;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.api.identity.ServerIdentity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
@@ -13,8 +12,7 @@ public final class RejoinGroupResponse extends ProtocolResponse {
     @JsonProperty("group")
     public final UUID group;
 
-    public RejoinGroupResponse(@JsonProperty("identity") ServerIdentity identity, @JsonProperty("group") UUID group) {
-        super(identity);
+    public RejoinGroupResponse(@JsonProperty("group") UUID group) {
         this.group = group;
     }
 }

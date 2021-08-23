@@ -1,8 +1,16 @@
 package com.collarmc.client.api.identity;
 
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.profiles.PublicProfile;
+import com.collarmc.api.session.Player;
+import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.security.ClientIdentityStore;
+import com.collarmc.protocol.ProtocolRequest;
+import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.identity.*;
+import com.collarmc.security.TokenGenerator;
+import com.collarmc.security.mojang.MinecraftPlayer;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.stoyanr.evictor.ConcurrentMapWithTimedEviction;
@@ -12,18 +20,13 @@ import com.stoyanr.evictor.scheduler.RegularTaskEvictionScheduler;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.collarmc.api.profiles.PublicProfile;
-import com.collarmc.api.session.Player;
-import com.collarmc.client.Collar;
-import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.security.TokenGenerator;
-import com.collarmc.security.mojang.MinecraftPlayer;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -104,7 +107,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
         } else {
             CompletableFuture<Optional<PublicProfile>> future = new CompletableFuture<>();
             profileFutures.put(player.identity.profile, future);
-            sender.accept(new GetProfileRequest(identity(), player.identity.profile));
+            sender.accept(new GetProfileRequest(player.identity.profile));
             return future;
         }
     }
@@ -122,7 +125,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
             long id = TokenGenerator.longToken();
             identifyFutures.put(id, future);
-            sender.accept(new GetIdentityRequest(identity(), id, playerId));
+            sender.accept(new GetIdentityRequest(id, playerId));
             return future;
         }
     }
@@ -137,7 +140,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
         if (clientIdentity == null || identityStore().isTrustedIdentity(clientIdentity)) {
             return CompletableFuture.completedFuture(identity);
         } else {
-            CreateTrustRequest request = identityStore().createCreateTrustRequest(clientIdentity, TokenGenerator.longToken());
+            CreateTrustRequest request = identityStore().createCreateTrustRequest(identity.get(), TokenGenerator.longToken());
             CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
             LOGGER.info("Creating trust future with " + identity + " and id " + request.id);
             identifyFutures.put(request.id, future);

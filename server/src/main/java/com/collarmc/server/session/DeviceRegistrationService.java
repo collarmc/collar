@@ -1,14 +1,14 @@
 package com.collarmc.server.session;
 
-import com.collarmc.server.security.ServerIdentityStore;
-import org.eclipse.jetty.websocket.api.Session;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.ServerErrorException;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.security.TokenGenerator;
 import com.collarmc.security.messages.CipherException;
+import com.collarmc.server.security.ServerIdentityStore;
 import com.collarmc.server.services.devices.DeviceService.CreateDeviceResponse;
+import org.eclipse.jetty.websocket.api.Session;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;

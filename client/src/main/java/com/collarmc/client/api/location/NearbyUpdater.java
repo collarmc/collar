@@ -1,7 +1,7 @@
 package com.collarmc.client.api.location;
 
-import com.collarmc.client.minecraft.Ticks;
 import com.collarmc.api.entities.Entity;
+import com.collarmc.client.minecraft.Ticks;
 
 import java.util.HashSet;
 import java.util.Set;

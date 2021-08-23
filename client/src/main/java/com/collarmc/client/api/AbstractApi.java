@@ -1,12 +1,12 @@
 package com.collarmc.client.api;
 
-import com.collarmc.client.security.ClientIdentityStore;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.client.Collar;
+import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.api.identity.ClientIdentity;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashSet;
 import java.util.Set;

@@ -4,6 +4,7 @@ import com.collarmc.api.groups.Group;
 import com.collarmc.api.session.Player;
 import com.collarmc.security.messages.GroupSession;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -17,8 +18,8 @@ public final class GroupSessionManager {
         this.store = store;
     }
 
-    public GroupSession session(Group group) {
-        return sessions.get(group.id);
+    public Optional<GroupSession> session(Group group) {
+        return Optional.ofNullable(sessions.get(group.id));
     }
 
     public GroupSession create(Group group) {

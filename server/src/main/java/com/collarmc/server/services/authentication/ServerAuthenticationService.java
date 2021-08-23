@@ -1,9 +1,5 @@
 package com.collarmc.server.services.authentication;
 
-import com.collarmc.server.http.ApiToken;
-import com.collarmc.server.security.hashing.PasswordHashing;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.collarmc.api.authentication.AuthenticationService;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.*;
@@ -13,8 +9,12 @@ import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.CreateProfileRequest;
 import com.collarmc.api.profiles.ProfileService.GetProfileRequest;
 import com.collarmc.api.profiles.ProfileService.UpdateProfileRequest;
+import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.http.AppUrlProvider;
 import com.collarmc.server.mail.Email;
+import com.collarmc.server.security.hashing.PasswordHashing;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.util.Date;

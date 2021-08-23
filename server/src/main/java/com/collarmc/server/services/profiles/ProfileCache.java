@@ -1,13 +1,13 @@
 package com.collarmc.server.services.profiles;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.GetProfileRequest;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 import java.util.Optional;
 import java.util.UUID;

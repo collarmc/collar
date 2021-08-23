@@ -1,22 +1,22 @@
 package com.collarmc.server.services.groups;
 
 import com.collarmc.api.groups.*;
-import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.server.configuration.Configuration;
-import com.collarmc.server.junit.MongoDatabaseTestRule;
-import com.collarmc.server.services.profiles.ProfileCache;
-import com.collarmc.server.services.profiles.ProfileServiceServer;
-import com.collarmc.server.session.SessionManager;
-import org.junit.Assert;
-import org.junit.Rule;
-import org.junit.Test;
 import com.collarmc.api.http.RequestContext;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.CreateProfileRequest;
 import com.collarmc.api.session.Player;
 import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.server.configuration.Configuration;
+import com.collarmc.server.junit.MongoDatabaseTestRule;
+import com.collarmc.server.services.profiles.ProfileCache;
+import com.collarmc.server.services.profiles.ProfileServiceServer;
+import com.collarmc.server.session.SessionManager;
 import com.collarmc.utils.Utils;
+import org.junit.Assert;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.util.List;
 import java.util.UUID;

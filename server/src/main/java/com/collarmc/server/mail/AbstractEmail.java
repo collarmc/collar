@@ -1,9 +1,9 @@
 package com.collarmc.server.mail;
 
-import com.collarmc.server.http.HandlebarsTemplateEngine;
-import spark.ModelAndView;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.server.http.AppUrlProvider;
+import com.collarmc.server.http.HandlebarsTemplateEngine;
+import spark.ModelAndView;
 
 import java.util.HashMap;
 import java.util.Map;

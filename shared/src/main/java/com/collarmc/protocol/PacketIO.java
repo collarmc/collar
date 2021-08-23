@@ -1,11 +1,11 @@
 package com.collarmc.protocol;
 
-import com.collarmc.security.messages.Cipher;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.collarmc.io.ByteBufferInputStream;
 import com.collarmc.api.identity.Identity;
+import com.collarmc.io.ByteBufferInputStream;
 import com.collarmc.io.IO;
+import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,6 +26,7 @@ public final class PacketIO {
     private static final int VERSION = 1;
     private static final int MODE_PLAIN = 0xc001;
     private static final int MODE_ENCRYPTED = 0xba5ed;
+    public static final short MAX_PACKET_SIZE = Short.MAX_VALUE;
 
     private final ObjectMapper mapper;
     private final Cipher<?> cipher;
@@ -107,9 +108,8 @@ public final class PacketIO {
     }
 
     private void checkPacketSize(byte[] bytes) {
-        // TODO: add check back
-//        if (bytes.length > Short.MAX_VALUE) {
-//            throw new IllegalStateException("Packet is too large. Size " + bytes.length + " bytes");
-//        }
+        if (bytes.length > PacketIO.MAX_PACKET_SIZE) {
+            throw new IllegalStateException("Packet is too large. Size is " + bytes.length + " bytes when maximum is " + MAX_PACKET_SIZE);
+        }
     }
 }

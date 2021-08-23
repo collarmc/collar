@@ -1,8 +1,5 @@
 package com.collarmc.tests.location;
 
-import com.collarmc.tests.groups.GroupsTest;
-import org.junit.Assert;
-import org.junit.Test;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.location.Dimension;
@@ -15,7 +12,10 @@ import com.collarmc.client.api.groups.GroupsApi;
 import com.collarmc.client.api.groups.GroupsListener;
 import com.collarmc.client.api.location.LocationApi;
 import com.collarmc.client.api.location.LocationListener;
+import com.collarmc.tests.groups.GroupsTest;
 import com.collarmc.tests.junit.CollarTest;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.LinkedList;
 import java.util.List;

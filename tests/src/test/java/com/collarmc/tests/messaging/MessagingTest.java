@@ -1,8 +1,6 @@
 package com.collarmc.tests.messaging;
 
 import com.collarmc.api.identity.ClientIdentity;
-import org.junit.Assert;
-import org.junit.Test;
 import com.collarmc.api.messaging.Message;
 import com.collarmc.api.messaging.TextMessage;
 import com.collarmc.api.session.Player;
@@ -11,6 +9,8 @@ import com.collarmc.client.api.messaging.MessagingApi;
 import com.collarmc.client.api.messaging.MessagingListener;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.tests.junit.CollarTest;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.UUID;
 

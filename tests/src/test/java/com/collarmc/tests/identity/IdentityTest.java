@@ -1,13 +1,13 @@
 package com.collarmc.tests.identity;
 
-import org.junit.Assert;
-import org.junit.Test;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.identity.IdentityApi;
 import com.collarmc.client.api.identity.IdentityListener;
 import com.collarmc.client.security.ClientIdentityStore;
-import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.tests.junit.CollarTest;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;

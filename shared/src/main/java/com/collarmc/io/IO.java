@@ -1,5 +1,7 @@
 package com.collarmc.io;
 
+import com.collarmc.protocol.PacketIO;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -133,7 +135,7 @@ public final class IO {
      */
     public static ByteBuffer toByteBuffer(InputStream input) throws IOException {
         // TODO buffer size
-        ByteBuffer buffer = ByteBuffer.allocate(Short.MAX_VALUE * 4);
+        ByteBuffer buffer = ByteBuffer.allocate(PacketIO.MAX_PACKET_SIZE);
         byte[] buf = new byte[1024];
         for (int n = input.read(buf); n != -1; n = input.read(buf)) {
             buffer.put(buf, 0, n);

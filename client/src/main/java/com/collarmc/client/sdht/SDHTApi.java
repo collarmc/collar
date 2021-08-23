@@ -1,9 +1,9 @@
 package com.collarmc.client.sdht;
 
-import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.minecraft.Ticks;
+import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.sdht.SDHTEventRequest;
@@ -33,7 +33,7 @@ public class SDHTApi extends AbstractApi<SDHTListener> implements Ticks.TickList
     public SDHTApi(Collar collar, Supplier<ClientIdentityStore> identityStoreSupplier, Consumer<ProtocolRequest> sender, ContentCipher cipher, Ticks ticks, File dhtDir) {
         super(collar, identityStoreSupplier, sender);
         Publisher publisher = event -> {
-            sender.accept(new SDHTEventRequest(identity(), event));
+            sender.accept(new SDHTEventRequest(event));
         };
         table = new DefaultDistributedHashTable(
                 publisher,

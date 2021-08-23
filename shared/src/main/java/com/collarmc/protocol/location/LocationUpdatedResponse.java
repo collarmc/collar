@@ -1,10 +1,9 @@
 package com.collarmc.protocol.location;
 
-import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.session.Player;
+import com.collarmc.protocol.ProtocolResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
@@ -24,12 +23,10 @@ public final class LocationUpdatedResponse extends ProtocolResponse {
     @JsonProperty("location")
     public final byte[] location;
 
-    public LocationUpdatedResponse(@JsonProperty("identity") ServerIdentity identity,
-                                   @JsonProperty("sender") ClientIdentity sender,
+    public LocationUpdatedResponse(@JsonProperty("sender") ClientIdentity sender,
                                    @JsonProperty("groupId") UUID group,
                                    @JsonProperty("player") Player player,
                                    @JsonProperty("location") byte[] location) {
-        super(identity);
         this.sender = sender;
         this.group = group;
         this.player = player;

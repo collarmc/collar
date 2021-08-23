@@ -1,5 +1,10 @@
 package com.collarmc.server.services.devices;
 
+import com.collarmc.api.http.HttpException.BadRequestException;
+import com.collarmc.api.http.HttpException.NotFoundException;
+import com.collarmc.api.http.HttpException.ServerErrorException;
+import com.collarmc.api.http.HttpException.UnauthorisedException;
+import com.collarmc.api.http.RequestContext;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
@@ -8,11 +13,6 @@ import com.mongodb.client.result.InsertOneResult;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
-import com.collarmc.api.http.HttpException.BadRequestException;
-import com.collarmc.api.http.HttpException.NotFoundException;
-import com.collarmc.api.http.HttpException.ServerErrorException;
-import com.collarmc.api.http.HttpException.UnauthorisedException;
-import com.collarmc.api.http.RequestContext;
 
 import java.util.HashMap;
 import java.util.List;

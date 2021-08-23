@@ -1,34 +1,29 @@
 package com.collarmc.client;
 
+import com.collarmc.api.http.CollarFeature;
+import com.collarmc.api.http.CollarVersion;
+import com.collarmc.api.http.DiscoverResponse;
+import com.collarmc.api.http.HttpException;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
+import com.collarmc.api.session.Player;
 import com.collarmc.client.CollarException.ConnectionException;
 import com.collarmc.client.api.AbstractApi;
+import com.collarmc.client.api.ApiListener;
 import com.collarmc.client.api.friends.FriendsApi;
+import com.collarmc.client.api.groups.GroupsApi;
 import com.collarmc.client.api.identity.IdentityApi;
+import com.collarmc.client.api.location.LocationApi;
 import com.collarmc.client.api.messaging.MessagingApi;
 import com.collarmc.client.api.textures.TexturesApi;
 import com.collarmc.client.minecraft.Ticks;
 import com.collarmc.client.sdht.SDHTApi;
+import com.collarmc.client.sdht.cipher.ContentCiphers;
 import com.collarmc.client.sdht.cipher.GroupContentCipher;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.client.security.ClientIdentityStoreImpl;
 import com.collarmc.client.utils.Crypto;
 import com.collarmc.client.utils.Http;
-import com.collarmc.protocol.SessionStopReason;
-import com.collarmc.protocol.devices.DeviceRegisteredResponse;
-import com.collarmc.security.messages.CipherException.InvalidCipherSessionException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mikael.urlbuilder.UrlBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import com.collarmc.api.http.CollarFeature;
-import com.collarmc.api.http.CollarVersion;
-import com.collarmc.api.http.DiscoverResponse;
-import com.collarmc.api.http.HttpException;
-import com.collarmc.api.session.Player;
-import com.collarmc.client.api.ApiListener;
-import com.collarmc.client.api.groups.GroupsApi;
-import com.collarmc.client.api.location.LocationApi;
-import com.collarmc.client.sdht.cipher.ContentCiphers;
 import com.collarmc.http.Request;
 import com.collarmc.http.Response;
 import com.collarmc.http.WebSocket;
@@ -36,6 +31,8 @@ import com.collarmc.http.WebSocketListener;
 import com.collarmc.protocol.PacketIO;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
+import com.collarmc.protocol.SessionStopReason;
+import com.collarmc.protocol.devices.DeviceRegisteredResponse;
 import com.collarmc.protocol.devices.RegisterDeviceResponse;
 import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.protocol.keepalive.KeepAliveResponse;
@@ -45,20 +42,23 @@ import com.collarmc.protocol.session.SessionFailedResponse.PrivateIdentityMismat
 import com.collarmc.protocol.session.SessionFailedResponse.SessionErrorResponse;
 import com.collarmc.protocol.session.StartSessionRequest;
 import com.collarmc.protocol.session.StartSessionResponse;
-import com.collarmc.protocol.trust.CheckTrustRelationshipRequest;
-import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsTrustedRelationshipResponse;
-import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsUntrustedRelationshipResponse;
-import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
+import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.CipherException.InvalidCipherSessionException;
 import com.collarmc.security.mojang.MinecraftSession;
 import com.collarmc.security.mojang.Mojang;
-import com.collarmc.security.messages.CipherException;
 import com.collarmc.utils.Utils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mikael.urlbuilder.UrlBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -368,14 +368,14 @@ public final class Collar {
             LOGGER.info("Connection established");
             try {
                 identityStore = new ClientIdentityStoreImpl(configuration.homeDirectory);
-            } catch (IOException | CipherException.UnknownCipherException e) {
+            } catch (IOException | CipherException e) {
                 throw new IllegalStateException("could not load identity store");
             }
             // Start protocol
             sendRequest(webSocket, identityStore.createIdentifyRequest());
             // Start the keep alive
             this.keepAlive = new KeepAlive(this, webSocket);
-            this.keepAlive.start(null);
+            this.keepAlive.start();
         }
 
         @Override
@@ -404,13 +404,15 @@ public final class Collar {
         public void onMessage(WebSocket webSocket, ByteBuffer messageBuffer) {
             Optional<ProtocolResponse> responseOptional = readResponse(messageBuffer);
             responseOptional.ifPresent(resp -> {
-                LOGGER.info(resp.getClass().getSimpleName() + " from " + resp.identity);
                 if (resp instanceof IdentifyResponse) {
-                    ClientIdentity identity = identityStore.identity();
                     ServerIdentity storedServerIdentity = identityStore.serverIdentity();
                     IdentifyResponse response = (IdentifyResponse) resp;
                     if (!response.identity.equals(storedServerIdentity)) {
                         throw new ConnectionException("server identity " + response.identity + " does not match " + storedServerIdentity);
+                    }
+                    if (!identityStore.verifyIdentityResponse(response)) {
+                        configuration.listener.onClientUntrusted(collar, identityStore);
+                        disconnect();
                     }
                     MinecraftSession session = configuration.sessionSupplier.get();
                     String serverId;
@@ -425,10 +427,10 @@ public final class Collar {
                     } else {
                         serverId = null;
                     }
-                    StartSessionRequest request = new StartSessionRequest(identity, session, serverId);
-                    sendRequest(webSocket, request);
+                    this.serverIdentity = response.identity;
+                    sendRequest(webSocket, new StartSessionRequest(session, serverId));
                     keepAlive.stop();
-                    keepAlive.start(identity);
+                    keepAlive.start();
                 } else if (resp instanceof KeepAliveResponse) {
                     LOGGER.info("KeepAliveResponse received");
                 } else if (resp instanceof RegisterDeviceResponse) {
@@ -439,8 +441,8 @@ public final class Collar {
                     DeviceRegisteredResponse response = (DeviceRegisteredResponse) resp;
                     sendRequest(webSocket, identityStore.processDeviceRegisteredResponse(response));
                 } else if (resp instanceof StartSessionResponse) {
-                    LOGGER.info("Session has started. Checking if the client and server are in a trusted relationship");
-                    sendRequest(webSocket, new CheckTrustRelationshipRequest(identityStore.identity()));
+                    LOGGER.info("Session has started");
+                    collar.changeState(State.CONNECTED);
                 } else if (resp instanceof SessionFailedResponse) {
                     LOGGER.info("SessionFailedResponse received");
                     if (resp instanceof MojangVerificationFailedResponse) {
@@ -460,17 +462,6 @@ public final class Collar {
                         }
                     }
                     collar.changeState(State.DISCONNECTED);
-                } else if (resp instanceof IsTrustedRelationshipResponse) {
-                    LOGGER.info("Server has confirmed a trusted relationship with the client");
-                    if (resp.identity == null) {
-                        throw new IllegalStateException("sever identity was null");
-                    }
-                    this.serverIdentity = resp.identity;
-                    collar.changeState(State.CONNECTED);
-                } else if (resp instanceof IsUntrustedRelationshipResponse) {
-                    LOGGER.info("Server has declared the client as untrusted. Consumer should reset the identity store and reconnect.");
-                    collar.changeState(State.DISCONNECTED);
-                    configuration.listener.onClientUntrusted(collar, identityStore);
                 } else {
                     for (AbstractApi<?> api : collar.apis) {
                         if (api.handleResponse(resp)) {

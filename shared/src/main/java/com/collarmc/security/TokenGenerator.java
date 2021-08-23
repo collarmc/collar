@@ -1,9 +1,7 @@
 package com.collarmc.security;
 
-import com.google.common.io.BaseEncoding;
 import com.collarmc.utils.Utils;
-
-import java.security.SecureRandom;
+import com.google.common.io.BaseEncoding;
 
 public final class TokenGenerator {
 

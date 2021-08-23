@@ -1,7 +1,6 @@
 package com.collarmc.protocol.groups;
 
 import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.api.identity.ClientIdentity;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -19,8 +18,8 @@ public final class EjectGroupMemberRequest extends ProtocolRequest {
     public final UUID player;
 
     @JsonCreator
-    public EjectGroupMemberRequest(@JsonProperty("identity") ClientIdentity identity, @JsonProperty("groupId") UUID groupId, @JsonProperty("player") UUID player) {
-        super(identity);
+    public EjectGroupMemberRequest(@JsonProperty("groupId") UUID groupId,
+                                   @JsonProperty("player") UUID player) {
         this.groupId = groupId;
         this.player = player;
     }

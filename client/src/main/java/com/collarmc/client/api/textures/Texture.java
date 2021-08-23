@@ -1,12 +1,12 @@
 package com.collarmc.client.api.textures;
 
-import com.collarmc.client.utils.Http;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.textures.TextureType;
+import com.collarmc.client.utils.Http;
 import com.collarmc.http.Request;
 import com.collarmc.http.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

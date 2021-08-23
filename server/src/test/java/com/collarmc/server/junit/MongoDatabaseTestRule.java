@@ -1,10 +1,10 @@
 package com.collarmc.server.junit;
 
+import com.collarmc.server.mongo.Mongo;
 import com.mongodb.client.MongoDatabase;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import com.collarmc.server.mongo.Mongo;
 
 public class MongoDatabaseTestRule implements TestRule {
 

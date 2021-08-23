@@ -2,7 +2,6 @@ package com.collarmc.protocol.location;
 
 import com.collarmc.protocol.ProtocolRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.api.identity.ClientIdentity;
 
 import java.util.UUID;
 
@@ -13,8 +12,7 @@ public final class StopSharingLocationRequest extends ProtocolRequest {
     @JsonProperty("groupId")
     public final UUID groupId;
 
-    public StopSharingLocationRequest(@JsonProperty("identity") ClientIdentity identity, @JsonProperty("groupId") UUID groupId) {
-        super(identity);
+    public StopSharingLocationRequest(@JsonProperty("groupId") UUID groupId) {
         this.groupId = groupId;
     }
 }

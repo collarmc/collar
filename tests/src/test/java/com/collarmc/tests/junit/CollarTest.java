@@ -1,8 +1,5 @@
 package com.collarmc.tests.junit;
 
-import com.collarmc.utils.Utils;
-import org.junit.Before;
-import org.junit.Rule;
 import com.collarmc.api.entities.Entity;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.location.Dimension;
@@ -18,6 +15,9 @@ import com.collarmc.server.security.mojang.NojangMinecraftSessionVerifier;
 import com.collarmc.server.services.devices.Device;
 import com.collarmc.server.services.devices.DeviceService;
 import com.collarmc.server.services.profiles.ProfileServiceServer;
+import com.collarmc.utils.Utils;
+import org.junit.Before;
+import org.junit.Rule;
 
 import java.util.Set;
 import java.util.UUID;
@@ -25,8 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-
-import static com.collarmc.tests.junit.CollarAssert.waitForCondition;
 
 public abstract class CollarTest {
 

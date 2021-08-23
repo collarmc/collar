@@ -1,7 +1,7 @@
 package com.collarmc.client.utils;
 
-import io.netty.handler.ssl.SslContextBuilder;
 import com.collarmc.http.HttpClient;
+import io.netty.handler.ssl.SslContextBuilder;
 
 import javax.net.ssl.TrustManagerFactory;
 import java.io.IOException;

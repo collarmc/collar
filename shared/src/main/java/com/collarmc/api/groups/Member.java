@@ -1,8 +1,8 @@
 package com.collarmc.api.groups;
 
 import com.collarmc.api.profiles.PublicProfile;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.session.Player;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 

@@ -18,6 +18,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.collarmc.api.profiles.ProfileService.UpdateProfileRequest.*;
+
 public final class AdminTool {
 
     private final HttpClient http;
@@ -52,7 +54,7 @@ public final class AdminTool {
 
     public void resetIdentity(String email) {
         Profile profile = client.getProfile(GetProfileRequest.byEmail(email)).profile;
-        client.updateProfile(ProfileService.UpdateProfileRequest.privateIdentityToken(profile.id, new byte[0]));
+        client.updateProfile(resetKeys(profile.id));
         System.out.println("Reset identity for " + email);
     }
 

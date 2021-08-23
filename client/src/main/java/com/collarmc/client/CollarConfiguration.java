@@ -1,14 +1,14 @@
 package com.collarmc.client;
 
+import com.collarmc.api.entities.Entity;
+import com.collarmc.api.location.Location;
 import com.collarmc.client.debug.DebugConfiguration;
 import com.collarmc.client.minecraft.Ticks;
+import com.collarmc.security.mojang.MinecraftSession;
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.collarmc.api.entities.Entity;
-import com.collarmc.api.location.Location;
-import com.collarmc.security.mojang.MinecraftSession;
 
 import java.io.File;
 import java.io.IOException;

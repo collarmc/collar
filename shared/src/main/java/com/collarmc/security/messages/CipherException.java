@@ -14,12 +14,12 @@ public abstract class CipherException extends Exception {
      * Thrown when a function of the cipher is not available (e.g. not implemented)
      */
     public static class UnavailableCipherException extends CipherException {
-        public UnavailableCipherException(String message) {
-            super(message);
+        public UnavailableCipherException(String message, Exception e) {
+            super(message, e);
         }
 
-        public UnavailableCipherException() {
-            super("unavailable");
+        public UnavailableCipherException(String message) {
+            super(message);
         }
     }
 

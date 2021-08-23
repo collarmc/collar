@@ -1,11 +1,11 @@
 package com.collarmc.server.services.location;
 
-import com.collarmc.api.identity.ClientIdentity;
-import org.junit.Assert;
-import org.junit.Test;
 import com.collarmc.api.groups.MemberSource;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.security.mojang.MinecraftPlayer;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Set;
 import java.util.UUID;

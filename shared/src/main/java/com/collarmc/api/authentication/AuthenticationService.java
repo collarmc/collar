@@ -1,9 +1,9 @@
 package com.collarmc.api.authentication;
 
-import com.collarmc.api.profiles.Profile;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.http.RequestContext;
+import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.PublicProfile;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public interface AuthenticationService {
     CreateAccountResponse createAccount(RequestContext context, CreateAccountRequest req);

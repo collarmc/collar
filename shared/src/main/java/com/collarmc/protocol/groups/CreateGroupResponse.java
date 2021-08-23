@@ -1,10 +1,9 @@
 package com.collarmc.protocol.groups;
 
+import com.collarmc.api.groups.Group;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.api.identity.ServerIdentity;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.api.groups.Group;
 
 /**
  * Sent by the server when it has issued a new Group
@@ -15,9 +14,7 @@ public final class CreateGroupResponse extends ProtocolResponse {
     public final Group group;
 
     @JsonCreator
-    public CreateGroupResponse(@JsonProperty("identity") ServerIdentity identity,
-                               @JsonProperty("group") Group group) {
-        super(identity);
+    public CreateGroupResponse(@JsonProperty("group") Group group) {
         this.group = group;
     }
 }

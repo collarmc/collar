@@ -1,21 +1,21 @@
 package com.collarmc.server.configuration;
 
-import com.collarmc.server.http.DefaultAppUrlProvider;
-import com.collarmc.server.security.mojang.MinecraftSessionVerifier;
-import com.collarmc.server.security.mojang.NojangMinecraftSessionVerifier;
-import com.collarmc.server.services.authentication.TokenCrypter;
-import com.mongodb.client.MongoDatabase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.collarmc.http.HttpClient;
 import com.collarmc.server.http.AppUrlProvider;
 import com.collarmc.server.http.CollarWebAppUrlProvider;
+import com.collarmc.server.http.DefaultAppUrlProvider;
 import com.collarmc.server.mail.Email;
 import com.collarmc.server.mail.LocalEmail;
 import com.collarmc.server.mail.MailGunEmail;
 import com.collarmc.server.mongo.Mongo;
 import com.collarmc.server.security.hashing.PasswordHashing;
+import com.collarmc.server.security.mojang.MinecraftSessionVerifier;
 import com.collarmc.server.security.mojang.MojangMinecraftSessionVerifier;
+import com.collarmc.server.security.mojang.NojangMinecraftSessionVerifier;
+import com.collarmc.server.services.authentication.TokenCrypter;
+import com.mongodb.client.MongoDatabase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Configuration {
     private static final Logger LOGGER = LogManager.getLogger(Configuration.class.getName());

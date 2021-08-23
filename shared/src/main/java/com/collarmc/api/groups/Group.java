@@ -1,15 +1,14 @@
 package com.collarmc.api.groups;
 
+import com.collarmc.api.session.Player;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
-import com.collarmc.api.session.Player;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public final class Group {
-
     @JsonProperty("id")
     public final UUID id;
     @JsonProperty("name")

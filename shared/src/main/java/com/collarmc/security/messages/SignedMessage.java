@@ -5,16 +5,16 @@ import java.nio.ByteBuffer;
 /**
  * Holds a message signed with the sender's signature key
  */
-public final class MessageEnvelope {
+public final class SignedMessage {
     public final byte[] signature;
     public final byte[] contents;
 
-    public MessageEnvelope(byte[] signature, byte[] contents) {
+    public SignedMessage(byte[] signature, byte[] contents) {
         this.signature = signature;
         this.contents = contents;
     }
 
-    public MessageEnvelope(byte[] bytes) {
+    public SignedMessage(byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         this.signature = new byte[buffer.getInt()];
         buffer.get(this.signature);
@@ -23,7 +23,7 @@ public final class MessageEnvelope {
     }
 
     public byte[] serialize() {
-        ByteBuffer buffer = ByteBuffer.allocate(Short.MAX_VALUE);
+        ByteBuffer buffer = ByteBuffer.allocate((2*4) + signature.length + contents.length);
         buffer.putInt(signature.length);
         buffer.put(signature);
         buffer.putInt(contents.length);

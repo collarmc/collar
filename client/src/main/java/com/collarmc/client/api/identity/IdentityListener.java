@@ -1,9 +1,9 @@
 package com.collarmc.client.api.identity;
 
-import com.collarmc.client.security.ClientIdentityStore;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.ApiListener;
-import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.client.security.ClientIdentityStore;
 
 public interface IdentityListener extends ApiListener {
     /**

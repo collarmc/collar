@@ -1,8 +1,8 @@
 package com.collarmc.security;
 
 import com.collarmc.api.identity.Identity;
+import com.collarmc.utils.Hex;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.whispersystems.libsignal.util.Hex;
 
 import java.util.Arrays;
 
@@ -32,6 +32,6 @@ public final class PublicKey {
 
     @Override
     public String toString() {
-        return Hex.toString(key);
+        return Hex.hexString(key);
     }
 }

@@ -1,7 +1,15 @@
 package com.collarmc.client.api.textures;
 
+import com.collarmc.api.groups.Group;
+import com.collarmc.api.session.Player;
+import com.collarmc.api.textures.TextureType;
+import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.security.ClientIdentityStore;
+import com.collarmc.protocol.ProtocolRequest;
+import com.collarmc.protocol.ProtocolResponse;
+import com.collarmc.protocol.textures.GetTextureRequest;
+import com.collarmc.protocol.textures.GetTextureResponse;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.stoyanr.evictor.ConcurrentMapWithTimedEviction;
@@ -9,14 +17,6 @@ import com.stoyanr.evictor.map.ConcurrentHashMapWithTimedEviction;
 import com.stoyanr.evictor.map.EvictibleEntry;
 import com.stoyanr.evictor.scheduler.RegularTaskEvictionScheduler;
 import io.mikael.urlbuilder.UrlBuilder;
-import com.collarmc.api.groups.Group;
-import com.collarmc.api.session.Player;
-import com.collarmc.api.textures.TextureType;
-import com.collarmc.client.Collar;
-import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.protocol.textures.GetTextureRequest;
-import com.collarmc.protocol.textures.GetTextureResponse;
 
 import java.net.URL;
 import java.util.Objects;
@@ -102,7 +102,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
                 texturesListener.onTextureReceived(collar, this, texture.get());
             });
         } else {
-            sender.accept(new GetTextureRequest(identity(), player.minecraftPlayer.id, null, type));
+            sender.accept(new GetTextureRequest(player.minecraftPlayer.id, null, type));
         }
     }
 
@@ -131,7 +131,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
                 texturesListener.onTextureReceived(collar, this, texture.get());
             });
         } else {
-            sender.accept(new GetTextureRequest(identity(), null, group.id, type));
+            sender.accept(new GetTextureRequest(null, group.id, type));
         }
     }
 

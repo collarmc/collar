@@ -2,7 +2,6 @@ package com.collarmc.protocol.location;
 
 import com.collarmc.protocol.ProtocolRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.api.identity.ClientIdentity;
 
 import java.util.Set;
 
@@ -12,9 +11,7 @@ public final class UpdateNearbyRequest extends ProtocolRequest {
      */
     public final Set<String> nearbyHashes;
 
-    public UpdateNearbyRequest(@JsonProperty("identity") ClientIdentity identity,
-                               @JsonProperty("nearbyHashes") Set<String> nearbyHashes) {
-        super(identity);
+    public UpdateNearbyRequest(@JsonProperty("nearbyHashes") Set<String> nearbyHashes) {
         this.nearbyHashes = nearbyHashes;
     }
 }

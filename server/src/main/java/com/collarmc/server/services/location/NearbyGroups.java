@@ -23,7 +23,7 @@ public final class NearbyGroups {
      * Calculates any nearby groups for the minecraft player and anyone in the calculated group
      * Both parties must have entity hashes in common to form one or more groups with other players
      * @param source to create state for
-     * @param hashes the players hashes
+     * @param hashes of players nearby
      * @return result delta
      */
     public Result updateNearbyGroups(MemberSource source, Set<String> hashes) {
@@ -31,9 +31,11 @@ public final class NearbyGroups {
         Map<UUID, NearbyGroup> add = new HashMap<>();
         Map<UUID, NearbyGroup> remove = new HashMap<>();
         playerHashes.keySet().stream()
-                .filter(anotherPlayer ->
-                        anotherPlayer.player.minecraftPlayer.inServerWith(source.player.minecraftPlayer)
-                        && !anotherPlayer.equals(source)
+                .filter(anotherSource ->
+                        anotherSource.player.minecraftPlayer != null &&
+                        source.player.minecraftPlayer != null &&
+                        anotherSource.player.minecraftPlayer.inServerWith(source.player.minecraftPlayer)
+                        && !anotherSource.equals(source)
                 ).forEach(anotherPlayer -> {
             Set<String> otherPlayersHashes = playerHashes.get(anotherPlayer);
             NearbyGroup group = new NearbyGroup(Set.of(source, anotherPlayer));

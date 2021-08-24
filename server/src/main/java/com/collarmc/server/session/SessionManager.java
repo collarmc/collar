@@ -110,7 +110,7 @@ public final class SessionManager {
         if (player == null) {
             return Optional.empty();
         }
-        return sessions.values().stream().filter(sessionState -> sessionState.minecraftPlayer.equals(player))
+        return sessions.values().stream().filter(sessionState -> sessionState.minecraftPlayer != null && sessionState.minecraftPlayer.equals(player))
                 .findFirst()
                 .map(sessionState -> sessionState.identity);
     }
@@ -121,7 +121,7 @@ public final class SessionManager {
         }
         MinecraftPlayer player = findMinecraftPlayer(identity).orElseThrow(() -> new IllegalStateException("cannot find player for " + identity));
         return sessions.values().stream()
-                .filter(sessionState -> sessionState.minecraftPlayer.inServerWith(player))
+                .filter(sessionState -> sessionState.minecraftPlayer != null && sessionState.minecraftPlayer.inServerWith(player))
                 .filter(sessionState -> players.contains(sessionState.minecraftPlayer.id))
                 .map(SessionState::toPlayer)
                 .collect(Collectors.toList());
@@ -132,7 +132,7 @@ public final class SessionManager {
             return Optional.empty();
         }
         return sessions.values().stream()
-                .filter(sessionState -> sessionState.identity.equals(identity))
+                .filter(sessionState -> sessionState.identity.equals(identity) && sessionState.minecraftPlayer != null)
                 .findFirst()
                 .map(sessionState -> sessionState.minecraftPlayer);
     }
@@ -165,7 +165,7 @@ public final class SessionManager {
 
     public Optional<SessionState> getSessionStateByPlayer(UUID player) {
         return sessions.values().stream()
-                .filter(sessionState -> sessionState.minecraftPlayer.id.equals(player))
+                .filter(sessionState -> sessionState.minecraftPlayer != null && sessionState.minecraftPlayer.id.equals(player))
                 .findFirst();
     }
 
@@ -176,7 +176,7 @@ public final class SessionManager {
     }
 
     public Optional<ClientIdentity> getIdentityByMinecraftPlayerId(UUID playerId) {
-        return sessions.values().stream().filter(sessionState -> sessionState.minecraftPlayer.id.equals(playerId))
+        return sessions.values().stream().filter(sessionState -> sessionState.minecraftPlayer != null && sessionState.minecraftPlayer.id.equals(playerId))
                 .findAny()
                 .map(sessionState -> sessionState.identity);
     }

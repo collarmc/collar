@@ -300,7 +300,7 @@ public final class GroupService {
             Map<Group, List<Member>> groupToMembers = new HashMap<>();
             group = group.addMembers(ImmutableList.copyOf(nearbyGroup.players), MembershipRole.MEMBER, MembershipState.PENDING, groupToMembers::put);
             for (Map.Entry<Group, List<Member>> memberEntry : groupToMembers.entrySet()) {
-                createGroupMembershipRequests(null, memberEntry.getKey(), memberEntry.getValue()).ifPresent(theResponse -> response.concat(response));
+                createGroupMembershipRequests(null, memberEntry.getKey(), memberEntry.getValue()).ifPresent(response::concat);
             }
             store.upsert(group);
         });
@@ -324,7 +324,8 @@ public final class GroupService {
      */
     private Optional<BatchProtocolResponse> createGroupMembershipRequests(ClientIdentity requester, Group group, List<Member> members) {
         Optional<Player> sender = sessions.findPlayer(requester);
-        if (sender.isEmpty()) {
+        if (sender.isEmpty() && !group.type.equals(GroupType.NEARBY)) {
+            LOGGER.error("Groups of type " + group.type + " must have a sender");
             return Optional.empty();
         }
         List<Player> players = members.stream()
@@ -334,7 +335,7 @@ public final class GroupService {
         BatchProtocolResponse response = new BatchProtocolResponse();
         players.forEach(player -> {
             sessions.getIdentity(player).ifPresent(identity -> {
-                response.add(identity, new GroupInviteResponse(group.id, group.name, group.type, sender.get()));
+                response.add(identity, new GroupInviteResponse(group.id, group.name, group.type, sender.orElse(null)));
             });
         });
         return response.optional();

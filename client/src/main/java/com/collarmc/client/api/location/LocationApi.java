@@ -104,10 +104,6 @@ public class LocationApi extends AbstractApi<LocationListener> {
      * @param group to share with
      */
     public void startSharingWith(Group group) {
-        // Start sharing
-        if (!this.updater.isRunning()) {
-            this.updater.start();
-        }
         synchronized (this) {
             groupsSharingWith.add(group.id);
             sender.accept(new StartSharingLocationRequest(group.id));
@@ -139,6 +135,14 @@ public class LocationApi extends AbstractApi<LocationListener> {
         synchronized (this) {
             return groupsSharingWith.contains(group.id);
         }
+    }
+
+    /**
+     * Tests if you are currently sharing location with one or more groups
+     * @return sharing
+     */
+    public boolean isSharing() {
+        return !groupsSharingWith.isEmpty();
     }
 
     /**

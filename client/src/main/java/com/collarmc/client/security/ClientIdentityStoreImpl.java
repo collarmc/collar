@@ -7,7 +7,7 @@ import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.client.HomeDirectory;
 import com.collarmc.io.AtomicFile;
 import com.collarmc.io.IO;
-import com.collarmc.protocol.devices.DeviceRegisteredResponse;
+import com.collarmc.protocol.devices.ClientRegisteredResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.identity.IdentifyRequest;
 import com.collarmc.protocol.identity.IdentifyResponse;
@@ -43,18 +43,12 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public ClientIdentity identity() {
-        if (collarIdentity == null) {
-            throw new IllegalStateException("identity not setup");
-        }
-        return new ClientIdentity(collarIdentity.profile, collarIdentity.publicKey(), collarIdentity.signatureKey());
+        return collarIdentity == null ? null : new ClientIdentity(collarIdentity.id, collarIdentity.publicKey(), collarIdentity.signatureKey());
     }
 
     @Override
     public ServerIdentity serverIdentity() {
-        if (collarIdentity == null) {
-            throw new IllegalStateException("identity not setup");
-        }
-        return collarIdentity.serverIdentity;
+        return collarIdentity == null ? null : collarIdentity.serverIdentity;
     }
 
     @Override
@@ -105,10 +99,10 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     }
 
     @Override
-    public IdentifyRequest processDeviceRegisteredResponse(DeviceRegisteredResponse response) {
+    public IdentifyRequest processClientRegisteredResponse(ClientRegisteredResponse response) {
         CollarIdentity collarIdentity;
         try {
-            collarIdentity = new CollarIdentity(response.profile.id, response.serverIdentity);
+            collarIdentity = CollarIdentity.createClientIdentity(response.profile.id, response.serverIdentity);
         } catch (UnavailableCipherException e) {
             throw new IllegalStateException(e);
         }

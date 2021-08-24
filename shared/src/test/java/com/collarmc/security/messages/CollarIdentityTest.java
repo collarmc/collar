@@ -13,14 +13,24 @@ import java.util.UUID;
 
 public class CollarIdentityTest {
     @Test
-    public void roundTrip() throws Exception {
+    public void roundTripClientIdentity() throws Exception {
         ServerIdentity serverIdentity = new ServerIdentity(new PublicKey(TokenGenerator.byteToken(16)), new PublicKey(TokenGenerator.byteToken(16)), UUID.randomUUID());
-        UUID profileId = UUID.randomUUID();
-        CollarIdentity identity = new CollarIdentity(profileId, serverIdentity);
+        UUID profile = UUID.randomUUID();
+        CollarIdentity identity = CollarIdentity.createClientIdentity(profile, serverIdentity);
         byte[] identityBytes = identity.serialize();
         identity = new CollarIdentity(identityBytes);
-        Assert.assertEquals(profileId, identity.profile);
+        Assert.assertEquals(profile, identity.id);
         Assert.assertEquals(serverIdentity, identity.serverIdentity);
+    }
+
+    @Test
+    public void roundTripServerIdentity() throws Exception {
+        CollarIdentity identity = CollarIdentity.createServerIdentity();
+        UUID id = identity.id;
+        byte[] identityBytes = identity.serialize();
+        identity = new CollarIdentity(identityBytes);
+        Assert.assertEquals(id, identity.id);
+        Assert.assertNull(identity.serverIdentity);
     }
 
     static {

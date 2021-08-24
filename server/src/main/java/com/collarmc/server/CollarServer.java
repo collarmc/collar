@@ -12,7 +12,7 @@ import com.collarmc.protocol.PacketIO;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.SessionStopReason;
-import com.collarmc.protocol.devices.RegisterDeviceResponse;
+import com.collarmc.protocol.devices.RegisterClientResponse;
 import com.collarmc.protocol.identity.IdentifyRequest;
 import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.protocol.keepalive.KeepAliveRequest;
@@ -113,9 +113,9 @@ public class CollarServer {
                 IdentifyRequest request = (IdentifyRequest)req;
                 if (request.identity == null) {
                     LOGGER.debug("Signaling client to register");
-                    String token = services.deviceRegistration.createDeviceRegistrationToken(session);
+                    String token = services.deviceRegistration.createClientRegistrationToken(session);
                     String url = services.urlProvider.deviceVerificationUrl(token);
-                    sendPlain(session, new RegisterDeviceResponse(url, token));
+                    sendPlain(session, new RegisterClientResponse(url, token));
                 } else {
                     try {
                         Profile profile = services.profiles.getProfile(RequestContext.SERVER, ProfileService.GetProfileRequest.byId(request.identity.id())).profile;

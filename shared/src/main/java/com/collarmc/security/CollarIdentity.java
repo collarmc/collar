@@ -11,20 +11,44 @@ import java.security.GeneralSecurityException;
 import java.util.UUID;
 
 /**
- * Identity representing a client or server on the Collar protocol
+ * Represents the private keys and identity of a client or server using the Collar protocol
  * For crypto purposes, use {@link com.collarmc.security.messages.Cipher<?>}
  * This class represents the identity.cif
  */
 public final class CollarIdentity {
     private static final int VERSION = 2;
 
-    public final UUID profile;
+    public final UUID id;
     public final ServerIdentity serverIdentity;
     public final KeysetHandle signatureKey;
     public final KeysetHandle dataKey;
 
-    public CollarIdentity(UUID profile, ServerIdentity serverIdentity) throws UnavailableCipherException {
-        this.profile = profile;
+    public CollarIdentity(byte[] bytes) throws UnavailableCipherException, IOException {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
+            try (DataInputStream dataStream = new DataInputStream(inputStream)) {
+                int version = dataStream.readInt();
+                if (VERSION != version) {
+                    throw new IllegalStateException("invalid version " + version);
+                }
+                id = IO.readUUID(dataStream);
+                signatureKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(IO.readBytes(dataStream)));
+                dataKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(IO.readBytes(dataStream)));
+                if (dataStream.readBoolean()) {
+                    UUID serverId = IO.readUUID(dataStream);
+                    byte[] serverSigKey = IO.readBytes(dataStream);
+                    byte[] serverDataKey = IO.readBytes(dataStream);
+                    this.serverIdentity = new ServerIdentity(new PublicKey(serverDataKey), new PublicKey(serverSigKey), serverId);
+                } else {
+                    this.serverIdentity = null;
+                }
+            }
+        } catch (GeneralSecurityException e) {
+            throw new UnavailableCipherException("problem reading keys from identity.cif", e);
+        }
+    }
+
+    private CollarIdentity(UUID id, ServerIdentity serverIdentity) throws UnavailableCipherException {
+        this.id = id;
         this.serverIdentity = serverIdentity;
         try {
             this.signatureKey = KeysetHandle.generateNew(KeyTemplates.get("ECDSA_P256"));
@@ -34,23 +58,14 @@ public final class CollarIdentity {
         }
     }
 
-    public CollarIdentity(byte[] bytes) {
-        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
-            try (DataInputStream dataStream = new DataInputStream(inputStream)) {
-                int version = dataStream.readInt();
-                if (VERSION != version) {
-                    throw new IllegalStateException("invalid version " + version);
-                }
-                profile = IO.readUUID(dataStream);
-                signatureKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(IO.readBytes(dataStream)));
-                dataKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(IO.readBytes(dataStream)));
-                UUID serverId = IO.readUUID(dataStream);
-                byte[] serverSigKey = IO.readBytes(dataStream);
-                byte[] serverDataKey = IO.readBytes(dataStream);
-                serverIdentity = new ServerIdentity(new PublicKey(serverDataKey), new PublicKey(serverSigKey), serverId);
-            }
-        } catch (IOException|GeneralSecurityException e) {
-            throw new IllegalStateException("could not read identity.cif", e);
+    private CollarIdentity(UUID id, byte[] dataKey, byte[] signatureKey) throws UnavailableCipherException, IOException {
+        this.id = id;
+        this.serverIdentity = null;
+        try {
+            this.signatureKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(signatureKey));
+            this.dataKey = CleartextKeysetHandle.read(BinaryKeysetReader.withBytes(dataKey));
+        } catch (GeneralSecurityException e) {
+            throw new UnavailableCipherException("could not generate new collar identity", e);
         }
     }
 
@@ -80,12 +95,15 @@ public final class CollarIdentity {
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream dataStream = new DataOutputStream(outputStream)) {
                 dataStream.writeInt(VERSION);
-                IO.writeUUID(dataStream, profile);
+                IO.writeUUID(dataStream, id);
                 IO.writeBytes(dataStream, serializeKey(signatureKey));
                 IO.writeBytes(dataStream, serializeKey(dataKey));
-                IO.writeUUID(dataStream, serverIdentity.serverId);
-                IO.writeBytes(dataStream, serverIdentity.signatureKey.key);
-                IO.writeBytes(dataStream, serverIdentity.publicKey.key);
+                dataStream.writeBoolean(serverIdentity != null);
+                if (serverIdentity != null) {
+                    IO.writeUUID(dataStream, serverIdentity.serverId);
+                    IO.writeBytes(dataStream, serverIdentity.signatureKey.key);
+                    IO.writeBytes(dataStream, serverIdentity.publicKey.key);
+                }
             }
             return outputStream.toByteArray();
         } catch (IOException e) {
@@ -93,7 +111,19 @@ public final class CollarIdentity {
         }
     }
 
-    private static byte[] serializeKey(KeysetHandle handle) {
+    public static CollarIdentity createClientIdentity(UUID profile, ServerIdentity serverIdentity) throws UnavailableCipherException {
+        return new CollarIdentity(profile, serverIdentity);
+    }
+
+    public static CollarIdentity createServerIdentity() throws UnavailableCipherException {
+        return new CollarIdentity(UUID.randomUUID(), null);
+    }
+
+    public static CollarIdentity createServerIdentity(UUID profile, byte[] dataKey, byte[] signatureKey) throws UnavailableCipherException, IOException {
+        return new CollarIdentity(profile, dataKey, signatureKey);
+    }
+
+    public static byte[] serializeKey(KeysetHandle handle) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         try {
             CleartextKeysetHandle.write(handle, BinaryKeysetWriter.withOutputStream(bos));

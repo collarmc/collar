@@ -32,8 +32,8 @@ import com.collarmc.protocol.PacketIO;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.SessionStopReason;
-import com.collarmc.protocol.devices.DeviceRegisteredResponse;
-import com.collarmc.protocol.devices.RegisterDeviceResponse;
+import com.collarmc.protocol.devices.ClientRegisteredResponse;
+import com.collarmc.protocol.devices.RegisterClientResponse;
 import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.protocol.keepalive.KeepAliveResponse;
 import com.collarmc.protocol.session.SessionFailedResponse;
@@ -53,7 +53,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -133,10 +132,6 @@ public final class Collar {
      * Connect to server
      */
     public void connect() {
-        if (!configuration.homeDirectory.getLock().tryLock()) {
-            configuration.listener.onError(this, "Collar cannot connect as there is another client using Collar. Disconnect the other client.");
-            return;
-        }
         try {
             checkServerCompatibility(configuration);
             String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
@@ -256,9 +251,6 @@ public final class Collar {
                 this.configuration.listener.onStateChanged(this, state);
                 apis.forEach(abstractApi -> abstractApi.onStateChanged(state));
             }
-        }
-        if (state == State.DISCONNECTED) {
-            this.configuration.homeDirectory.getLock().unlock();
         }
     }
 
@@ -407,13 +399,13 @@ public final class Collar {
                     keepAlive.start();
                 } else if (resp instanceof KeepAliveResponse) {
                     LOGGER.trace("KeepAliveResponse received");
-                } else if (resp instanceof RegisterDeviceResponse) {
-                    RegisterDeviceResponse registerDeviceResponse = (RegisterDeviceResponse) resp;
-                    LOGGER.info("RegisterDeviceResponse received with registration url " + ((RegisterDeviceResponse) resp).approvalUrl);
-                    configuration.listener.onConfirmDeviceRegistration(collar, registerDeviceResponse.approvalToken, registerDeviceResponse.approvalUrl);
-                } else if (resp instanceof DeviceRegisteredResponse) {
-                    DeviceRegisteredResponse response = (DeviceRegisteredResponse) resp;
-                    sendRequest(webSocket, identityStore.processDeviceRegisteredResponse(response));
+                } else if (resp instanceof RegisterClientResponse) {
+                    RegisterClientResponse registerClientResponse = (RegisterClientResponse) resp;
+                    LOGGER.info("RegisterDeviceResponse received with registration url " + ((RegisterClientResponse) resp).approvalUrl);
+                    configuration.listener.onConfirmDeviceRegistration(collar, registerClientResponse.approvalToken, registerClientResponse.approvalUrl);
+                } else if (resp instanceof ClientRegisteredResponse) {
+                    ClientRegisteredResponse response = (ClientRegisteredResponse) resp;
+                    sendRequest(webSocket, identityStore.processClientRegisteredResponse(response));
                 } else if (resp instanceof StartSessionResponse) {
                     LOGGER.info("Session has started");
                     collar.changeState(State.CONNECTED);

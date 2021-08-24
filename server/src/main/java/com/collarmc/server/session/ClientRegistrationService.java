@@ -3,11 +3,11 @@ package com.collarmc.server.session;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.ServerErrorException;
 import com.collarmc.api.profiles.PublicProfile;
-import com.collarmc.protocol.devices.DeviceRegisteredResponse;
+import com.collarmc.protocol.devices.ClientRegisteredResponse;
 import com.collarmc.security.TokenGenerator;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.server.security.ServerIdentityStore;
-import com.collarmc.server.services.devices.DeviceService.CreateDeviceResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.eclipse.jetty.websocket.api.Session;
 
 import javax.annotation.Nonnull;
@@ -16,15 +16,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Keeps track of device registrations
+ * Keeps track of client registrations
  */
-public final class DeviceRegistrationService {
+public final class ClientRegistrationService {
     private final ConcurrentMap<String, Session> devicesWaitingToRegister = new ConcurrentHashMap<>();
     private final ConcurrentMap<Session, String> sessionToRegistrationToken = new ConcurrentHashMap<>();
     private final SessionManager sessions;
     private final ServerIdentityStore identityStore;
 
-    public DeviceRegistrationService(SessionManager sessions, ServerIdentityStore identityStore) {
+    public ClientRegistrationService(SessionManager sessions, ServerIdentityStore identityStore) {
         this.sessions = sessions;
         this.identityStore = identityStore;
     }
@@ -34,7 +34,7 @@ public final class DeviceRegistrationService {
      * @param session to issue a token for
      * @return token
      */
-    public String createDeviceRegistrationToken(@Nonnull Session session) {
+    public String createClientRegistrationToken(@Nonnull Session session) {
         String token = TokenGenerator.urlToken();
         devicesWaitingToRegister.put(token, session);
         sessionToRegistrationToken.put(session, token);
@@ -42,20 +42,18 @@ public final class DeviceRegistrationService {
     }
 
     /**
-     * Called when the device has finished registering
+     * Called when the client has finished registering
      * @param profile owner of the device
      * @param token token being claimed
-     * @param resp of the device being created
      */
-    public void onDeviceRegistered(@Nonnull PublicProfile profile,
-                                   @Nonnull String token,
-                                   @Nonnull CreateDeviceResponse resp) {
+    public void onClientRegistered(@Nonnull PublicProfile profile,
+                                   @Nonnull String token) {
         Session session = devicesWaitingToRegister.get(token);
         if (session == null) {
             throw new HttpException.NotFoundException("session does not exist");
         }
         try {
-            sessions.send(session, null, new DeviceRegisteredResponse(identityStore.identity(), profile, resp.device.deviceId));
+            sessions.send(session, null, new ClientRegisteredResponse(identityStore.identity(), profile));
         } catch (IOException | CipherException e) {
             throw new ServerErrorException("could not send DeviceRegisteredResponse", e);
         }
@@ -71,4 +69,15 @@ public final class DeviceRegistrationService {
             devicesWaitingToRegister.remove(token);
         }
     }
+
+    public static class RegisterClientRequest {
+        @JsonProperty("token")
+        public final String token;
+
+        public RegisterClientRequest(@JsonProperty("token") String token) {
+            this.token = token;
+        }
+    }
+
+    public static class RegisterClientResponse {}
 }

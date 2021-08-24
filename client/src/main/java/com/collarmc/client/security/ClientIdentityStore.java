@@ -3,7 +3,7 @@ package com.collarmc.client.security;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.identity.ServerIdentity;
-import com.collarmc.protocol.devices.DeviceRegisteredResponse;
+import com.collarmc.protocol.devices.ClientRegisteredResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.identity.IdentifyRequest;
 import com.collarmc.protocol.identity.IdentifyResponse;
@@ -51,7 +51,7 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
     /**
      * @param response of the registered device
      */
-    IdentifyRequest processDeviceRegisteredResponse(DeviceRegisteredResponse response);
+    IdentifyRequest processClientRegisteredResponse(ClientRegisteredResponse response);
 
     /**
      * @param groupId of the group being joined

@@ -22,11 +22,9 @@ import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.http.HandlebarsTemplateEngine;
 import com.collarmc.server.services.authentication.TokenCrypter;
-import com.collarmc.server.services.devices.DeviceService;
-import com.collarmc.server.services.devices.DeviceService.CreateDeviceRequest;
-import com.collarmc.server.services.devices.DeviceService.DeleteDeviceRequest;
-import com.collarmc.server.services.devices.DeviceService.TrustDeviceResponse;
 import com.collarmc.server.services.textures.TextureService;
+import com.collarmc.server.session.ClientRegistrationService;
+import com.collarmc.server.session.ClientRegistrationService.RegisterClientRequest;
 import com.collarmc.utils.Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableList;
@@ -159,22 +157,21 @@ public class WebServer {
                         services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(loginResp.profile.id));
                         return new Object();
                     }, services.jsonMapper::writeValueAsString);
-                    get("/devices", (request, response) -> {
-                        return services.devices.findDevices(from(request), services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.FindDevicesRequest.class));
-                    }, services.jsonMapper::writeValueAsString);
                     post("/devices/trust", (request, response) -> {
+                        // TODO: update web app and remove
                         RequestContext context = from(request);
-                        DeviceService.TrustDeviceRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), DeviceService.TrustDeviceRequest.class);
-                        DeviceService.CreateDeviceResponse device = services.devices.createDevice(context, new CreateDeviceRequest(context.owner, req.deviceName));
+                        RegisterClientRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), RegisterClientRequest.class);
                         PublicProfile profile = services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile.toPublic();
-                        services.deviceRegistration.onDeviceRegistered(profile, req.token, device);
-                        return new TrustDeviceResponse();
+                        services.deviceRegistration.onClientRegistered(profile, req.token);
+                        return new ClientRegistrationService.RegisterClientResponse();
                     }, services.jsonMapper::writeValueAsString);
-                    delete("/devices/:id", (request, response) -> {
+                    post("/client/register", (request, response) -> {
                         RequestContext context = from(request);
-                        String deviceId = request.params("id");
-                        return services.devices.deleteDevice(context, new DeleteDeviceRequest(context.owner, Integer.parseInt(deviceId)));
-                    });
+                        RegisterClientRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), RegisterClientRequest.class);
+                        PublicProfile profile = services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile.toPublic();
+                        services.deviceRegistration.onClientRegistered(profile, req.token);
+                        return new ClientRegistrationService.RegisterClientResponse();
+                    }, services.jsonMapper::writeValueAsString);
                     get("/textures/:type", (request, response) -> {
                         RequestContext context = from(request);
                         TextureType textureType = TextureType.valueOf(request.params("type").toUpperCase());

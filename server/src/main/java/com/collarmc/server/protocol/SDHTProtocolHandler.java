@@ -11,6 +11,8 @@ import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.sdht.SDHTEventRequest;
 import com.collarmc.protocol.sdht.SDHTEventResponse;
 import com.collarmc.sdht.events.*;
+import com.collarmc.security.messages.GroupMessage;
+import com.collarmc.security.messages.GroupMessageEnvelope;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.services.groups.GroupService;
 import com.collarmc.server.session.SessionManager;
@@ -41,10 +43,14 @@ public class SDHTProtocolHandler extends ProtocolHandler {
             AbstractSDHTEvent e = request.event;
             if (e instanceof CreateEntryEvent) {
                 CreateEntryEvent event = (CreateEntryEvent) e;
+                GroupMessageEnvelope envelope = new GroupMessageEnvelope(event.content);
                 findListeners(identity, event.record.key.namespace).forEach(found -> {
-                    CreateEntryEvent newEvent = new CreateEntryEvent(identity, null, event.record, event.content);
-                    SDHTEventResponse response = new SDHTEventResponse(newEvent);
-                    sender.accept(found, response);
+                    GroupMessage message = envelope.messages.get(identity.id());
+                    if (message != null) {
+                        CreateEntryEvent newEvent = new CreateEntryEvent(identity, null, event.record, message.contents);
+                        SDHTEventResponse response = new SDHTEventResponse(newEvent);
+                        sender.accept(found, response);
+                    }
                 });
                 return true;
             } else if (e instanceof DeleteRecordEvent) {

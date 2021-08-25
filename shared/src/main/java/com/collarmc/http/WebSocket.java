@@ -36,15 +36,15 @@ public final class WebSocket {
     public void send(ByteBuffer message) {
         assertWritable();
         sendingCount.incrementAndGet();
-        ChannelPromise promise = channel.newPromise().addListener((ChannelFutureListener) future1 -> {
-            sendingCount.decrementAndGet();
-        });
-        channel.writeAndFlush(new BinaryWebSocketFrame(Unpooled.copiedBuffer(message)), promise);
+        channel.writeAndFlush(
+                new BinaryWebSocketFrame(Unpooled.copiedBuffer(message)),
+                channel.newPromise().addListener(future1 -> sendingCount.decrementAndGet())
+        );
     }
 
     private void assertWritable() {
         if (closing) {
-
+            throw new IllegalStateException("socket is closing");
         }
         if (!channel.isWritable()) {
             throw new IllegalStateException("socket is closed");
@@ -58,7 +58,11 @@ public final class WebSocket {
      */
     public void close(int code, String reason) {
         waitForSendingToComplete();
-        channel.writeAndFlush(new CloseWebSocketFrame(code, reason));
+        sendingCount.getAndIncrement();
+        channel.writeAndFlush(
+                new CloseWebSocketFrame(code, reason),
+                channel.newPromise().addListener(future1 -> sendingCount.decrementAndGet())
+        );
     }
 
     /**

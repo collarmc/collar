@@ -59,10 +59,12 @@ public final class WebSocket {
     public void close(int code, String reason) {
         waitForSendingToComplete();
         sendingCount.getAndIncrement();
-        channel.writeAndFlush(
-                new CloseWebSocketFrame(code, reason),
-                channel.newPromise().addListener(future1 -> sendingCount.decrementAndGet())
-        );
+        if (channel.isWritable()) {
+            channel.writeAndFlush(
+                    new CloseWebSocketFrame(code, reason),
+                    channel.newPromise().addListener(future1 -> sendingCount.decrementAndGet())
+            );
+        }
     }
 
     /**

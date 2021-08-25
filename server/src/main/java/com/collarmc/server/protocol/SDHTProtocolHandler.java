@@ -14,6 +14,7 @@ import com.collarmc.sdht.events.*;
 import com.collarmc.security.messages.GroupMessage;
 import com.collarmc.security.messages.GroupMessageEnvelope;
 import com.collarmc.server.CollarServer;
+import com.collarmc.server.Services;
 import com.collarmc.server.services.groups.GroupService;
 import com.collarmc.server.session.SessionManager;
 import org.eclipse.jetty.websocket.api.Session;
@@ -26,14 +27,8 @@ import java.util.function.BiConsumer;
 
 public class SDHTProtocolHandler extends ProtocolHandler {
 
-    private final GroupService groups;
-    private final SessionManager sessions;
-    private final ServerIdentity serverIdentity;
-
-    public SDHTProtocolHandler(GroupService groups, SessionManager sessions, ServerIdentity serverIdentity) {
-        this.groups = groups;
-        this.sessions = sessions;
-        this.serverIdentity = serverIdentity;
+    public SDHTProtocolHandler(Services services) {
+        super(services);
     }
 
     @Override
@@ -80,8 +75,8 @@ public class SDHTProtocolHandler extends ProtocolHandler {
     }
 
     private Set<ClientIdentity> findListeners(ClientIdentity sender, UUID namespace) {
-        Group group = groups.findGroup(namespace).orElseThrow(() -> new IllegalStateException("could not find group " + namespace));
-        Optional<Player> sendingPlayer = sessions.findPlayer(sender);
+        Group group = services.groups.findGroup(namespace).orElseThrow(() -> new IllegalStateException("could not find group " + namespace));
+        Optional<Player> sendingPlayer = services.sessions.findPlayer(sender);
         if (sendingPlayer.isEmpty()) {
             return Set.of();
         }
@@ -93,7 +88,7 @@ public class SDHTProtocolHandler extends ProtocolHandler {
             if (member.membershipState != MembershipState.ACCEPTED && sendingPlayer.get().equals(member.player)) {
                 continue;
             }
-            sessions.getIdentity(member.player).ifPresent(listeners::add);
+            services.sessions.getIdentity(member.player).ifPresent(listeners::add);
         }
         return listeners;
     }

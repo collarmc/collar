@@ -12,6 +12,7 @@ import com.collarmc.protocol.textures.GetTextureRequest;
 import com.collarmc.protocol.textures.GetTextureResponse;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.server.CollarServer;
+import com.collarmc.server.Services;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.services.textures.TextureService;
 import com.collarmc.server.session.SessionManager;
@@ -25,14 +26,8 @@ public class TexturesProtocolHandler extends ProtocolHandler {
 
     private static final Logger LOGGER = LogManager.getLogger(TexturesProtocolHandler.class.getName());
 
-    private final ProfileCache profiles;
-    private final SessionManager sessions;
-    private final TextureService textures;
-
-    public TexturesProtocolHandler(ProfileCache profiles, SessionManager sessions, TextureService textures) {
-        this.profiles = profiles;
-        this.sessions = sessions;
-        this.textures = textures;
+    public TexturesProtocolHandler(Services services) {
+        super(services);
     }
 
     @Override
@@ -40,7 +35,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
         if (req instanceof GetTextureRequest) {
             GetTextureRequest request = (GetTextureRequest) req;
             if (request.player != null) {
-                sessions.getSessionStateByPlayer(request.player).ifPresentOrElse(sessionState -> {
+                services.sessions.getSessionStateByPlayer(request.player).ifPresentOrElse(sessionState -> {
                     GetTextureResponse response;
                     try {
                         TextureService.Texture texture = null;
@@ -50,7 +45,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                         }
                         // otherwise fall back to fetching any cape cape the player owns
                         if (texture == null) {
-                            texture = textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null, sessionState.identity.profile, request.group, request.type)).texture;
+                            texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null, sessionState.identity.profile, request.group, request.type)).texture;
                         }
                         response = new GetTextureResponse(texture.id, null, sessionState.toPlayer(), texture.url, texture.type);
                     } catch (NotFoundException ignored) {
@@ -59,7 +54,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                     }
                     sender.accept(identity, response);
                 }, () -> {
-                    sessions.findPlayer(identity).ifPresent(player -> {
+                    services.sessions.findPlayer(identity).ifPresent(player -> {
                         Player requestedPlayer = new Player(player.identity, new MinecraftPlayer(request.player, player.minecraftPlayer.server, player.minecraftPlayer.networkId));
                         // Send this back to complete any futures on the client
                         sender.accept(identity, new GetTextureResponse(null, null, requestedPlayer, null, request.type));
@@ -69,7 +64,7 @@ public class TexturesProtocolHandler extends ProtocolHandler {
             } else if (request.group != null) {
                 GetTextureResponse response;
                 try {
-                    TextureService.Texture texture = textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null,null, request.group, request.type)).texture;
+                    TextureService.Texture texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null,null, request.group, request.type)).texture;
                     response = new GetTextureResponse(texture.id, texture.group, null, texture.url, texture.type);
                 } catch (NotFoundException ignored) {
                     LOGGER.info("Could not find texture " + request.type + " for group " + request.group);
@@ -84,10 +79,10 @@ public class TexturesProtocolHandler extends ProtocolHandler {
 
     private TextureService.Texture findDefaultCape(GetTextureRequest request, SessionManager.SessionState sessionState) {
         TextureService.Texture texture;
-        PublicProfile playerProfile = profiles.getById(sessionState.identity.profile).orElseThrow(() -> new IllegalStateException("could not find profile " + sessionState.identity.profile)).toPublic();
+        PublicProfile playerProfile = services.profileCache.getById(sessionState.identity.profile).orElseThrow(() -> new IllegalStateException("could not find profile " + sessionState.identity.profile)).toPublic();
         if (playerProfile.cape != null) {
             try {
-                texture = textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(playerProfile.cape.texture, null, null, null)).texture;
+                texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(playerProfile.cape.texture, null, null, null)).texture;
             } catch (NotFoundException ignored) {
                 LOGGER.info("Could not find texture " + playerProfile.cape.texture + " for player " + request.player);
                 texture = null;

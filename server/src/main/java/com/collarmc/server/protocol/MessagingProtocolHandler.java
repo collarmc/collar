@@ -8,6 +8,7 @@ import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
 import com.collarmc.server.CollarServer;
+import com.collarmc.server.Services;
 import com.collarmc.server.services.groups.GroupService;
 import com.collarmc.server.session.SessionManager;
 import org.apache.logging.log4j.LogManager;
@@ -20,14 +21,8 @@ public class MessagingProtocolHandler extends ProtocolHandler {
 
     private static final Logger LOGGER = LogManager.getLogger(MessagingProtocolHandler.class.getName());
 
-    private final SessionManager sessions;
-    private final GroupService groups;
-    private final ServerIdentity serverIdentity;
-
-    public MessagingProtocolHandler(SessionManager sessions, GroupService groups, ServerIdentity serverIdentity) {
-        this.sessions = sessions;
-        this.groups = groups;
-        this.serverIdentity = serverIdentity;
+    public MessagingProtocolHandler(Services services) {
+        super(services);
     }
 
     @Override
@@ -35,9 +30,9 @@ public class MessagingProtocolHandler extends ProtocolHandler {
         if (req instanceof SendMessageRequest) {
             SendMessageRequest request = (SendMessageRequest) req;
             if (request.group != null) {
-                groups.createMessages(identity, request).ifPresent(response -> sender.accept(null, response));
+                services.groups.createMessages(identity, request).ifPresent(response -> sender.accept(null, response));
             } else if (request.recipient != null) {
-                sessions.findPlayer(identity).ifPresentOrElse(player -> {
+                services.sessions.findPlayer(identity).ifPresentOrElse(player -> {
                     sender.accept(request.recipient, new SendMessageResponse(identity, null, player, request.message));
                 }, () -> {
                     LOGGER.info("could not find player for " + identity);

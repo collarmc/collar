@@ -42,14 +42,17 @@ public final class SessionManager {
         this.store = store;
     }
 
-    public void identify(Session session, ClientIdentity identity, MinecraftPlayer player) {
+    public void identify(Session session, ClientIdentity identity, MinecraftPlayer player, BiConsumer<ClientIdentity, Player> callback) {
         SessionState state = new SessionState(session, identity, player);
-        sessions.compute(session, (theSession, sessionState) -> {
+        SessionState computed = sessions.compute(session, (theSession, sessionState) -> {
             if (sessionState != null && sessionState.minecraftPlayer != null) {
                 throw new IllegalStateException("session cannot be identified with a single player more than once");
             }
             return state;
         });
+        if (computed.minecraftPlayer != null) {
+            callback.accept(state.identity, state.toPlayer());
+        }
     }
 
     public boolean isIdentified(Session session) {
@@ -142,7 +145,7 @@ public final class SessionManager {
             return Optional.empty();
         }
         return sessions.values().stream()
-                .filter(sessionState -> sessionState.identity.equals(identity))
+                .filter(sessionState -> sessionState.minecraftPlayer != null && sessionState.identity.equals(identity))
                 .findFirst()
                 .map(SessionState::toPlayer);
     }

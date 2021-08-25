@@ -17,10 +17,8 @@ import java.util.function.BiConsumer;
 public final class GroupsProtocolHandler extends ProtocolHandler {
     private static final Logger LOGGER = LogManager.getLogger(GroupsProtocolHandler.class.getName());
 
-    private final Services services;
-
     public GroupsProtocolHandler(Services services) {
-        this.services = services;
+        super(services);
     }
 
     @Override

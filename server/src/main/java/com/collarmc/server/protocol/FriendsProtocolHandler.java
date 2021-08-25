@@ -10,6 +10,7 @@ import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.friends.*;
 import com.collarmc.server.CollarServer;
+import com.collarmc.server.Services;
 import com.collarmc.server.services.friends.FriendsService;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
@@ -27,14 +28,8 @@ public class FriendsProtocolHandler extends ProtocolHandler {
 
     private static final Logger LOGGER = LogManager.getLogger(FriendsProtocolHandler.class.getName());
 
-    private final ProfileCache profiles;
-    private final FriendsService friends;
-    private final SessionManager sessions;
-
-    public FriendsProtocolHandler(ProfileCache profiles, FriendsService friends, SessionManager sessions) {
-        this.profiles = profiles;
-        this.friends = friends;
-        this.sessions = sessions;
+    public FriendsProtocolHandler(Services services) {
+        super(services);
     }
 
     @Override
@@ -43,7 +38,7 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         if (req instanceof AddFriendRequest) {
             AddFriendRequest request = (AddFriendRequest) req;
             findFriendProfileId(request.profile, request.player).ifPresentOrElse(friendProfileId -> {
-                Friend friend = friends.createFriend(caller, new FriendsService.CreateFriendRequest(identity.profile, friendProfileId)).friend;
+                Friend friend = services.friends.createFriend(caller, new FriendsService.CreateFriendRequest(identity.profile, friendProfileId)).friend;
                 sender.accept(identity, new AddFriendResponse(friend));
             }, () -> {
                 LOGGER.error("Could not add friend with profileId " + request.profile  + " or playerId " + request.player);
@@ -52,14 +47,14 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         } else if (req instanceof RemoveFriendRequest) {
             RemoveFriendRequest request = (RemoveFriendRequest) req;
             findFriendProfileId(request.profile, request.player).ifPresentOrElse(friendProfileId -> {
-                UUID deletedFriend = friends.deleteFriend(caller, new FriendsService.DeleteFriendRequest(identity.profile, friendProfileId)).friend;
+                UUID deletedFriend = services.friends.deleteFriend(caller, new FriendsService.DeleteFriendRequest(identity.profile, friendProfileId)).friend;
                 sender.accept(identity, new RemoveFriendResponse(deletedFriend));
             }, () -> {
                 LOGGER.error("Could not add friend with profileId " + request.profile + " or playerId " + request.player);
             });
             return true;
         } else if (req instanceof GetFriendListRequest) {
-            List<Friend> friends = this.friends.getFriends(caller, new FriendsService.GetFriendsRequest(identity.profile, null)).friends;
+            List<Friend> friends = services.friends.getFriends(caller, new FriendsService.GetFriendsRequest(identity.profile, null)).friends;
             sender.accept(identity, new GetFriendListResponse(friends));
             return true;
         }
@@ -71,7 +66,7 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         if (profile != null) {
             profileId = Optional.of(profile);
         } else if (player != null) {
-            profileId = sessions.getSessionStateByPlayer(player).map(sessionState -> sessionState.identity.profile);
+            profileId = services.sessions.getSessionStateByPlayer(player).map(sessionState -> sessionState.identity.profile);
         } else {
             profileId = Optional.empty();
         }
@@ -81,9 +76,9 @@ public class FriendsProtocolHandler extends ProtocolHandler {
     @Override
     public void onSessionStopping(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) {
         // Broadcast to the players friends that the player is now offline
-        friends.getFriends(RequestContext.from(identity), new FriendsService.GetFriendsRequest(null, identity.profile)).friends.forEach(friend -> {
-            sessions.getSessionStateByOwner(friend.owner).ifPresentOrElse(sessionState -> {
-                PublicProfile profile = profiles.getById(identity.profile).orElseThrow(() -> new IllegalStateException("could not find profile " + identity.profile)).toPublic();
+        services.friends.getFriends(RequestContext.from(identity), new FriendsService.GetFriendsRequest(null, identity.profile)).friends.forEach(friend -> {
+            services.sessions.getSessionStateByOwner(friend.owner).ifPresentOrElse(sessionState -> {
+                PublicProfile profile = services.profileCache.getById(identity.profile).orElseThrow(() -> new IllegalStateException("could not find profile " + identity.profile)).toPublic();
                 Friend offline = new Friend(sessionState.identity.profile, profile, Status.OFFLINE, Set.of());
                 LOGGER.info("Notifying " + sessionState.identity + " that player " + identity + " is OFFLINE");
                 sender.accept(sessionState.session, new FriendChangedResponse(offline));

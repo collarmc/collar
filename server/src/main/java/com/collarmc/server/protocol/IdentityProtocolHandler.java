@@ -19,10 +19,8 @@ import java.util.function.BiConsumer;
 
 public class IdentityProtocolHandler extends ProtocolHandler {
 
-    private final Services services;
-
     public IdentityProtocolHandler(Services services) {
-        this.services = services;
+        super(services);
     }
 
     @Override

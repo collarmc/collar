@@ -4,7 +4,6 @@ import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.Member;
 import com.collarmc.api.groups.MembershipState;
 import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
@@ -15,8 +14,6 @@ import com.collarmc.security.messages.GroupMessage;
 import com.collarmc.security.messages.GroupMessageEnvelope;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.Services;
-import com.collarmc.server.services.groups.GroupService;
-import com.collarmc.server.session.SessionManager;
 import org.eclipse.jetty.websocket.api.Session;
 
 import java.util.HashSet;

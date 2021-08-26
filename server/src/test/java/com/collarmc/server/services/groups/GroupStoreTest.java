@@ -33,7 +33,7 @@ public class GroupStoreTest {
         GroupStore store = new GroupStore(profileCache, new SessionManager(Utils.messagePackMapper(), null), dbRule.db);
 
         UUID groupId = UUID.randomUUID();
-        Player owner = new Player(new ClientIdentity(ownerProfile.id, null, null), new MinecraftPlayer(UUID.randomUUID(), "2b2t.org", 1));
+        Player owner = new Player(new ClientIdentity(ownerProfile.id, null), new MinecraftPlayer(UUID.randomUUID(), "2b2t.org", 1));
 
         store.upsert(Group.newGroup(groupId, "The Spawnmasons", GroupType.GROUP, new MemberSource(owner, null), List.of()));
 
@@ -45,9 +45,9 @@ public class GroupStoreTest {
         Assert.assertTrue(group.members.stream().anyMatch(member -> member.player.equals(owner)));
 
         Profile player1Profile = profiles.createProfile(RequestContext.ANON, new CreateProfileRequest("player1@example.com", "cute", "player1")).profile;
-        Player player1 = new Player(new ClientIdentity(player1Profile.id, null, null), null);
+        Player player1 = new Player(new ClientIdentity(player1Profile.id, null), null);
         Profile player2Profile = profiles.createProfile(RequestContext.ANON, new CreateProfileRequest("player2@example.com", "cute", "player2")).profile;
-        Player player2 = new Player(new ClientIdentity(player2Profile.id, null, null), null);
+        Player player2 = new Player(new ClientIdentity(player2Profile.id, null), null);
 
         group = store.addMembers(groupId, List.of(new MemberSource(player1, null), new MemberSource(player2, null)), MembershipRole.MEMBER, MembershipState.ACCEPTED).orElse(null);
         Assert.assertNotNull(group);

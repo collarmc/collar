@@ -70,7 +70,7 @@ public class TexturesTest extends CollarTest {
         AtomicReference<Texture> theTexture = new AtomicReference<>();
         alicePlayer.collar.textures().subscribe((collar, texturesApi, texture) -> theTexture.set(texture));
 
-        Group group = Group.newGroup(groupId, "Cool group", GroupType.GROUP, new MemberSource(new Player(new ClientIdentity(UUID.randomUUID(), null, null), new MinecraftPlayer(UUID.randomUUID(), "hypoxel.net", 1)), null), new ArrayList<>());
+        Group group = Group.newGroup(groupId, "Cool group", GroupType.GROUP, new MemberSource(new Player(new ClientIdentity(UUID.randomUUID(), null), new MinecraftPlayer(UUID.randomUUID(), "hypoxel.net", 1)), null), new ArrayList<>());
 
         alicePlayer.collar.textures().requestGroupTexture(group, TextureType.AVATAR);
         CollarAssert.waitForCondition("Receive the requested texture", () -> theTexture.get() != null);

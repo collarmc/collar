@@ -15,25 +15,15 @@ public final class ClientIdentity implements Identity {
     public final UUID profile;
     @JsonProperty("publicKey")
     public final PublicKey publicKey;
-    @JsonProperty("signatureKey")
-    public final PublicKey signatureKey;
-
     public ClientIdentity(@JsonProperty("profile") UUID profile,
-                          @JsonProperty("publicKey") PublicKey publicKey,
-                          @JsonProperty("signatureKey") PublicKey signatureKey) {
+                          @JsonProperty("publicKey") PublicKey publicKey) {
         this.profile = profile;
         this.publicKey = publicKey;
-        this.signatureKey = signatureKey;
     }
 
     @Override
     public PublicKey publicKey() {
         return publicKey;
-    }
-
-    @Override
-    public PublicKey signatureKey() {
-        return signatureKey;
     }
 
     @Override

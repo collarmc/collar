@@ -8,7 +8,6 @@ import com.collarmc.sdht.Content;
 import com.collarmc.sdht.cipher.ContentCipher;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.CipherException.UnavailableCipherException;
-import com.collarmc.security.messages.GroupMessage;
 import com.collarmc.security.messages.GroupSession;
 
 import java.util.UUID;

@@ -41,7 +41,6 @@ public class ProfileServiceServer implements ProfileService {
     private static final String FIELD_KNOWN_ACCOUNTS = "knownAccounts";
     private static final String FIELD_ROLES = "roles";
     private static final String FIELD_PUBLIC_KEY = "publicKey";
-    private static final String FIELD_SIGNING_KEY = "signingKey";
 
     private final MongoCollection<Document> docs;
     private final PasswordHashing passwordHashing;
@@ -125,8 +124,8 @@ public class ProfileServiceServer implements ProfileService {
             result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_EMAIL_VERIFIED, req.emailVerified)));
         } else if (req.hashedPassword != null) {
             result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_HASHED_PASSWORD, req.hashedPassword)));
-        } else if (req.publicKey != null && req.signingKey != null) {
-            result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(Map.of(FIELD_PUBLIC_KEY, new Binary(req.publicKey.key), FIELD_SIGNING_KEY, new Binary(req.signingKey.key)))));
+        } else if (req.publicKey != null) {
+            result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(Map.of(FIELD_PUBLIC_KEY, new Binary(req.publicKey.key)))));
         } else if (req.cape != null) {
             result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_CAPE_TEXTURE, map(req.cape))));
         } else if (req.addMinecraftAccount != null) {
@@ -157,10 +156,10 @@ public class ProfileServiceServer implements ProfileService {
         String hashedPassword = doc.getString(FIELD_HASHED_PASSWORD);
         boolean emailVerified = doc.getBoolean(FIELD_EMAIL_VERIFIED, false);
         TexturePreference capeTexture = mapTexturePreference(doc.get(FIELD_CAPE_TEXTURE, Document.class));
-        Binary publicKey = doc.get(FIELD_PUBLIC_KEY, Binary.class);
-        Binary signingKey = doc.get(FIELD_SIGNING_KEY, Binary.class);
+        Binary publicKeyBinary = doc.get(FIELD_PUBLIC_KEY, Binary.class);
         List<UUID> knownAccounts = doc.getList(FIELD_KNOWN_ACCOUNTS, UUID.class);
         Set<Role> roles = doc.getList(FIELD_ROLES, String.class, List.of()).stream().map(Role::valueOf).collect(Collectors.toSet());
+        PublicKey publicKey = publicKeyBinary == null || publicKeyBinary.getData().length == 0 ? null : new PublicKey(publicKeyBinary.getData());
         return new Profile(
                 profileId,
                 roles,
@@ -170,8 +169,8 @@ public class ProfileServiceServer implements ProfileService {
                 emailVerified,
                 capeTexture,
                 knownAccounts == null ? Set.of() : Set.copyOf(knownAccounts),
-                publicKey == null || publicKey.getData().length == 0 ? null : new PublicKey(publicKey.getData()),
-                signingKey == null || signingKey.getData().length == 0 ? null : new PublicKey(signingKey.getData()));
+                publicKey
+        );
     }
 
     private static TexturePreference mapTexturePreference(Document doc) {

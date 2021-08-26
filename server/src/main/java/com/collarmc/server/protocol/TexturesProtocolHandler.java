@@ -13,7 +13,6 @@ import com.collarmc.protocol.textures.GetTextureResponse;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.Services;
-import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.services.textures.TextureService;
 import com.collarmc.server.session.SessionManager;
 import org.apache.logging.log4j.LogManager;

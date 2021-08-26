@@ -12,8 +12,6 @@ import com.collarmc.protocol.friends.*;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.Services;
 import com.collarmc.server.services.friends.FriendsService;
-import com.collarmc.server.services.profiles.ProfileCache;
-import com.collarmc.server.session.SessionManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.websocket.api.Session;

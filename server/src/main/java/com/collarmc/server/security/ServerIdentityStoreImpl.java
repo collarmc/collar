@@ -14,8 +14,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-import static com.collarmc.security.CollarIdentity.serializeKey;
-
 public class ServerIdentityStoreImpl implements ServerIdentityStore {
 
     private final CollarIdentity collarIdentity;
@@ -25,16 +23,16 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
         MongoCursor<Document> iterator = serverIdentityCollection.find().iterator();
         if (iterator.hasNext()) {
             Document document = iterator.next();
-            Binary dataKey = document.get("dataKey", Binary.class);
-            Binary signatureKey = document.get("signatureKey", Binary.class);
+            Binary publicKey = document.get("publicKey", Binary.class);
+            Binary privateKey = document.get("privateKey", Binary.class);
             UUID serverId = document.get("serverId", UUID.class);
-            collarIdentity = CollarIdentity.createServerIdentity(serverId, dataKey.getData(), signatureKey.getData());
+            collarIdentity = CollarIdentity.createServerIdentity(serverId, publicKey.getData(), privateKey.getData());
         } else {
             collarIdentity = CollarIdentity.createServerIdentity();
             Document document = new Document(Map.of(
                     "serverId", collarIdentity.id,
-                    "signatureKey", new Binary(serializeKey(collarIdentity.signatureKey)),
-                    "dataKey", new Binary(serializeKey(collarIdentity.dataKey))
+                    "publicKey", new Binary(collarIdentity.keyPair.getPublic().getEncoded()),
+                    "privateKey", new Binary(collarIdentity.keyPair.getPrivate().getEncoded())
             ));
             serverIdentityCollection.insertOne(document);
         }
@@ -42,7 +40,7 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
 
     @Override
     public ServerIdentity identity() {
-        return new ServerIdentity(collarIdentity.publicKey(), collarIdentity.signatureKey(), collarIdentity.id);
+        return new ServerIdentity(collarIdentity.id, collarIdentity.publicKey());
     }
 
     @Override

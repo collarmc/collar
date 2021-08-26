@@ -7,6 +7,7 @@ import com.collarmc.protocol.devices.ClientRegisteredResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.identity.IdentifyRequest;
 import com.collarmc.protocol.identity.IdentifyResponse;
+import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.GroupSession;
 import com.collarmc.security.messages.IdentityStore;
 
@@ -51,7 +52,7 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
     /**
      * @param response of the registered device
      */
-    IdentifyRequest processClientRegisteredResponse(ClientRegisteredResponse response);
+    IdentifyRequest processClientRegisteredResponse(ClientRegisteredResponse response) throws CipherException;
 
     /**
      * @param groupId of the group being joined

@@ -15,7 +15,6 @@ import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.TokenGenerator;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.messages.CipherException.UnavailableCipherException;
 import com.collarmc.security.messages.GroupSession;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -43,7 +42,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public ClientIdentity identity() {
-        return collarIdentity == null ? null : new ClientIdentity(collarIdentity.id, collarIdentity.publicKey(), collarIdentity.signatureKey());
+        return collarIdentity == null ? null : new ClientIdentity(collarIdentity.id, collarIdentity.publicKey());
     }
 
     @Override
@@ -99,13 +98,8 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     }
 
     @Override
-    public IdentifyRequest processClientRegisteredResponse(ClientRegisteredResponse response) {
-        CollarIdentity collarIdentity;
-        try {
-            collarIdentity = CollarIdentity.createClientIdentity(response.profile.id, response.serverIdentity);
-        } catch (UnavailableCipherException e) {
-            throw new IllegalStateException(e);
-        }
+    public IdentifyRequest processClientRegisteredResponse(ClientRegisteredResponse response) throws CipherException {
+        CollarIdentity collarIdentity = CollarIdentity.createClientIdentity(response.profile.id, response.serverIdentity);
         try {
             AtomicFile.write(getIdentityFile(homeDirectory), theFile -> IO.writeBytesToFile(theFile, collarIdentity.serialize()));
         } catch (IOException e) {

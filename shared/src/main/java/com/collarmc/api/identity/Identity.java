@@ -12,6 +12,4 @@ public interface Identity {
     UUID id();
 
     PublicKey publicKey();
-
-    PublicKey signatureKey();
 }

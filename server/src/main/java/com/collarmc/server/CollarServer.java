@@ -161,15 +161,15 @@ public class CollarServer {
     }
 
     private byte[] processIdentityRequestToken(Profile profile, IdentifyRequest req) {
-        if (profile.publicKey == null && profile.signingKey == null) {
-            profile = services.profiles.updateProfile(RequestContext.SERVER, UpdateProfileRequest.keys(profile.id, req.identity.publicKey, req.identity.signatureKey)).profile;
+        if (profile.publicKey == null) {
+            profile = services.profiles.updateProfile(RequestContext.SERVER, UpdateProfileRequest.keys(profile.id, req.identity.publicKey)).profile;
         }
-        ClientIdentity storedIdentity = new ClientIdentity(profile.id, profile.publicKey, profile.signingKey);
+        ClientIdentity storedIdentity = new ClientIdentity(profile.id, profile.publicKey);
         if (!storedIdentity.equals(req.identity)) {
             return null;
         }
         try {
-            return services.identityStore.cipher().decrypt(req.token, profile.id, profile.signingKey);
+            return services.identityStore.cipher().decrypt(req.token, storedIdentity);
         } catch (CipherException e) {
             LOGGER.log(Level.ERROR, "Could not decrypt token");
             return null;

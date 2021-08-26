@@ -144,7 +144,7 @@ public class WebServer {
                     get("/groups", (request, response) -> {
                         RequestContext context = from(request);
                         // TODO: does this search still work???
-                        return services.groupStore.findGroupsContaining(new Player(new ClientIdentity(context.owner, null, null), null)).collect(Collectors.toList());
+                        return services.groupStore.findGroupsContaining(new Player(new ClientIdentity(context.owner, null), null)).collect(Collectors.toList());
                     }, services.jsonMapper::writeValueAsString);
                     post("/reset", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);

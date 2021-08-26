@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.StringJoiner;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -406,7 +405,12 @@ public final class Collar {
                     configuration.listener.onConfirmDeviceRegistration(collar, registerClientResponse.approvalToken, registerClientResponse.approvalUrl);
                 } else if (resp instanceof ClientRegisteredResponse) {
                     ClientRegisteredResponse response = (ClientRegisteredResponse) resp;
-                    sendRequest(webSocket, identityStore.processClientRegisteredResponse(response));
+                    try {
+                        sendRequest(webSocket, identityStore.processClientRegisteredResponse(response));
+                    } catch (CipherException e) {
+                        configuration.listener.onError(collar, e);
+                        collar.changeState(State.DISCONNECTED);
+                    }
                 } else if (resp instanceof StartSessionResponse) {
                     LOGGER.info("Session has started");
                     collar.changeState(State.CONNECTED);

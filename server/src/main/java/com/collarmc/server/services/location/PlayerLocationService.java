@@ -11,9 +11,6 @@ import com.collarmc.protocol.location.*;
 import com.collarmc.security.messages.GroupMessageEnvelope;
 import com.collarmc.server.Services;
 import com.collarmc.server.protocol.BatchProtocolResponse;
-import com.collarmc.server.services.groups.GroupService;
-import com.collarmc.server.services.profiles.ProfileCache;
-import com.collarmc.server.session.SessionManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

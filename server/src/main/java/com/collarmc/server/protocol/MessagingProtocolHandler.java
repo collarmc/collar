@@ -1,7 +1,6 @@
 package com.collarmc.server.protocol;
 
 import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
@@ -9,8 +8,6 @@ import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.Services;
-import com.collarmc.server.services.groups.GroupService;
-import com.collarmc.server.session.SessionManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.websocket.api.Session;

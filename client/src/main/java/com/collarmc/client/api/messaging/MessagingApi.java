@@ -13,7 +13,6 @@ import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.messages.GroupMessage;
 import com.collarmc.utils.Utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.logging.log4j.LogManager;

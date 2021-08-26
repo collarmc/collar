@@ -188,6 +188,11 @@
                 <artifactId>mongodb-driver-sync</artifactId>
                 <version>4.2.3</version>
             </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15to18</artifactId>
+                <version>1.69</version>
+            </dependency>
             <!-- password hashing -->
             <dependency>
                 <groupId>at.favre.lib</groupId>
@@ -198,11 +203,6 @@
                 <groupId>org.jasypt</groupId>
                 <artifactId>jasypt</artifactId>
                 <version>1.9.3</version>
-            </dependency>
-            <dependency>
-                <groupId>com.google.crypto.tink</groupId>
-                <artifactId>tink</artifactId>
-                <version>1.6.1</version>
             </dependency>
             <!-- used for www testing interface -->
             <dependency>

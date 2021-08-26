@@ -4,7 +4,6 @@ import com.collarmc.api.authentication.AuthenticationService;
 import com.collarmc.api.authentication.AuthenticationService.LoginRequest;
 import com.collarmc.api.authentication.AuthenticationService.LoginResponse;
 import com.collarmc.api.profiles.Profile;
-import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.GetProfileRequest;
 import com.collarmc.http.HttpClient;
 
@@ -18,7 +17,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.collarmc.api.profiles.ProfileService.UpdateProfileRequest.*;
+import static com.collarmc.api.profiles.ProfileService.UpdateProfileRequest.resetKeys;
 
 public final class AdminTool {
 

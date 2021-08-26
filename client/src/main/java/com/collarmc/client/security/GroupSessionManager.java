@@ -1,7 +1,6 @@
 package com.collarmc.client.security;
 
 import com.collarmc.api.groups.Group;
-import com.collarmc.api.session.Player;
 import com.collarmc.security.messages.GroupSession;
 
 import java.util.Optional;

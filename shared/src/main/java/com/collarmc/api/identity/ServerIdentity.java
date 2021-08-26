@@ -12,16 +12,11 @@ import java.util.UUID;
 public final class ServerIdentity implements Identity {
     @JsonProperty("publicKey")
     public final PublicKey publicKey;
-    @JsonProperty("signatureKey")
-    public final PublicKey signatureKey;
     @JsonProperty("serverId")
     public final UUID serverId;
 
-    public ServerIdentity(@JsonProperty("publicKey") PublicKey publicKey,
-                          @JsonProperty("signatureKey") PublicKey signatureKey,
-                          @JsonProperty("serverId") UUID serverId) {
+    public ServerIdentity(@JsonProperty("serverId") UUID serverId, @JsonProperty("publicKey") PublicKey publicKey) {
         this.publicKey = publicKey;
-        this.signatureKey = signatureKey;
         this.serverId = serverId;
     }
 
@@ -33,11 +28,6 @@ public final class ServerIdentity implements Identity {
     @Override
     public PublicKey publicKey() {
         return publicKey;
-    }
-
-    @Override
-    public PublicKey signatureKey() {
-        return signatureKey;
     }
 
     @Override

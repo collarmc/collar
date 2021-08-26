@@ -4,7 +4,6 @@ import com.collarmc.api.authentication.AuthenticationService;
 import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.AppUrlProvider;
-import com.collarmc.server.protocol.ProtocolHandler;
 import com.collarmc.server.security.ServerIdentityStore;
 import com.collarmc.server.security.ServerIdentityStoreImpl;
 import com.collarmc.server.security.hashing.PasswordHashing;
@@ -24,9 +23,6 @@ import com.collarmc.server.session.ClientRegistrationService;
 import com.collarmc.server.session.SessionManager;
 import com.collarmc.utils.Utils;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public final class Services {
     public final ObjectMapper jsonMapper;

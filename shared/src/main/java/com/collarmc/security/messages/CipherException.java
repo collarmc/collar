@@ -1,6 +1,6 @@
 package com.collarmc.security.messages;
 
-public abstract class CipherException extends Exception {
+public class CipherException extends Exception {
 
     public CipherException(String message) {
         super(message);

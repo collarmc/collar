@@ -160,7 +160,7 @@ public final class GroupStore {
     private Member mapMemberFrom(Document document) {
         UUID profileId = document.get(FIELD_MEMBER_PROFILE_ID, UUID.class);
         // TODO: does this query still work??
-        Player player = sessions.findPlayerByProfile(profileId).orElse(new Player(new ClientIdentity(profileId, null, null), null));
+        Player player = sessions.findPlayerByProfile(profileId).orElse(new Player(new ClientIdentity(profileId, null), null));
         MembershipRole role = MembershipRole.valueOf(document.getString(FIELD_MEMBER_ROLE));
         MembershipState state = MembershipState.valueOf(document.getString(FIELD_MEMBER_STATE));
         PublicProfile profile = profiles.getById(profileId).orElseThrow(() -> new IllegalStateException("could not find profile " + profileId)).toPublic();

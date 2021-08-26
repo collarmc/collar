@@ -1,7 +1,6 @@
 package com.collarmc.server.protocol;
 
 import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.waypoints.EncryptedWaypoint;
 import com.collarmc.protocol.ProtocolRequest;
@@ -16,8 +15,6 @@ import com.collarmc.protocol.waypoints.GetWaypointsResponse;
 import com.collarmc.protocol.waypoints.RemoveWaypointRequest;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.Services;
-import com.collarmc.server.services.location.PlayerLocationService;
-import com.collarmc.server.services.location.WaypointService;
 import org.eclipse.jetty.websocket.api.Session;
 
 import java.util.List;

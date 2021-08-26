@@ -44,7 +44,7 @@ public class DistributedHashTableTest {
         PublisherImpl publisher = new PublisherImpl();
         DistributedHashTableListenerImpl dhtListener = new DistributedHashTableListenerImpl();
         DHTNamespaceState state = new DHTNamespaceState(Files.createTempDir());
-        table = new DefaultDistributedHashTable(publisher, () -> new ClientIdentity(UUID.randomUUID(), null, null), cipher, state, dhtListener);
+        table = new DefaultDistributedHashTable(publisher, () -> new ClientIdentity(UUID.randomUUID(), null), cipher, state, dhtListener);
     }
 
     @Test

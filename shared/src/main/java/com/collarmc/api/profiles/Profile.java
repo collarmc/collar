@@ -27,8 +27,6 @@ public final class Profile {
     public final Set<UUID> knownAccounts;
     @JsonProperty("publicKey")
     public final PublicKey publicKey;
-    @JsonProperty("signingKey")
-    public final PublicKey signingKey;
 
     public Profile(UUID id,
                    Set<Role> roles,
@@ -38,8 +36,7 @@ public final class Profile {
                    Boolean emailVerified,
                    TexturePreference cape,
                    Set<UUID> knownAccounts,
-                   PublicKey publicKey,
-                   PublicKey signingKey) {
+                   PublicKey publicKey) {
         this.id = id;
         this.roles = roles;
         this.email = email;
@@ -49,7 +46,6 @@ public final class Profile {
         this.cape = cape;
         this.knownAccounts = knownAccounts;
         this.publicKey = publicKey;
-        this.signingKey = signingKey;
     }
 
     @JsonCreator
@@ -60,8 +56,7 @@ public final class Profile {
                    @JsonProperty("emailVerified") Boolean emailVerified,
                    @JsonProperty("cape") TexturePreference cape,
                    @JsonProperty("knownAccounts") Set<UUID> knownAccounts,
-                   @JsonProperty("publicKey") PublicKey publicKey,
-                   @JsonProperty("signingKey") PublicKey signingKey) {
+                   @JsonProperty("publicKey") PublicKey publicKey) {
         this.id = id;
         this.roles = roles;
         this.email = email;
@@ -70,7 +65,6 @@ public final class Profile {
         this.cape = cape;
         this.knownAccounts = knownAccounts;
         this.publicKey = publicKey;
-        this.signingKey = signingKey;
         this.hashedPassword = null;
     }
 

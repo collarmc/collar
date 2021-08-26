@@ -315,6 +315,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                 groupsSharingWith.clear();
             }
             nearbyUpdater.stop();
+            this.sdhtApi.unsubscribe(sdhtListener);
         }
     }
 

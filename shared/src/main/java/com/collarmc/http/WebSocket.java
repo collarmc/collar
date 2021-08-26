@@ -18,7 +18,7 @@ public final class WebSocket {
      */
     public final Request request;
     private final Channel channel;
-    private AtomicInteger sendingCount = new AtomicInteger();
+    private final AtomicInteger sendingCount = new AtomicInteger();
     private volatile boolean closing = false;
 
     WebSocket(Request request, Channel channel) {

@@ -1,6 +1,5 @@
 package com.collarmc.security.messages;
 
-import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.TokenGenerator;
 import org.junit.Assert;

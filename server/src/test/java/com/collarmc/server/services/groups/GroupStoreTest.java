@@ -62,7 +62,7 @@ public class GroupStoreTest {
         Assert.assertEquals(MembershipRole.MEMBER, member2.membershipRole);
         Assert.assertEquals(MembershipState.ACCEPTED, member2.membershipState);
 
-        Assert.assertEquals(groupId, store.findGroupsContaining(player1).findFirst().map(group1 -> group1.id).orElse(null));
+        Assert.assertEquals(groupId, store.findGroupsContaining(player1.identity.profile).findFirst().map(group1 -> group1.id).orElse(null));
 
         group = store.updateMember(groupId, player1.identity.profile, MembershipRole.MEMBER, MembershipState.DECLINED).orElse(null);
         Assert.assertNotNull(group);

@@ -37,7 +37,7 @@ public class SDHTProtocolHandler extends ProtocolHandler {
                 CreateEntryEvent event = (CreateEntryEvent) e;
                 GroupMessageEnvelope envelope = new GroupMessageEnvelope(event.content);
                 findListeners(identity, event.record.key.namespace).forEach(found -> {
-                    GroupMessage message = envelope.messages.get(identity.id());
+                    GroupMessage message = envelope.messages.get(found.id());
                     if (message != null) {
                         CreateEntryEvent newEvent = new CreateEntryEvent(identity, null, event.record, message.contents);
                         SDHTEventResponse response = new SDHTEventResponse(newEvent);

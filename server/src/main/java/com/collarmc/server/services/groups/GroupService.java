@@ -129,7 +129,7 @@ public final class GroupService {
      */
     public Optional<ProtocolResponse> playerIsOffline(Player player) {
         BatchProtocolResponse response = new BatchProtocolResponse();
-        store.findGroupsContaining(player).forEach(group -> {
+        store.findGroupsContaining(player.identity.id()).forEach(group -> {
             PublicProfile profile = profiles.getById(player.identity.id()).orElseThrow(() -> new IllegalStateException("could not load profile " + player.identity.id())).toPublic();
             group = group.updatePlayer(new MemberSource(player, profile));
             // Let everyone else in the group know that this identity has gone offline

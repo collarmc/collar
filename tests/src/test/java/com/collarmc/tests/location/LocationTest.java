@@ -165,10 +165,11 @@ public class LocationTest extends CollarTest {
         // Bob creates a waypoint
         Location baseLocation = new Location(0d, 64d, 0d, Dimension.OVERWORLD);
         bobPlayer.collar.location().addWaypoint(theGroup, "Our base", baseLocation);
+        System.err.println("added waypoint");
 
-        waitForCondition("alice has a waypoint", () -> !alicePlayer.collar.location().groupWaypoints(theGroup).isEmpty());
-        waitForCondition("bob has a waypoint", () -> !bobPlayer.collar.location().groupWaypoints(theGroup).isEmpty());
-        waitForCondition("eve has a waypoint", () -> !evePlayer.collar.location().groupWaypoints(theGroup).isEmpty());
+        waitForCondition("alice has a waypoint", () -> !alicePlayer.collar.location().groupWaypoints(theGroup).isEmpty(), 10, TimeUnit.SECONDS);
+        waitForCondition("bob has a waypoint", () -> !bobPlayer.collar.location().groupWaypoints(theGroup).isEmpty(), 10, TimeUnit.SECONDS);
+        waitForCondition("eve has a waypoint", () -> !evePlayer.collar.location().groupWaypoints(theGroup).isEmpty(), 10, TimeUnit.SECONDS);
 
         waitForCondition("alice has the waypoint", () -> {
             Waypoint waypoint = alicePlayer.collar.location().groupWaypoints(theGroup).stream().filter(waypoint1 -> waypoint1.equals(aliceWaypointListener.lastWaypointCreated)).findFirst().orElse(null);

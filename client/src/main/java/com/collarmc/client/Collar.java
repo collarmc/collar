@@ -324,8 +324,8 @@ public final class Collar {
         public void onOpen(WebSocket webSocket) {
             // Create the sender delegate
             sender = request -> {
-                if (state != State.CONNECTED) {
-                    throw new IllegalStateException("Client is not in CONNECTED state");
+                if (state == State.DISCONNECTED) {
+                    throw new IllegalStateException("Client is not in CONNECTED or CONNECTING state");
                 }
                 sendRequest(webSocket, request);
             };

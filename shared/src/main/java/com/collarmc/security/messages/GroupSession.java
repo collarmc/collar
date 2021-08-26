@@ -9,14 +9,14 @@ import java.util.*;
 public final class GroupSession {
     private final UUID group;
     private final CollarIdentity collarIdentity;
-    private final Cipher<ClientIdentity> cipher;
+    private final Cipher cipher;
     private final IdentityStore<ClientIdentity> store;
     private final Set<ClientIdentity> recipients;
 
-    public GroupSession(Identity self, UUID group, IdentityStore<ClientIdentity> store, CollarIdentity collarIdentity, Set<ClientIdentity> recipients) {
+    public GroupSession(UUID group, IdentityStore<ClientIdentity> store, CollarIdentity collarIdentity, Set<ClientIdentity> recipients) {
         this.group = group;
         this.collarIdentity = collarIdentity;
-        this.cipher = new Cipher<>(self, store, collarIdentity);
+        this.cipher = new Cipher(collarIdentity);
         this.store = store;
         this.recipients = recipients;
     }
@@ -47,12 +47,12 @@ public final class GroupSession {
     public GroupSession add(ClientIdentity identity) {
         Set<ClientIdentity> identities = new HashSet<>(recipients);
         identities.add(identity);
-        return new GroupSession(identity, group, store, collarIdentity, identities);
+        return new GroupSession(group, store, collarIdentity, identities);
     }
 
     public GroupSession remove(ClientIdentity identity) {
         Set<ClientIdentity> identities = new HashSet<>(recipients);
         identities.remove(identity);
-        return new GroupSession(identity, group, store, collarIdentity, identities);
+        return new GroupSession(group, store, collarIdentity, identities);
     }
 }

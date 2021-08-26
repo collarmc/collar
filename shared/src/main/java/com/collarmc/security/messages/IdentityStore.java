@@ -11,5 +11,5 @@ public interface IdentityStore<T extends Identity> {
     /**
      * @return creates a new {@link Cipher}
      */
-    Cipher<T> cipher();
+    Cipher cipher();
 }

@@ -8,19 +8,12 @@ import com.collarmc.security.jce.JCECipher;
 /**
  * Message Cipher service for encrypting and decrypting protocol messages
  * All messages processed with this service are encrypted and signed
- * @param <T> identity type
  */
-public final class Cipher<T extends Identity> {
+public final class Cipher {
 
-    private final Identity self;
-    private final IdentityStore<T> identityStore;
     private final CollarIdentity identity;
 
-    public Cipher(Identity self,
-                  IdentityStore<T> identityStore,
-                  CollarIdentity identity) {
-        this.self = self;
-        this.identityStore = identityStore;
+    public Cipher(CollarIdentity identity) {
         this.identity = identity;
     }
 
@@ -32,10 +25,7 @@ public final class Cipher<T extends Identity> {
      * @throws CipherException if decryption fails
      */
     public byte[] decrypt(byte[] content, PublicKey publicKey) throws CipherException {
-        byte[] plainText = JCECipher.decrypt(content, identity.keyPair.getPrivate());
-        SignedMessage message = new SignedMessage(plainText);
-        JCECipher.verify(message.contents, message.signature, JCECipher.publicKey(publicKey.key));
-        return message.contents;
+        return decrypt(content, JCECipher.publicKey(publicKey.key));
     }
 
     /**
@@ -46,10 +36,7 @@ public final class Cipher<T extends Identity> {
      * @throws CipherException if decryption fails
      */
     public byte[] decrypt(byte[] content, Identity sender) throws CipherException {
-        byte[] plainText = JCECipher.decrypt(content, identity.keyPair.getPrivate());
-        SignedMessage message = new SignedMessage(plainText);
-        JCECipher.verify(message.contents, message.signature, JCECipher.publicKey(sender.publicKey().key));
-        return message.contents;
+        return decrypt(content, JCECipher.publicKey(sender.publicKey().key));
     }
 
     /**
@@ -59,10 +46,7 @@ public final class Cipher<T extends Identity> {
      * @return cipher text
      */
     public byte[] decrypt(byte[] bytes) throws CipherException {
-        byte[] plain = JCECipher.decrypt(bytes, identity.keyPair.getPrivate());
-        SignedMessage signedMessage = new SignedMessage(plain);
-        JCECipher.verify(signedMessage.contents, signedMessage.signature, identity.keyPair.getPublic());
-        return signedMessage.contents;
+        return decrypt(bytes, identity.keyPair.getPublic());
     }
 
     /**
@@ -73,9 +57,7 @@ public final class Cipher<T extends Identity> {
      * @throws CipherException if encryption fails
      */
     public byte[] encrypt(byte[] plain, Identity recipient) throws CipherException {
-        byte[] signature = JCECipher.sign(plain, identity.keyPair.getPrivate());
-        SignedMessage signedMessage = new SignedMessage(signature, plain);
-        return JCECipher.encrypt(signedMessage.serialize(), JCECipher.publicKey(recipient.publicKey().key));
+        return encrypt(plain, JCECipher.publicKey(recipient.publicKey().key));
     }
 
     /**
@@ -85,7 +67,18 @@ public final class Cipher<T extends Identity> {
      * @return cipher text
      */
     public byte[] encrypt(byte[] plain) throws CipherException {
+        return encrypt(plain, identity.keyPair.getPublic());
+    }
+
+    private byte[] encrypt(byte[] plain, java.security.PublicKey recipient) throws CipherException {
         SignedMessage signedMessage = new SignedMessage(JCECipher.sign(plain, identity.keyPair.getPrivate()), plain);
-        return JCECipher.encrypt(signedMessage.contents, identity.keyPair.getPublic());
+        return JCECipher.encrypt(signedMessage.serialize(), recipient);
+    }
+
+    private byte[] decrypt(byte[] content, java.security.PublicKey sender) throws CipherException {
+        byte[] plainText = JCECipher.decrypt(content, identity.keyPair.getPrivate());
+        SignedMessage message = new SignedMessage(plainText);
+        JCECipher.verify(message.contents, message.signature, sender);
+        return message.contents;
     }
 }

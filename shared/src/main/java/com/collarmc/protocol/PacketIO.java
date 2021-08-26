@@ -33,9 +33,9 @@ public final class PacketIO {
     @Nonnull
     private final ObjectMapper mapper;
     @Nullable
-    private final Cipher<?> cipher;
+    private final Cipher cipher;
 
-    public PacketIO(@Nonnull ObjectMapper mapper, @Nullable Cipher<?> cipher) {
+    public PacketIO(@Nonnull ObjectMapper mapper, @Nullable Cipher cipher) {
         this.mapper = mapper;
         this.cipher = cipher;
     }

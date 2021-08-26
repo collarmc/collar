@@ -44,7 +44,7 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
     }
 
     @Override
-    public Cipher<ServerIdentity> cipher() {
-        return new Cipher<>(this.identity(), this, collarIdentity);
+    public Cipher cipher() {
+        return new Cipher(collarIdentity);
     }
 }

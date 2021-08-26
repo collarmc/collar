@@ -84,7 +84,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public GroupSession createSession(Group group) {
-        return new GroupSession(identity(), group.id, this, collarIdentity, group.members.stream().map(member -> member.player.identity).collect(Collectors.toSet()));
+        return new GroupSession(group.id, this, collarIdentity, group.members.stream().map(member -> member.player.identity).collect(Collectors.toSet()));
     }
 
     @Override
@@ -93,8 +93,8 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     }
 
     @Override
-    public Cipher<ClientIdentity> cipher() {
-        return new Cipher<>(identity(), this, collarIdentity);
+    public Cipher cipher() {
+        return new Cipher(collarIdentity);
     }
 
     @Override

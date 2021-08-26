@@ -76,10 +76,16 @@ public final class WebSocket {
         closing = true;
         while (sendingCount.get() != 0) {
             try {
-                Thread.sleep(TimeUnit.MILLISECONDS.toMillis(10));
+                Thread.sleep(TimeUnit.MILLISECONDS.toMillis(100));
             } catch (InterruptedException e) {
                 throw new IllegalStateException(e);
             }
+        }
+        channel.flush();
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new IllegalStateException(e);
         }
     }
 }

@@ -106,7 +106,7 @@ public class LocationTest extends CollarTest {
     }
 
     @Test
-    public void privateWaypointsArriveOnConnect() throws InterruptedException {
+    public void privateWaypointsArriveOnConnect() {
         PrivateWaypointListener listener = new PrivateWaypointListener();
         alicePlayer.collar.location().subscribe(listener);
         Assert.assertTrue(alicePlayer.collar.location().privateWaypoints().isEmpty());

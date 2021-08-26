@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * Represents the private keys and identity of a client or server using the Collar protocol
- * For crypto purposes, use {@link com.collarmc.security.messages.Cipher<?>}
+ * For crypto purposes, use {@link com.collarmc.security.messages.Cipher}
  * This class represents the identity.cif
  */
 public final class CollarIdentity {

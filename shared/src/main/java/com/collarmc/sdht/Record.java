@@ -1,7 +1,7 @@
 package com.collarmc.sdht;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.utils.Hex;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Arrays;
 import java.util.Objects;

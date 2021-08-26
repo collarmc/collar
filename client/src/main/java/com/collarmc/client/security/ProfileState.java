@@ -1,9 +1,9 @@
 package com.collarmc.client.security;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.client.HomeDirectory;
 import com.collarmc.io.AtomicFile;
 import com.collarmc.utils.Utils;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.File;
 import java.io.IOException;

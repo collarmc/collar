@@ -1,7 +1,5 @@
 package com.collarmc.tests.messaging;
 
-import org.junit.Assert;
-import org.junit.Test;
 import com.collarmc.api.entities.Entity;
 import com.collarmc.api.entities.EntityType;
 import com.collarmc.api.groups.Group;
@@ -10,6 +8,8 @@ import com.collarmc.tests.groups.GroupsTest.MessagingListenerImpl;
 import com.collarmc.tests.groups.GroupsTest.TestGroupsListener;
 import com.collarmc.tests.junit.CollarTest;
 import com.collarmc.utils.Utils;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.util.Set;
 

@@ -1,7 +1,7 @@
 package com.collarmc.sdht.impl;
 
-import com.collarmc.sdht.Content;
 import com.collarmc.io.IO;
+import com.collarmc.sdht.Content;
 
 import java.io.*;
 import java.util.Map;

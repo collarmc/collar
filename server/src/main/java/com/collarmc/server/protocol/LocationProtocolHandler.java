@@ -1,6 +1,6 @@
 package com.collarmc.server.protocol;
 
-import org.eclipse.jetty.websocket.api.Session;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.waypoints.EncryptedWaypoint;
 import com.collarmc.protocol.ProtocolRequest;
@@ -13,57 +13,49 @@ import com.collarmc.protocol.waypoints.CreateWaypointRequest;
 import com.collarmc.protocol.waypoints.GetWaypointsRequest;
 import com.collarmc.protocol.waypoints.GetWaypointsResponse;
 import com.collarmc.protocol.waypoints.RemoveWaypointRequest;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
 import com.collarmc.server.CollarServer;
-import com.collarmc.server.services.location.PlayerLocationService;
-import com.collarmc.server.services.location.WaypointService;
+import com.collarmc.server.Services;
+import org.eclipse.jetty.websocket.api.Session;
 
 import java.util.List;
 import java.util.function.BiConsumer;
 
 public class LocationProtocolHandler extends ProtocolHandler {
 
-    private final PlayerLocationService playerLocations;
-    private final WaypointService waypoints;
-    private final ServerIdentity serverIdentity;
-
-    public LocationProtocolHandler(PlayerLocationService playerLocations, WaypointService waypoints, ServerIdentity serverIdentity) {
-        this.playerLocations = playerLocations;
-        this.waypoints = waypoints;
-        this.serverIdentity = serverIdentity;
+    public LocationProtocolHandler(Services services) {
+        super(services);
     }
 
     @Override
-    public boolean handleRequest(CollarServer collar, ProtocolRequest req, BiConsumer<ClientIdentity, ProtocolResponse> sender) {
+    public boolean handleRequest(CollarServer collar, ClientIdentity identity, ProtocolRequest req, BiConsumer<ClientIdentity, ProtocolResponse> sender) {
         if (req instanceof StartSharingLocationRequest) {
             StartSharingLocationRequest request = (StartSharingLocationRequest)req;
-            playerLocations.startSharing(request);
+            services.playerLocations.startSharing(identity, request);
             return true;
         } else if (req instanceof StopSharingLocationRequest) {
             StopSharingLocationRequest request = (StopSharingLocationRequest) req;
-            playerLocations.stopSharing(request).ifPresent(response -> sender.accept(null, response));
+            services.playerLocations.stopSharing(identity, request).ifPresent(response -> sender.accept(null, response));
             return true;
         } else if (req instanceof UpdateLocationRequest) {
             UpdateLocationRequest request = (UpdateLocationRequest) req;
-            playerLocations.updateLocation(request).ifPresent(response -> sender.accept(request.identity, response));
+            services.playerLocations.updateLocation(identity, request).ifPresent(response -> sender.accept(identity, response));
             return true;
         } else if (req instanceof UpdateNearbyRequest) {
             UpdateNearbyRequest request = (UpdateNearbyRequest) req;
-            playerLocations.updateNearbyGroups(request).ifPresent(response -> sender.accept(null, response));
+            services.playerLocations.updateNearbyGroups(identity, request).ifPresent(response -> sender.accept(null, response));
             return true;
         } else if (req instanceof CreateWaypointRequest) {
             CreateWaypointRequest request = (CreateWaypointRequest) req;
-            waypoints.createWaypoint(request);
+            services.waypoints.createWaypoint(identity, request);
             return true;
         } else if (req instanceof RemoveWaypointRequest) {
             RemoveWaypointRequest request = (RemoveWaypointRequest) req;
-            waypoints.removeWaypoint(request);
+            services.waypoints.removeWaypoint(identity, request);
             return true;
         } else if (req instanceof GetWaypointsRequest) {
             GetWaypointsRequest request = (GetWaypointsRequest) req;
-            List<EncryptedWaypoint> waypoints = this.waypoints.getWaypoints(request);
-            sender.accept(req.identity, new GetWaypointsResponse(serverIdentity, waypoints));
+            List<EncryptedWaypoint> waypoints = services.waypoints.getWaypoints(identity, request);
+            sender.accept(identity, new GetWaypointsResponse(waypoints));
             return true;
         }
         return false;
@@ -71,9 +63,9 @@ public class LocationProtocolHandler extends ProtocolHandler {
 
     @Override
     public void onSessionStopping(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) {
-        playerLocations.stopSharing(player).ifPresent(response -> {
+        services.playerLocations.stopSharing(player).ifPresent(response -> {
             sender.accept(null, response);
         });
-        playerLocations.removePlayerState(player);
+        services.playerLocations.removePlayerState(player);
     }
 }

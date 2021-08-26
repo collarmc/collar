@@ -1,6 +1,7 @@
 package com.collarmc.api.profiles;
 
 import com.collarmc.api.http.RequestContext;
+import com.collarmc.security.PublicKey;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
@@ -77,24 +78,25 @@ public interface ProfileService {
         public final Boolean emailVerified;
         @JsonProperty("hashedPassword")
         public final String hashedPassword;
-        @JsonProperty("privateIdentityToken")
-        public final byte[] privateIdentityToken;
+        @JsonProperty("addMinecraftAccount")
         public final UUID addMinecraftAccount;
         @JsonProperty("cape")
         public final TexturePreference cape;
+        @JsonProperty("publicKey")
+        public final PublicKey publicKey;
 
         public UpdateProfileRequest(@JsonProperty("profile") UUID profile,
                                     @JsonProperty("emailVerified") Boolean emailVerified,
                                     @JsonProperty("hashedPassword") String hashedPassword,
-                                    @JsonProperty("privateIdentityToken") byte[] privateIdentityToken,
                                     @JsonProperty("addMinecraftAccount") UUID addMinecraftAccount,
-                                    @JsonProperty("cape") TexturePreference cape) {
+                                    @JsonProperty("cape") TexturePreference cape,
+                                    @JsonProperty("publicKey") PublicKey publicKey) {
             this.profile = profile;
             this.emailVerified = emailVerified;
             this.hashedPassword = hashedPassword;
-            this.privateIdentityToken = privateIdentityToken;
             this.addMinecraftAccount = addMinecraftAccount;
             this.cape = cape;
+            this.publicKey = publicKey;
         }
 
         public static UpdateProfileRequest emailVerified(UUID profile) {
@@ -105,16 +107,20 @@ public interface ProfileService {
             return new UpdateProfileRequest(profile, null, newPassword, null, null, null);
         }
 
-        public static UpdateProfileRequest privateIdentityToken(UUID profile, byte[] privateIdentityToken) {
-            return new UpdateProfileRequest(profile, null, null, privateIdentityToken, null, null);
+        public static UpdateProfileRequest keys(UUID profile, PublicKey publicKey) {
+            return new UpdateProfileRequest(profile, null, null, null, null, publicKey);
+        }
+
+        public static UpdateProfileRequest resetKeys(UUID profile) {
+            return keys(profile, new PublicKey(new byte[0]));
         }
 
         public static UpdateProfileRequest capeTexturePreference(UUID profile, TexturePreference capeTexture) {
-            return new UpdateProfileRequest(profile, null, null, null, null, capeTexture);
+            return new UpdateProfileRequest(profile, null, null, null, capeTexture, null);
         }
 
         public static UpdateProfileRequest addMinecraftAccount(UUID profile, UUID minecraftAccount) {
-            return new UpdateProfileRequest(profile, null, null, null, minecraftAccount, null);
+            return new UpdateProfileRequest(profile, null, null, minecraftAccount, null, null);
         }
     }
 

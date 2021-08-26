@@ -1,9 +1,9 @@
 package com.collarmc.sdht;
 
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.sdht.cipher.ContentCipher;
 import com.collarmc.sdht.events.*;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.messages.CipherException;
 import com.collarmc.utils.Utils;
 
 import java.util.*;
@@ -87,7 +87,7 @@ public abstract class DistributedHashTable {
     public void process(AbstractSDHTEvent e) {
         if (e instanceof CreateEntryEvent) {
             CreateEntryEvent event = (CreateEntryEvent) e;
-            Content content = null;
+            Content content;
             try {
                 content = cipher.decrypt(event.sender, event.record.key.namespace, event.content);
             } catch (CipherException ex) {

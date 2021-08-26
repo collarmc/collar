@@ -1,11 +1,10 @@
 package com.collarmc.protocol.groups;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
@@ -21,11 +20,9 @@ public final class LeaveGroupResponse extends ProtocolResponse {
     public final Player player;
 
     @JsonCreator
-    public LeaveGroupResponse(@JsonProperty("identity") ServerIdentity identity,
-                              @JsonProperty("groupId") UUID groupId,
+    public LeaveGroupResponse(@JsonProperty("groupId") UUID groupId,
                               @JsonProperty("sender") ClientIdentity sender,
                               @JsonProperty("player") Player player) {
-        super(identity);
         this.groupId = groupId;
         this.sender = sender;
         this.player = player;

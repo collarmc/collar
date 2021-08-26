@@ -1,10 +1,9 @@
 package com.collarmc.protocol.groups;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.security.ClientIdentity;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,12 +22,10 @@ public final class CreateGroupRequest extends ProtocolRequest {
     public final List<UUID> players;
 
     @JsonCreator
-    public CreateGroupRequest(@JsonProperty("identity") ClientIdentity identity,
-                              @JsonProperty("groupId") UUID groupId,
+    public CreateGroupRequest(@JsonProperty("groupId") UUID groupId,
                               @JsonProperty("name") String name,
                               @JsonProperty("type") GroupType type,
                               @JsonProperty("players") List<UUID> players) {
-        super(identity);
         this.groupId = groupId;
         this.name = name;
         this.type = type;

@@ -1,6 +1,7 @@
 package com.collarmc.http;
 
 import com.collarmc.api.http.HttpException;
+import com.collarmc.protocol.PacketIO;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -12,7 +13,6 @@ import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
-import static com.collarmc.api.http.HttpException.*;
 
 import javax.net.ssl.SSLException;
 import java.io.Closeable;
@@ -22,6 +22,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.collarmc.api.http.HttpException.*;
 
 /**
  * Simple Netty based HTTP client
@@ -74,7 +76,7 @@ public final class HttpClient implements Closeable {
                 null,
                 false,
                 headers,
-                Short.MAX_VALUE);
+                PacketIO.MAX_PACKET_SIZE);
         WebSocketClientHandler handler = new WebSocketClientHandler(request, handshaker, listener);
         Bootstrap bootstrap = new Bootstrap();
         bootstrap.group(group)

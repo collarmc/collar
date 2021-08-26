@@ -1,11 +1,10 @@
 package com.collarmc.protocol.messaging;
 
+import com.collarmc.api.identity.Identity;
+import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.Identity;
-import com.collarmc.security.ServerIdentity;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.api.session.Player;
 
 import java.util.UUID;
 
@@ -20,12 +19,10 @@ public final class SendMessageResponse extends ProtocolResponse {
     public final byte[] message;
 
     @JsonCreator
-    public SendMessageResponse(@JsonProperty("identity") ServerIdentity identity,
-                               @JsonProperty("sender") Identity sender,
+    public SendMessageResponse(@JsonProperty("sender") Identity sender,
                                @JsonProperty("group") UUID group,
                                @JsonProperty("player") Player player,
                                @JsonProperty("message") byte[] message) {
-        super(identity);
         this.sender = sender;
         this.group = group;
         this.player = player;

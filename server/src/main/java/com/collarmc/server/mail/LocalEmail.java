@@ -1,10 +1,10 @@
 package com.collarmc.server.mail;
 
+import com.collarmc.api.profiles.Profile;
 import com.collarmc.server.http.AppUrlProvider;
 import com.google.common.io.Files;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.collarmc.api.profiles.Profile;
 
 import java.io.File;
 import java.io.IOException;

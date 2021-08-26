@@ -1,10 +1,9 @@
 package com.collarmc.client;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import com.collarmc.http.WebSocket;
 import com.collarmc.protocol.keepalive.KeepAliveRequest;
-import com.collarmc.security.ClientIdentity;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -24,11 +23,11 @@ final class KeepAlive {
         this.webSocket = webSocket;
     }
 
-    public void start(ClientIdentity identity) {
+    public void start() {
         scheduler = Executors.newScheduledThreadPool(1);
         scheduler.scheduleAtFixedRate(() -> {
             try {
-                KeepAliveRequest keepAliveRequest = new KeepAliveRequest(identity);
+                KeepAliveRequest keepAliveRequest = new KeepAliveRequest();
                 collarWebSocket.sendRequest(webSocket, keepAliveRequest);
             } catch (CollarException.ConnectionException e) {
                 LOGGER.error("Couldn't send KeepAliveRequest", e);

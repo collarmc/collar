@@ -1,15 +1,14 @@
 package com.collarmc.api.groups;
 
+import com.collarmc.api.session.Player;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
-import com.collarmc.api.session.Player;
 
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public final class Group {
-
     @JsonProperty("id")
     public final UUID id;
     @JsonProperty("name")
@@ -92,7 +91,7 @@ public final class Group {
     }
 
     public MembershipRole getRole(Player sendingPlayer) {
-        return members.stream().filter(member -> sendingPlayer.profile.equals(member.player.profile))
+        return members.stream().filter(member -> sendingPlayer.identity.profile.equals(member.player.identity.profile))
                 .findFirst().map(member -> member.membershipRole).orElse(null);
     }
 }

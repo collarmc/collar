@@ -1,9 +1,8 @@
 package com.collarmc.protocol.textures;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.textures.TextureType;
 import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.security.ClientIdentity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
@@ -18,11 +17,9 @@ public final class GetTextureRequest extends ProtocolRequest {
     @JsonProperty("type")
     public final TextureType type;
 
-    public GetTextureRequest(@JsonProperty("identity") ClientIdentity identity,
-                             @JsonProperty("player") UUID player,
+    public GetTextureRequest(@JsonProperty("player") UUID player,
                              @JsonProperty("group") UUID group,
                              @JsonProperty("type") TextureType type) {
-        super(identity);
         this.player = player;
         this.group = group;
         this.type = type;

@@ -1,13 +1,13 @@
 package com.collarmc.tests.junit;
 
+import com.collarmc.client.Collar;
+import com.collarmc.client.CollarConfiguration;
+import com.collarmc.client.minecraft.Ticks;
 import com.collarmc.security.mojang.MinecraftSession;
 import com.google.common.io.Files;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
-import com.collarmc.client.Collar;
-import com.collarmc.client.CollarConfiguration;
-import com.collarmc.client.minecraft.Ticks;
 
 import java.util.UUID;
 

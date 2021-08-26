@@ -1,7 +1,12 @@
 package com.collarmc.server.services.groups;
 
 import com.collarmc.api.groups.*;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.profiles.Profile;
+import com.collarmc.api.profiles.PublicProfile;
+import com.collarmc.api.session.Player;
 import com.collarmc.server.services.profiles.ProfileCache;
+import com.collarmc.server.session.SessionManager;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -10,10 +15,8 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
-import com.collarmc.api.profiles.PublicProfile;
-import com.collarmc.api.session.Player;
-import com.collarmc.server.session.SessionManager;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -70,7 +73,12 @@ public final class GroupStore {
     }
 
     public Stream<Group> findGroupsContaining(Player player) {
-        MongoCursor<Group> iterator = docs.find(eq(FIELD_MEMBERS + "." + FIELD_MEMBER_PROFILE_ID, player.profile)).map(this::mapFromDocument).batchSize(100).iterator();
+        MongoCursor<Group> iterator = docs.find(eq(FIELD_MEMBERS + "." + FIELD_MEMBER_PROFILE_ID, player.identity.id())).map(this::mapFromDocument).batchSize(100).iterator();
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
+    }
+
+    public Stream<Group> findGroupsContaining(UUID profile) {
+        MongoCursor<Group> iterator = docs.find(eq(FIELD_MEMBERS + "." + FIELD_MEMBER_PROFILE_ID, profile)).map(this::mapFromDocument).batchSize(100).iterator();
         return StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, Spliterator.ORDERED), false);
     }
 
@@ -131,6 +139,7 @@ public final class GroupStore {
         return result.getDeletedCount();
     }
 
+    @Nonnull
     private Group mapFromDocument(Document doc) {
         Set<Member> members = doc.getList(FIELD_MEMBERS, Document.class, new ArrayList<>()).stream()
                 .map(this::mapMemberFrom)
@@ -158,7 +167,11 @@ public final class GroupStore {
 
     private Member mapMemberFrom(Document document) {
         UUID profileId = document.get(FIELD_MEMBER_PROFILE_ID, UUID.class);
-        Player player = sessions.findPlayerByProfile(profileId).orElse(new Player(profileId, null));
+        Player player = sessions.findPlayerByProfile(profileId)
+                .or(() -> profiles.getById(profileId)
+                .map(profile -> Optional.of(new Player(new ClientIdentity(profile.id, profile.publicKey), null)))
+                .orElseThrow(() -> new IllegalStateException("could not find player with profile id " + profileId)))
+                .orElseThrow(() -> new IllegalStateException("could not find player with profile id " + profileId));
         MembershipRole role = MembershipRole.valueOf(document.getString(FIELD_MEMBER_ROLE));
         MembershipState state = MembershipState.valueOf(document.getString(FIELD_MEMBER_STATE));
         PublicProfile profile = profiles.getById(profileId).orElseThrow(() -> new IllegalStateException("could not find profile " + profileId)).toPublic();
@@ -169,7 +182,7 @@ public final class GroupStore {
         return Map.of(
                 FIELD_MEMBER_ROLE, member.membershipRole.name(),
                 FIELD_MEMBER_STATE, member.membershipState.name(),
-                FIELD_MEMBER_PROFILE_ID, member.player.profile
+                FIELD_MEMBER_PROFILE_ID, member.player.identity.profile
         );
     }
 

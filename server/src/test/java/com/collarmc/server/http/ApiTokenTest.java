@@ -1,9 +1,5 @@
 package com.collarmc.server.http;
 
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.ProfileService;
@@ -11,6 +7,10 @@ import com.collarmc.server.junit.MongoDatabaseTestRule;
 import com.collarmc.server.security.hashing.PasswordHashing;
 import com.collarmc.server.services.authentication.TokenCrypter;
 import com.collarmc.server.services.profiles.ProfileServiceServer;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;

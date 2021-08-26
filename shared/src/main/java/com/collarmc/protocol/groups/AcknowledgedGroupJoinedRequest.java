@@ -1,8 +1,8 @@
 package com.collarmc.protocol.groups;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.security.ClientIdentity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
@@ -16,16 +16,9 @@ public final class AcknowledgedGroupJoinedRequest extends ProtocolRequest {
     @JsonProperty("group")
     public final UUID group;
 
-    @JsonProperty("keys")
-    public final byte[] keys;
-
-    public AcknowledgedGroupJoinedRequest(@JsonProperty("identity") ClientIdentity identity,
-                                          @JsonProperty("recipient") ClientIdentity recipient,
-                                          @JsonProperty("group") UUID group,
-                                          @JsonProperty("keys") byte[] keys) {
-        super(identity);
+    public AcknowledgedGroupJoinedRequest(@JsonProperty("recipient") ClientIdentity recipient,
+                                          @JsonProperty("group") UUID group) {
         this.recipient = recipient;
         this.group = group;
-        this.keys = keys;
     }
 }

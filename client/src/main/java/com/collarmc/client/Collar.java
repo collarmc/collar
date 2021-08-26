@@ -1,36 +1,29 @@
 package com.collarmc.client;
 
-import com.collarmc.client.api.AbstractApi;
-import com.collarmc.client.api.friends.FriendsApi;
-import com.collarmc.client.api.identity.IdentityApi;
-import com.collarmc.client.api.messaging.MessagingApi;
-import com.collarmc.client.api.textures.TexturesApi;
-import com.collarmc.client.minecraft.Ticks;
-import com.collarmc.client.sdht.SDHTApi;
-import com.collarmc.client.sdht.cipher.GroupContentCipher;
-import com.collarmc.client.security.ClientIdentityStore;
-import com.collarmc.client.security.PrivateIdentity;
-import com.collarmc.client.security.ProfileState;
-import com.collarmc.client.security.signal.SignalClientIdentityStore;
-import com.collarmc.client.utils.Crypto;
-import com.collarmc.client.utils.Http;
-import com.collarmc.protocol.SessionStopReason;
-import com.collarmc.security.cipher.CipherException.InvalidCipherSessionException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import io.mikael.urlbuilder.UrlBuilder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.whispersystems.libsignal.IdentityKey;
 import com.collarmc.api.http.CollarFeature;
 import com.collarmc.api.http.CollarVersion;
 import com.collarmc.api.http.DiscoverResponse;
 import com.collarmc.api.http.HttpException;
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.api.session.Player;
+import com.collarmc.client.CollarException.ConnectionException;
+import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.api.ApiListener;
+import com.collarmc.client.api.friends.FriendsApi;
 import com.collarmc.client.api.groups.GroupsApi;
+import com.collarmc.client.api.identity.IdentityApi;
 import com.collarmc.client.api.location.LocationApi;
+import com.collarmc.client.api.messaging.MessagingApi;
+import com.collarmc.client.api.textures.TexturesApi;
+import com.collarmc.client.minecraft.Ticks;
+import com.collarmc.client.sdht.SDHTApi;
 import com.collarmc.client.sdht.cipher.ContentCiphers;
-import com.collarmc.client.security.signal.ResettableClientIdentityStore;
+import com.collarmc.client.sdht.cipher.GroupContentCipher;
+import com.collarmc.client.security.ClientIdentityStore;
+import com.collarmc.client.security.ClientIdentityStoreImpl;
+import com.collarmc.client.utils.Crypto;
+import com.collarmc.client.utils.Http;
 import com.collarmc.http.Request;
 import com.collarmc.http.Response;
 import com.collarmc.http.WebSocket;
@@ -38,9 +31,9 @@ import com.collarmc.http.WebSocketListener;
 import com.collarmc.protocol.PacketIO;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.protocol.devices.DeviceRegisteredResponse;
-import com.collarmc.protocol.devices.RegisterDeviceResponse;
-import com.collarmc.protocol.identity.IdentifyRequest;
+import com.collarmc.protocol.SessionStopReason;
+import com.collarmc.protocol.devices.ClientRegisteredResponse;
+import com.collarmc.protocol.devices.RegisterClientResponse;
 import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.protocol.keepalive.KeepAliveResponse;
 import com.collarmc.protocol.session.SessionFailedResponse;
@@ -49,24 +42,22 @@ import com.collarmc.protocol.session.SessionFailedResponse.PrivateIdentityMismat
 import com.collarmc.protocol.session.SessionFailedResponse.SessionErrorResponse;
 import com.collarmc.protocol.session.StartSessionRequest;
 import com.collarmc.protocol.session.StartSessionResponse;
-import com.collarmc.protocol.signal.ResendPreKeysResponse;
-import com.collarmc.protocol.signal.SendPreKeysRequest;
-import com.collarmc.protocol.signal.SendPreKeysResponse;
-import com.collarmc.protocol.trust.CheckTrustRelationshipRequest;
-import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsTrustedRelationshipResponse;
-import com.collarmc.protocol.trust.CheckTrustRelationshipResponse.IsUntrustedRelationshipResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.PublicKey;
-import com.collarmc.security.ServerIdentity;
+import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.CipherException.InvalidCipherSessionException;
 import com.collarmc.security.mojang.MinecraftSession;
 import com.collarmc.security.mojang.Mojang;
-import com.collarmc.security.cipher.CipherException;
 import com.collarmc.utils.Utils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.mikael.urlbuilder.UrlBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.StringJoiner;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -88,7 +79,7 @@ public final class Collar {
     private volatile State state;
     private final List<AbstractApi<? extends ApiListener>> apis;
     private Consumer<ProtocolRequest> sender;
-    private ResettableClientIdentityStore identityStore;
+    private ClientIdentityStore identityStore;
     private final Supplier<ClientIdentityStore> identityStoreSupplier;
     private final Ticks ticks;
     private final ContentCiphers recordCiphers;
@@ -96,7 +87,7 @@ public final class Collar {
     private Collar(CollarConfiguration configuration) throws IOException {
         this.configuration = configuration;
         changeState(State.DISCONNECTED);
-        this.identityStoreSupplier = () -> identityStore;
+        this.identityStoreSupplier = () -> this.identityStore;
         Consumer<ProtocolRequest> sender = request -> this.sender.accept(request);
         this.ticks = configuration.ticks;
         this.recordCiphers = new ContentCiphers();
@@ -123,7 +114,6 @@ public final class Collar {
         this.apis.add(identityApi);
         this.apis.add(messagingApi);
         this.apis.add(sdhtApi);
-        addStateSavingShutdownHook(this);
     }
 
     /**
@@ -142,10 +132,6 @@ public final class Collar {
      * Connect to server
      */
     public void connect() {
-        if (!configuration.homeDirectory.getLock().tryLock()) {
-            configuration.listener.onError(this, "Collar cannot connect as there is another client using Collar. Disconnect the other client.");
-            return;
-        }
         try {
             checkServerCompatibility(configuration);
             String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
@@ -157,7 +143,7 @@ public final class Collar {
             throw e;
         } catch (Throwable e) {
             changeState(State.DISCONNECTED);
-            throw new CollarException.ConnectionException("Failed to connect", e);
+            throw new ConnectionException("Failed to connect", e);
         }
     }
 
@@ -176,13 +162,6 @@ public final class Collar {
                 return;
             }
             changeState(State.DISCONNECTED);
-            if (identityStore != null) {
-                try {
-                    identityStore.save();
-                } catch (IOException e) {
-                    LOGGER.error("Could not save Collar signal state", e);
-                }
-            }
         }
     }
 
@@ -245,7 +224,7 @@ public final class Collar {
      * @return the current clients identity
      */
     public ClientIdentity identity() {
-        return identityStore != null ? identityStore.currentIdentity() : null;
+        return identityStore != null ? identityStore.identity() : null;
     }
 
     /**
@@ -263,7 +242,7 @@ public final class Collar {
                 LOGGER.info("client in state " + state);
             } else {
                 if (identityStore != null) {
-                    LOGGER.info(identityStore.currentIdentity() + " state changed from " + previousState + " to " + state);
+                    LOGGER.info(identityStore.identity() + " state changed from " + previousState + " to " + state);
                 } else {
                     LOGGER.info("state changed from " + previousState + " to " + state);
                 }
@@ -273,9 +252,6 @@ public final class Collar {
                 apis.forEach(abstractApi -> abstractApi.onStateChanged(state));
             }
         }
-        if (state == State.DISCONNECTED) {
-            this.configuration.homeDirectory.getLock().unlock();
-        }
     }
 
     /**
@@ -284,7 +260,7 @@ public final class Collar {
      */
     public Player player() {
         assertConnected();
-        return new Player(identity().id(), configuration.sessionSupplier.get().toPlayer());
+        return new Player(identity(), configuration.sessionSupplier.get().toPlayer());
     }
 
     private void assertConnected() {
@@ -302,7 +278,7 @@ public final class Collar {
         try {
             response = Http.client().execute(url(UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/discover")).get(), Response.json(DiscoverResponse.class));
         } catch (HttpException e) {
-            throw new CollarException.ConnectionException("Problem connecting to collar", e);
+            throw new ConnectionException("Problem connecting to collar", e);
         }
         StringJoiner versions = new StringJoiner(",");
         response.versions.stream()
@@ -334,26 +310,6 @@ public final class Collar {
                 .findFirst();
     }
 
-    /**
-     * Saves signal store state on shutdown
-     * @param collar instance
-     */
-    private static void addStateSavingShutdownHook(Collar collar) {
-        WeakReference<Collar> collarWeakRef = new WeakReference<>(collar);
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            Collar instance = collarWeakRef.get();
-            if (instance != null && instance.identityStore != null) {
-                try {
-                    instance.identityStore.save();
-                } catch (IOException e) {
-                    LOGGER.error("Could not save Collar signal state to disk", e);
-                }
-                // Unlock
-                instance.configuration.homeDirectory.getLock().unlock();
-            }
-        }));
-    }
-
     class CollarWebSocket implements WebSocketListener {
         private final ObjectMapper mapper = Utils.messagePackMapper();
         private final Collar collar;
@@ -368,38 +324,22 @@ public final class Collar {
         public void onOpen(WebSocket webSocket) {
             // Create the sender delegate
             sender = request -> {
-                if (state != State.CONNECTED) {
-                    throw new IllegalStateException("Client is not in CONNECTED state");
+                if (state == State.DISCONNECTED) {
+                    throw new IllegalStateException("Client is not in CONNECTED or CONNECTING state");
                 }
                 sendRequest(webSocket, request);
             };
             LOGGER.info("Connection established");
-            if (SignalClientIdentityStore.hasIdentityStore(configuration.homeDirectory)) {
-                identityStore = getOrCreateIdentityKeyStore(webSocket, null);
-            } else {
-                sendRequest(webSocket, IdentifyRequest.unknown());
+            try {
+                identityStore = new ClientIdentityStoreImpl(configuration.homeDirectory);
+            } catch (IOException | CipherException e) {
+                throw new IllegalStateException("could not load identity store");
             }
+            // Start protocol
+            sendRequest(webSocket, identityStore.createIdentifyRequest());
             // Start the keep alive
             this.keepAlive = new KeepAlive(this, webSocket);
-            this.keepAlive.start(null);
-        }
-
-        private ResettableClientIdentityStore getOrCreateIdentityKeyStore(WebSocket webSocket, UUID owner) {
-            if (ProfileState.exists(configuration.homeDirectory)) {
-                owner = ProfileState.read(configuration.homeDirectory).owner;
-            }
-            UUID finalOwner = owner;
-            return new ResettableClientIdentityStore(() -> SignalClientIdentityStore.from(finalOwner, configuration.homeDirectory, signalProtocolStore -> {
-                LOGGER.info("New installation. Registering device with server");
-                new ProfileState(finalOwner).write(configuration.homeDirectory);
-            }, (store) -> {
-                LOGGER.info("Existing installation. Loading the store and identifying with server " + serverIdentity);
-                IdentityKey publicKey = store.getIdentityKeyPair().getPublicKey();
-                ClientIdentity clientIdentity = new ClientIdentity(finalOwner, new PublicKey(publicKey.serialize()), null);
-                PrivateIdentity privateIdentity = PrivateIdentity.getOrCreate(configuration.homeDirectory);
-                IdentifyRequest request = new IdentifyRequest(clientIdentity, privateIdentity.token);
-                sendRequest(webSocket, request);
-            }));
+            this.keepAlive.start();
         }
 
         @Override
@@ -426,60 +366,54 @@ public final class Collar {
 
         @Override
         public void onMessage(WebSocket webSocket, ByteBuffer messageBuffer) {
-            Optional<ProtocolResponse> responseOptional = readResponse(messageBuffer);
-            responseOptional.ifPresent(resp -> {
-                LOGGER.info(resp.getClass().getSimpleName() + " from " + resp.identity);
-                ClientIdentity identity = identityStore == null ? null : identityStore.currentIdentity();
+            readResponse(messageBuffer).ifPresent(resp -> {
                 if (resp instanceof IdentifyResponse) {
+                    ServerIdentity storedServerIdentity = identityStore.serverIdentity();
                     IdentifyResponse response = (IdentifyResponse) resp;
-                    if (identityStore == null) {
-                        identityStore = getOrCreateIdentityKeyStore(webSocket, response.profile.id);
+                    if (!response.identity.equals(storedServerIdentity)) {
+                        configuration.listener.onClientUntrusted(collar, identityStore);
+                        disconnect();
+                        return;
+                    }
+                    if (!identityStore.verifyIdentityResponse(response)) {
+                        configuration.listener.onClientUntrusted(collar, identityStore);
+                        disconnect();
+                        return;
                     }
                     MinecraftSession session = configuration.sessionSupplier.get();
                     String serverId;
                     if (session.mode == MinecraftSession.Mode.MOJANG) {
                         Mojang authentication = new Mojang(Http.client());
-                        Optional<Mojang.JoinServerResponse> joinServerResponse = authentication.joinServer(session, response.serverPublicKey, response.sharedSecret);
+                        Optional<Mojang.JoinServerResponse> joinServerResponse = authentication.joinServer(session, response.minecraftServerId, response.minecraftSharedSecret);
                         if (joinServerResponse.isPresent()) {
                             serverId = joinServerResponse.get().serverId;
                         } else {
-                            throw new CollarException.ConnectionException("Couldn't verify your client session with Mojang");
+                            throw new ConnectionException("Couldn't verify your client session with Mojang");
                         }
                     } else {
                         serverId = null;
                     }
-                    StartSessionRequest request = new StartSessionRequest(identity, session, serverId);
-                    sendRequest(webSocket, request);
+                    this.serverIdentity = response.identity;
+                    sendRequest(webSocket, new StartSessionRequest(session, serverId));
                     keepAlive.stop();
-                    keepAlive.start(identity);
+                    keepAlive.start();
                 } else if (resp instanceof KeepAliveResponse) {
-                    LOGGER.info("KeepAliveResponse received");
-                } else if (resp instanceof RegisterDeviceResponse) {
-                    RegisterDeviceResponse registerDeviceResponse = (RegisterDeviceResponse)resp;
-                    LOGGER.info("RegisterDeviceResponse received with registration url " + ((RegisterDeviceResponse) resp).approvalUrl);
-                    configuration.listener.onConfirmDeviceRegistration(collar, registerDeviceResponse.approvalToken, registerDeviceResponse.approvalUrl);
-                } else if (resp instanceof DeviceRegisteredResponse) {
-                    DeviceRegisteredResponse response = (DeviceRegisteredResponse)resp;
-                    identityStore = getOrCreateIdentityKeyStore(webSocket, response.profile.id);
-                    identityStore.processDeviceRegisteredResponse(response);
-                    LOGGER.info("Ready to exchange keys for device " + response.deviceId);
-                    SendPreKeysRequest request = identityStore.createPreKeyRequest(response);
-                    sendRequest(webSocket, request);
-                } else if (resp instanceof SendPreKeysResponse) {
-                    SendPreKeysResponse response = (SendPreKeysResponse) resp;
-                    if (identityStore == null) {
-                        throw new IllegalStateException("identity has not been established");
+                    LOGGER.trace("KeepAliveResponse received");
+                } else if (resp instanceof RegisterClientResponse) {
+                    RegisterClientResponse registerClientResponse = (RegisterClientResponse) resp;
+                    LOGGER.info("RegisterDeviceResponse received with registration url " + ((RegisterClientResponse) resp).approvalUrl);
+                    configuration.listener.onConfirmDeviceRegistration(collar, registerClientResponse.approvalToken, registerClientResponse.approvalUrl);
+                } else if (resp instanceof ClientRegisteredResponse) {
+                    ClientRegisteredResponse response = (ClientRegisteredResponse) resp;
+                    try {
+                        sendRequest(webSocket, identityStore.processClientRegisteredResponse(response));
+                    } catch (CipherException e) {
+                        configuration.listener.onError(collar, e);
+                        collar.changeState(State.DISCONNECTED);
                     }
-                    identityStore.trustIdentity(response.identity, response.preKeyBundle);
-                    LOGGER.info("PreKeys have been exchanged successfully");
-                    sendRequest(webSocket, new IdentifyRequest(identity, identityStore.privateIdentityToken()));
-                } else if (resp instanceof ResendPreKeysResponse) {
-                    ResendPreKeysResponse response = (ResendPreKeysResponse) resp;
-                    SendPreKeysRequest request = identityStore.createPreKeyRequest(response);
-                    sendRequest(webSocket, request);
                 } else if (resp instanceof StartSessionResponse) {
-                    LOGGER.info("Session has started. Checking if the client and server are in a trusted relationship");
-                    sendRequest(webSocket, new CheckTrustRelationshipRequest(identity));
+                    LOGGER.info("Session has started");
+                    collar.changeState(State.CONNECTED);
                 } else if (resp instanceof SessionFailedResponse) {
                     LOGGER.info("SessionFailedResponse received");
                     if (resp instanceof MojangVerificationFailedResponse) {
@@ -499,17 +433,6 @@ public final class Collar {
                         }
                     }
                     collar.changeState(State.DISCONNECTED);
-                } else if (resp instanceof IsTrustedRelationshipResponse) {
-                    LOGGER.info("Server has confirmed a trusted relationship with the client");
-                    if (resp.identity == null) {
-                        throw new IllegalStateException("sever identity was null");
-                    }
-                    this.serverIdentity = resp.identity;
-                    collar.changeState(State.CONNECTED);
-                } else if (resp instanceof IsUntrustedRelationshipResponse) {
-                    LOGGER.info("Server has declared the client as untrusted. Consumer should reset the identity store and reconnect.");
-                    collar.changeState(State.DISCONNECTED);
-                    configuration.listener.onClientUntrusted(collar, identityStore);
                 } else {
                     for (AbstractApi<?> api : collar.apis) {
                         if (api.handleResponse(resp)) {
@@ -521,29 +444,24 @@ public final class Collar {
         }
 
         private Optional<ProtocolResponse> readResponse(ByteBuffer buffer) {
-            PacketIO packetIO = new PacketIO(mapper, identityStore == null ? null : identityStore.createCypher());
             try {
-                return packetIO.decode(serverIdentity, buffer, ProtocolResponse.class);
+                return packets().decode(serverIdentity, buffer, ProtocolResponse.class);
             } catch (CipherException e) {
-                if (identityStore == null) {
-                    throw new IllegalStateException("Could not recover from cipher error", e);
-                }
-                sender.accept(identityStore.createPreKeyRequest(serverIdentity));
+                throw new IllegalStateException("Could not recover from cipher error", e);
             } catch (IOException e) {
                 throw new IllegalStateException("Read error ", e);
             }
-            return Optional.empty();
         }
 
         public void sendRequest(WebSocket webSocket, ProtocolRequest req) {
-            PacketIO packetIO = identityStore == null ? new PacketIO(mapper, null) : new PacketIO(mapper, identityStore.createCypher());
+            PacketIO packetIO = packets();
             byte[] bytes;
             if (state == State.CONNECTED) {
                 try {
                     if (identityStore == null) {
-                        throw new IllegalStateException("identity store should be available by the time the client is CONNECTED");
+                        throw new IllegalStateException("identity store should be available by the time the client is " + State.CONNECTED);
                     }
-                    bytes = packetIO.encodeEncrypted(serverIdentity, req);
+                    bytes = packets().encodeEncrypted(serverIdentity, req);
                 } catch (InvalidCipherSessionException e) {
                     collar.configuration.listener.onClientUntrusted(collar, identityStore);
                     return;
@@ -558,6 +476,10 @@ public final class Collar {
                 }
             }
             webSocket.send(ByteBuffer.wrap(bytes));
+        }
+
+        private PacketIO packets() {
+            return identityStore.isValid() ? new PacketIO(mapper, identityStore.cipher()) : new PacketIO(mapper, null);
         }
     }
 

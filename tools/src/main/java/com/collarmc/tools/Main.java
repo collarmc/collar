@@ -1,11 +1,11 @@
 package com.collarmc.tools;
 
+import com.collarmc.client.utils.Http;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.collarmc.client.utils.Http;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;

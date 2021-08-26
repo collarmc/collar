@@ -1,9 +1,8 @@
 package com.collarmc.protocol.groups;
 
+import com.collarmc.protocol.ProtocolRequest;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.security.ClientIdentity;
 
 import java.util.UUID;
 
@@ -15,8 +14,7 @@ public final class LeaveGroupRequest extends ProtocolRequest {
     public final UUID groupId;
 
     @JsonCreator
-    public LeaveGroupRequest(@JsonProperty("identity") ClientIdentity identity, @JsonProperty("groupId") UUID groupId) {
-        super(identity);
+    public LeaveGroupRequest(@JsonProperty("groupId") UUID groupId) {
         this.groupId = groupId;
     }
 }

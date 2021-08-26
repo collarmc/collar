@@ -1,24 +1,34 @@
 package com.collarmc.api.session;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.collarmc.api.friends.Status;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.security.mojang.MinecraftPlayer;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Represents a Collar player
  */
 public final class Player {
-    @JsonProperty("profile")
-    public final UUID profile;
+    @JsonProperty("identity")
+    @Nonnull
+    public final ClientIdentity identity;
     @JsonProperty("minecraftPlayer")
+    @Nullable
     public final MinecraftPlayer minecraftPlayer;
+    @Nonnull
+    @JsonIgnore
+    public final Status status;
 
-    public Player(@JsonProperty("profile") UUID profile,
-                  @JsonProperty("minecraftPlayer") MinecraftPlayer minecraftPlayer) {
-        this.profile = profile;
+    public Player(@Nonnull @JsonProperty("identity") ClientIdentity identity,
+                  @Nullable @JsonProperty("minecraftPlayer") MinecraftPlayer minecraftPlayer) {
+        this.identity = identity;
         this.minecraftPlayer = minecraftPlayer;
+        this.status = minecraftPlayer == null ? Status.OFFLINE : Status.ONLINE;
     }
 
     @Override
@@ -26,16 +36,17 @@ public final class Player {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Player player = (Player) o;
-        return profile.equals(player.profile);
+        return identity.profile.equals(player.identity.profile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(profile);
+        return Objects.hash(identity.profile);
     }
 
     @Override
     public String toString() {
-        return profile + ":" + minecraftPlayer;
+        String player = minecraftPlayer == null ? "<none>" : minecraftPlayer.toString();
+        return identity.profile + ":" + player;
     }
 }

@@ -1,6 +1,5 @@
 package com.collarmc.tests.friends;
 
-import org.junit.Test;
 import com.collarmc.api.friends.Friend;
 import com.collarmc.api.friends.Status;
 import com.collarmc.client.Collar;
@@ -8,6 +7,7 @@ import com.collarmc.client.api.friends.FriendsApi;
 import com.collarmc.client.api.friends.FriendsListener;
 import com.collarmc.tests.junit.CollarAssert;
 import com.collarmc.tests.junit.CollarTest;
+import org.junit.Test;
 
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;

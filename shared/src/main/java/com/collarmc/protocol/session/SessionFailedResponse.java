@@ -1,19 +1,15 @@
 package com.collarmc.protocol.session;
 
+import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.SessionStopReason;
+import com.collarmc.security.mojang.MinecraftSession;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ServerIdentity;
-import com.collarmc.security.mojang.MinecraftSession;
 
 /**
  * Fired when the session fails in various conditions and force the client to disconnect
  */
 public abstract class SessionFailedResponse extends ProtocolResponse {
-    public SessionFailedResponse(@JsonProperty("identity") ServerIdentity identity) {
-        super(identity);
-    }
 
     /**
      * Fired when Mojang MinecraftSession could not be validated
@@ -23,9 +19,7 @@ public abstract class SessionFailedResponse extends ProtocolResponse {
         public final MinecraftSession minecraftSession;
 
         @JsonCreator
-        public MojangVerificationFailedResponse(@JsonProperty("identity") ServerIdentity identity,
-                                                @JsonProperty("minecraftSession") MinecraftSession minecraftSession) {
-            super(identity);
+        public MojangVerificationFailedResponse(@JsonProperty("minecraftSession") MinecraftSession minecraftSession) {
             this.minecraftSession = minecraftSession;
         }
     }
@@ -40,9 +34,7 @@ public abstract class SessionFailedResponse extends ProtocolResponse {
         public final String url;
 
         @JsonCreator
-        public PrivateIdentityMismatchResponse(@JsonProperty("identity") ServerIdentity identity,
-                                               @JsonProperty("url") String url) {
-            super(identity);
+        public PrivateIdentityMismatchResponse(@JsonProperty("url") String url) {
             this.url = url;
         }
     }
@@ -56,10 +48,8 @@ public abstract class SessionFailedResponse extends ProtocolResponse {
         @JsonProperty("message")
         public final String message;
         @JsonCreator
-        public SessionErrorResponse(@JsonProperty("identity") ServerIdentity identity,
-                                    @JsonProperty("reason") SessionStopReason reason,
+        public SessionErrorResponse(@JsonProperty("reason") SessionStopReason reason,
                                     @JsonProperty("message") String message) {
-            super(identity);
             this.reason = reason;
             this.message = message;
         }

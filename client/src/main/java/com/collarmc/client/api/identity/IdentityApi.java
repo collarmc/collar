@@ -1,8 +1,19 @@
 package com.collarmc.client.api.identity;
 
+import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.profiles.PublicProfile;
+import com.collarmc.api.session.Player;
+import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.security.ClientIdentityStore;
-import com.collarmc.protocol.identity.*;
+import com.collarmc.protocol.ProtocolRequest;
+import com.collarmc.protocol.ProtocolResponse;
+import com.collarmc.protocol.identity.GetIdentityRequest;
+import com.collarmc.protocol.identity.GetIdentityResponse;
+import com.collarmc.protocol.identity.GetProfileRequest;
+import com.collarmc.protocol.identity.GetProfileResponse;
+import com.collarmc.security.TokenGenerator;
+import com.collarmc.security.mojang.MinecraftPlayer;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.stoyanr.evictor.ConcurrentMapWithTimedEviction;
@@ -12,18 +23,13 @@ import com.stoyanr.evictor.scheduler.RegularTaskEvictionScheduler;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.collarmc.api.profiles.PublicProfile;
-import com.collarmc.api.session.Player;
-import com.collarmc.client.Collar;
-import com.collarmc.protocol.ProtocolRequest;
-import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.TokenGenerator;
-import com.collarmc.security.mojang.MinecraftPlayer;
 
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -83,7 +89,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 identityOptional = Optional.empty();
             }
-            return identityOptional.map(identity -> new Player(identity.owner, new MinecraftPlayer(
+            return identityOptional.map(identity -> new Player(identity, new MinecraftPlayer(
                     playerId,
                     collar.player().minecraftPlayer.server,
                     collar.player().minecraftPlayer.networkId)
@@ -98,13 +104,13 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
      * @return profile
      */
     public CompletableFuture<Optional<PublicProfile>> resolveProfile(Player player) {
-        Optional<PublicProfile> profile = profileCache.asMap().getOrDefault(player.profile, Optional.empty());
+        Optional<PublicProfile> profile = profileCache.asMap().getOrDefault(player.identity.profile, Optional.empty());
         if (profile.isPresent()) {
             return CompletableFuture.completedFuture(profile);
         } else {
             CompletableFuture<Optional<PublicProfile>> future = new CompletableFuture<>();
-            profileFutures.put(player.profile, future);
-            sender.accept(new GetProfileRequest(identity(), player.profile));
+            profileFutures.put(player.identity.profile, future);
+            sender.accept(new GetProfileRequest(player.identity.profile));
             return future;
         }
     }
@@ -122,26 +128,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
             long id = TokenGenerator.longToken();
             identifyFutures.put(id, future);
-            sender.accept(new GetIdentityRequest(identity(), id, playerId));
-            return future;
-        }
-    }
-
-    /**
-     * Creates a bi-directional trust between the clients identity and a remote client identity
-     * @param identity to create bi-directional trust with
-     * @return future for when trust relationship has been created
-     */
-    public CompletableFuture<Optional<ClientIdentity>> createTrust(Optional<ClientIdentity> identity) {
-        ClientIdentity clientIdentity = identity.orElse(null);
-        if (clientIdentity == null || identityStore().isTrustedIdentity(clientIdentity)) {
-            return CompletableFuture.completedFuture(identity);
-        } else {
-            CreateTrustRequest request = identityStore().createPreKeyRequest(clientIdentity, TokenGenerator.longToken());
-            CompletableFuture<Optional<ClientIdentity>> future = new CompletableFuture<>();
-            LOGGER.info("Creating trust future with " + identity + " and id " + request.id);
-            identifyFutures.put(request.id, future);
-            sender.accept(request);
+            sender.accept(new GetIdentityRequest(id, playerId));
             return future;
         }
     }
@@ -162,21 +149,6 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
             Optional<ClientIdentity> identity = Optional.ofNullable(response.found);
             identityCache.put(response.player, identity);
             future.complete(identity);
-            return true;
-        } else if (resp instanceof CreateTrustResponse) {
-            CreateTrustResponse response = (CreateTrustResponse) resp;
-            identityStore().trustIdentity(response.sender, response.preKeyBundle);
-            fireListener("onIdentityTrusted", listener -> {
-                listener.onIdentityTrusted(collar, this, identityStore(), response.sender);
-            });
-            CompletableFuture<Optional<ClientIdentity>> removed = identifyFutures.remove(response.id);
-            if (removed == null) {
-                LOGGER.info("Sending back a CreateTrustRequest to " + response.sender + " and id " + response.id);
-                sender.accept(identityStore().createPreKeyRequest(response.sender, response.id));
-            } else {
-                LOGGER.info("Finished creating trust with " + response.sender + " and id " + response.id);
-                removed.complete(Optional.ofNullable(response.sender));
-            }
             return true;
         } else if (resp instanceof GetProfileResponse) {
             GetProfileResponse response = (GetProfileResponse) resp;

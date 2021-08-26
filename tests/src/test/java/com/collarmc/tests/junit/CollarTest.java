@@ -1,8 +1,5 @@
 package com.collarmc.tests.junit;
 
-import com.collarmc.utils.Utils;
-import org.junit.Before;
-import org.junit.Rule;
 import com.collarmc.api.entities.Entity;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.location.Dimension;
@@ -15,9 +12,10 @@ import com.collarmc.server.Services;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.mongo.Mongo;
 import com.collarmc.server.security.mojang.NojangMinecraftSessionVerifier;
-import com.collarmc.server.services.devices.Device;
-import com.collarmc.server.services.devices.DeviceService;
 import com.collarmc.server.services.profiles.ProfileServiceServer;
+import com.collarmc.utils.Utils;
+import org.junit.Before;
+import org.junit.Rule;
 
 import java.util.Set;
 import java.util.UUID;
@@ -25,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
-
-import static com.collarmc.tests.junit.CollarAssert.waitForCondition;
 
 public abstract class CollarTest {
 
@@ -137,8 +133,7 @@ public abstract class CollarTest {
         public void onConfirmDeviceRegistration(Collar collar, String token, String approvalUrl) {
             Profile profile = this.profile.get();
             Services services = this.services.get();
-            DeviceService.CreateDeviceResponse resp = new DeviceService.CreateDeviceResponse(new Device(profile.id, 1, "Cool Computer Beep Boop"));
-            services.deviceRegistration.onDeviceRegistered(services.identityStore.getIdentity(), profile.toPublic(), token, resp);
+            services.deviceRegistration.onClientRegistered(profile.toPublic(), token);
             devicesConfirmed.incrementAndGet();
         }
     }

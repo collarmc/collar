@@ -1,5 +1,7 @@
 package com.collarmc.io;
 
+import com.collarmc.protocol.PacketIO;
+
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -70,6 +72,20 @@ public final class IO {
         return new UUID(is.readLong(), is.readLong());
     }
 
+    public static byte[] writeUUIDToBytes(UUID uuid) {
+        ByteBuffer buffer = ByteBuffer.allocate(16);
+        buffer.putLong(uuid.getMostSignificantBits());
+        buffer.putLong(uuid.getLeastSignificantBits());
+        return buffer.array();
+    }
+
+    public static UUID readUUIDFromBytes(byte[] bytes) {
+        ByteBuffer buffer = ByteBuffer.wrap(bytes);
+        long most = buffer.getLong();
+        long least = buffer.getLong();
+        return new UUID(most, least);
+    }
+
     /**
      * Write all bytes to file
      * @param file to write to
@@ -118,7 +134,8 @@ public final class IO {
      * @throws IOException if stream failed to be read
      */
     public static ByteBuffer toByteBuffer(InputStream input) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(Short.MAX_VALUE);
+        // TODO buffer size
+        ByteBuffer buffer = ByteBuffer.allocate(PacketIO.MAX_PACKET_SIZE);
         byte[] buf = new byte[1024];
         for (int n = input.read(buf); n != -1; n = input.read(buf)) {
             buffer.put(buf, 0, n);

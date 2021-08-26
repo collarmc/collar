@@ -1,12 +1,13 @@
 package com.collarmc.server.protocol;
 
-import com.collarmc.server.session.SessionManager;
-import org.eclipse.jetty.websocket.api.Session;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
 import com.collarmc.server.CollarServer;
+import com.collarmc.server.Services;
+import com.collarmc.server.session.SessionManager;
+import org.eclipse.jetty.websocket.api.Session;
 
 import java.util.function.BiConsumer;
 
@@ -14,14 +15,22 @@ import java.util.function.BiConsumer;
  * Extensible protocol packet listener and sender
  */
 public abstract class ProtocolHandler {
+
+    protected final Services services;
+
+    public ProtocolHandler(Services services) {
+        this.services = services;
+    }
+
     /**
      * Handles a request coming from a client and processes it
      * @param collar server
+     * @param identity of the request
      * @param req request received
      * @param sender to send a response
      * @return if packet handled
      */
-    public abstract boolean handleRequest(CollarServer collar, ProtocolRequest req, BiConsumer<ClientIdentity, ProtocolResponse> sender);
+    public abstract boolean handleRequest(CollarServer collar, ClientIdentity identity, ProtocolRequest req, BiConsumer<ClientIdentity, ProtocolResponse> sender);
 
     /**
      * Fired when the session has started and all the session information is available

@@ -1,9 +1,8 @@
 package com.collarmc.protocol.identity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ServerIdentity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
@@ -13,10 +12,8 @@ public final class GetProfileResponse extends ProtocolResponse {
     @JsonProperty("profile")
     public final PublicProfile profile;
 
-    public GetProfileResponse(@JsonProperty("identity") ServerIdentity identity,
-                              @JsonProperty("id") UUID id,
+    public GetProfileResponse(@JsonProperty("id") UUID id,
                               @JsonProperty("profile") PublicProfile profile) {
-        super(identity);
         this.id = id;
         this.profile = profile;
     }

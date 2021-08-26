@@ -1,21 +1,18 @@
 package com.collarmc.security;
 
-import com.google.common.io.BaseEncoding;
 import com.collarmc.utils.Utils;
-
-import java.security.SecureRandom;
+import com.google.common.io.BaseEncoding;
 
 public final class TokenGenerator {
-    private static final SecureRandom RANDOM = Utils.secureRandom();
 
     public static byte[] byteToken(int size) {
         byte[] bytes = new byte[size];
-        RANDOM.nextBytes(bytes);
+        Utils.secureRandom().nextBytes(bytes);
         return bytes;
     }
 
     public static long longToken() {
-        return RANDOM.nextLong();
+        return Utils.secureRandom().nextLong();
     }
 
     /**

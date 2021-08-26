@@ -25,12 +25,16 @@ class LocationUpdater implements Ticks.TickListener {
 
     public void start() {
         ticks.subscribe(this);
-        LOGGER.info("Started sending player location");
+        if (locationApi.isSharing()) {
+            LOGGER.info("Started sending player location");
+        }
     }
 
     public void stop() {
         ticks.unsubscribe(this);
-        LOGGER.info("Stopped sending player location");
+        if (locationApi.isSharing()) {
+            LOGGER.info("Stopped sending player location");
+        }
     }
 
     @Override

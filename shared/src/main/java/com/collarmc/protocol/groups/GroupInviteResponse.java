@@ -1,11 +1,10 @@
 package com.collarmc.protocol.groups;
 
-import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ServerIdentity;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.session.Player;
+import com.collarmc.protocol.ProtocolResponse;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;
 
@@ -24,12 +23,10 @@ public final class GroupInviteResponse extends ProtocolResponse {
 
     @JsonCreator
     public GroupInviteResponse(
-            @JsonProperty("identity") ServerIdentity identity,
             @JsonProperty("group") UUID group,
             @JsonProperty("name") String name,
             @JsonProperty("type") GroupType type,
             @JsonProperty("sender") Player sender) {
-        super(identity);
         this.group = group;
         this.name = name;
         this.type = type;

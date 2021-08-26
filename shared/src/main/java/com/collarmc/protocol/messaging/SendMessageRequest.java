@@ -1,8 +1,8 @@
 package com.collarmc.protocol.messaging;
 
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.protocol.ProtocolRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.collarmc.security.ClientIdentity;
 
 import java.util.UUID;
 
@@ -25,11 +25,9 @@ public final class SendMessageRequest extends ProtocolRequest {
     @JsonProperty("message")
     public final byte[] message;
 
-    public SendMessageRequest(@JsonProperty("identity") ClientIdentity identity,
-                              @JsonProperty("recipient") ClientIdentity recipient,
+    public SendMessageRequest(@JsonProperty("recipient") ClientIdentity recipient,
                               @JsonProperty("group") UUID group,
                               @JsonProperty("message") byte[] message) {
-        super(identity);
         this.recipient = recipient;
         this.group = group;
         this.message = message;

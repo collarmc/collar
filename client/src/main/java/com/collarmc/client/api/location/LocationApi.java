@@ -1,31 +1,31 @@
 package com.collarmc.client.api.location;
 
-import com.collarmc.client.Collar;
-import com.collarmc.client.api.AbstractApi;
-import com.collarmc.client.api.groups.GroupsListener;
-import com.collarmc.client.minecraft.Ticks;
-import com.collarmc.client.sdht.SDHTApi;
-import com.collarmc.client.sdht.SDHTListener;
-import com.collarmc.client.security.ClientIdentityStore;
-import com.collarmc.protocol.location.*;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.hash.Hashing;
 import com.collarmc.api.entities.Entity;
 import com.collarmc.api.entities.EntityType;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.location.Location;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.waypoints.Waypoint;
+import com.collarmc.client.Collar;
+import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.api.groups.GroupsApi;
+import com.collarmc.client.api.groups.GroupsListener;
+import com.collarmc.client.minecraft.Ticks;
+import com.collarmc.client.sdht.SDHTApi;
+import com.collarmc.client.sdht.SDHTListener;
+import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
+import com.collarmc.protocol.location.*;
 import com.collarmc.protocol.waypoints.CreateWaypointRequest;
 import com.collarmc.protocol.waypoints.GetWaypointsRequest;
 import com.collarmc.protocol.waypoints.GetWaypointsResponse;
 import com.collarmc.protocol.waypoints.RemoveWaypointRequest;
 import com.collarmc.sdht.Content;
 import com.collarmc.sdht.Key;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.messages.CipherException;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.hash.Hashing;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -104,13 +104,9 @@ public class LocationApi extends AbstractApi<LocationListener> {
      * @param group to share with
      */
     public void startSharingWith(Group group) {
-        // Start sharing
-        if (!this.updater.isRunning()) {
-            this.updater.start();
-        }
         synchronized (this) {
             groupsSharingWith.add(group.id);
-            sender.accept(new StartSharingLocationRequest(identity(), group.id));
+            sender.accept(new StartSharingLocationRequest(group.id));
             if (!updater.isRunning()) {
                 updater.start();
             }
@@ -125,7 +121,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
     public void stopSharingWith(Group group) {
         synchronized (this) {
             stopSharingForGroup(group);
-            sender.accept(new StopSharingLocationRequest(identity(), group.id));
+            sender.accept(new StopSharingLocationRequest(group.id));
         }
         fireListener("onStoppedSharingLocation", listener -> listener.onStoppedSharingLocation(collar, this, group));
     }
@@ -139,6 +135,14 @@ public class LocationApi extends AbstractApi<LocationListener> {
         synchronized (this) {
             return groupsSharingWith.contains(group.id);
         }
+    }
+
+    /**
+     * Tests if you are currently sharing location with one or more groups
+     * @return sharing
+     */
+    public boolean isSharing() {
+        return !groupsSharingWith.isEmpty();
     }
 
     /**
@@ -193,11 +197,11 @@ public class LocationApi extends AbstractApi<LocationListener> {
         byte[] bytes = waypoint.serialize();
         byte[] encryptedBytes;
         try {
-            encryptedBytes = identityStore().createCypher().crypt(bytes);
+            encryptedBytes = identityStore().cipher().encrypt(bytes);
         } catch (CipherException e) {
             throw new IllegalStateException(e);
         }
-        sender.accept(new CreateWaypointRequest(identity(), waypoint.id, encryptedBytes));
+        sender.accept(new CreateWaypointRequest(waypoint.id, encryptedBytes));
         fireListener("onWaypointCreated", listener -> listener.onWaypointCreated(collar, this, null, waypoint));
     }
 
@@ -207,7 +211,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
      */
     public void removeWaypoint(Waypoint waypoint) {
         privateWaypoints.remove(waypoint.id);
-        sender.accept(new RemoveWaypointRequest(identity(), waypoint.id));
+        sender.accept(new RemoveWaypointRequest(waypoint.id));
         fireListener("onWaypointRemoved", listener -> listener.onWaypointRemoved(collar, this, null, waypoint));
     }
 
@@ -225,15 +229,18 @@ public class LocationApi extends AbstractApi<LocationListener> {
             Location location = locationSupplier.get();
             byte[] bytes = location.serialize();
             groupsSharingWith.forEach(groupId -> {
-                collar.groups().findGroupById(groupId).ifPresent(group -> {
-                    byte[] encryptedBytes;
-                    try {
-                        encryptedBytes = identityStore().createCypher().crypt(identity(), group, bytes);
-                    } catch (CipherException e) {
-                        throw new IllegalStateException(e);
-                    }
-                    sender.accept(new UpdateLocationRequest(identity(), groupId, encryptedBytes));
-                });
+                collar.groups().findGroupById(groupId)
+                        .flatMap(group -> identityStore().groupSessions().session(group))
+                        .ifPresent(groupSession -> {
+                            byte[] encryptedBytes;
+                            try {
+                                encryptedBytes = groupSession.encrypt(bytes);
+                            } catch (CipherException e) {
+                                LOGGER.error("Could not share location with group " + groupId, e);
+                                return;
+                            }
+                            sender.accept(new UpdateLocationRequest(groupId, encryptedBytes));
+                        });
             });
         }
     }
@@ -242,8 +249,9 @@ public class LocationApi extends AbstractApi<LocationListener> {
         Set<String> nearbyHashes = entities.stream().filter(entity -> entity.isTypeOf(EntityType.PLAYER))
                 .limit(200)
                 .map(entity -> Hashing.sha256().hashString(entity.id.toString(), StandardCharsets.UTF_8).toString())
+                .sorted()
                 .collect(Collectors.toSet());
-        sender.accept(new UpdateNearbyRequest(identity(), nearbyHashes));
+        sender.accept(new UpdateNearbyRequest(nearbyHashes));
     }
 
     @Override
@@ -252,27 +260,26 @@ public class LocationApi extends AbstractApi<LocationListener> {
             LocationUpdatedResponse response = (LocationUpdatedResponse) resp;
             synchronized (this) {
                 collar.groups().findGroupById(response.group).ifPresent(group -> {
-                    Location location;
-                    if (response.location == null) {
-                        // Stopped sharing
-                        location = Location.UNKNOWN;
-                    } else {
-                        try {
-                            byte[] decryptedBytes = identityStore().createCypher().decrypt(response.sender, group, response.location);
-                            location = new Location(decryptedBytes);
-                        } catch (IOException | CipherException e) {
-                            LOGGER.error("could not decrypt location sent by " + response.sender);
-                            return;
+                    Optional<Location> location = identityStore().groupSessions().session(group).map(groupSession -> {
+                        if (response.location == null) {
+                            return null;
                         }
-                    }
-                    if (location.equals(Location.UNKNOWN)) {
-                        // Remove if stooped sharing
-                        playerLocations.remove(response.player);
-                    } else {
+                        try {
+                            byte[] contents = groupSession.decrypt(response.location, response.sender.identity);
+                            return new Location(contents);
+                        } catch (IOException | CipherException e) {
+                            LOGGER.error("could not decrypt location sent by " + response.sender.identity);
+                            return null;
+                        }
+                    });
+                    if (location.isPresent()) {
                         // Update the location
-                        playerLocations.put(response.player, location);
+                        playerLocations.put(response.sender, location.get());
+                    } else {
+                        // Remove if stooped sharing
+                        playerLocations.remove(response.sender);
                     }
-                    fireListener("onLocationUpdated", listener -> listener.onLocationUpdated(collar, this, response.player, location));
+                    fireListener("onLocationUpdated", listener -> listener.onLocationUpdated(collar, this, response.sender, location.orElse(Location.UNKNOWN)));
                 });
             }
             return true;
@@ -282,7 +289,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                 Map<UUID, Waypoint> waypoints = response.waypoints.stream()
                         .map(encryptedWaypoint -> {
                             try {
-                                return identityStore().createCypher().decrypt(encryptedWaypoint.waypoint);
+                                return identityStore().cipher().decrypt(encryptedWaypoint.waypoint);
                             } catch (CipherException e) {
                                 throw new IllegalStateException("Unable to decrypt private waypoint", e);
                             }
@@ -300,7 +307,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
     public void onStateChanged(Collar.State state) {
         if (state == Collar.State.CONNECTED) {
             nearbyUpdater.start();
-            sender.accept(new GetWaypointsRequest(identity()));
+            sender.accept(new GetWaypointsRequest());
         } else if (state == Collar.State.DISCONNECTED) {
             synchronized (this) {
                 updater.stop();
@@ -308,6 +315,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                 groupsSharingWith.clear();
             }
             nearbyUpdater.stop();
+            this.sdhtApi.unsubscribe(sdhtListener);
         }
     }
 

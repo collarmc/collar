@@ -1,5 +1,6 @@
 package com.collarmc.api.profiles;
 
+import com.collarmc.security.PublicKey;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -20,12 +21,12 @@ public final class Profile {
     public final String hashedPassword;
     @JsonProperty("emailVerified")
     public final Boolean emailVerified;
-    @JsonProperty("privateIdentityToken")
-    public final byte[] privateIdentityToken;
     @JsonProperty("cape")
     public final TexturePreference cape;
     @JsonProperty("knownAccounts")
     public final Set<UUID> knownAccounts;
+    @JsonProperty("publicKey")
+    public final PublicKey publicKey;
 
     public Profile(UUID id,
                    Set<Role> roles,
@@ -33,18 +34,18 @@ public final class Profile {
                    String name,
                    String hashedPassword,
                    Boolean emailVerified,
-                   byte[] privateIdentityToken,
                    TexturePreference cape,
-                   Set<UUID> knownAccounts) {
+                   Set<UUID> knownAccounts,
+                   PublicKey publicKey) {
         this.id = id;
         this.roles = roles;
         this.email = email;
         this.name = name;
         this.hashedPassword = hashedPassword;
         this.emailVerified = emailVerified;
-        this.privateIdentityToken = privateIdentityToken;
         this.cape = cape;
         this.knownAccounts = knownAccounts;
+        this.publicKey = publicKey;
     }
 
     @JsonCreator
@@ -54,7 +55,8 @@ public final class Profile {
                    @JsonProperty("name") String name,
                    @JsonProperty("emailVerified") Boolean emailVerified,
                    @JsonProperty("cape") TexturePreference cape,
-                   @JsonProperty("knownAccounts") Set<UUID> knownAccounts) {
+                   @JsonProperty("knownAccounts") Set<UUID> knownAccounts,
+                   @JsonProperty("publicKey") PublicKey publicKey) {
         this.id = id;
         this.roles = roles;
         this.email = email;
@@ -62,7 +64,7 @@ public final class Profile {
         this.emailVerified = emailVerified;
         this.cape = cape;
         this.knownAccounts = knownAccounts;
-        this.privateIdentityToken = null;
+        this.publicKey = publicKey;
         this.hashedPassword = null;
     }
 

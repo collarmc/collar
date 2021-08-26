@@ -1,10 +1,10 @@
 package com.collarmc.client.api.friends;
 
-import com.collarmc.client.api.AbstractApi;
-import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.api.friends.Friend;
 import com.collarmc.client.Collar;
 import com.collarmc.client.Collar.State;
+import com.collarmc.client.api.AbstractApi;
+import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.friends.*;
@@ -38,7 +38,7 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
      * @param player to add
      */
     public void addFriend(MinecraftPlayer player) {
-        sender.accept(new AddFriendRequest(identity(), player.id, null));
+        sender.accept(new AddFriendRequest(player.id, null));
     }
 
     /**
@@ -46,7 +46,7 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
      * @param profile id
      */
     public void addFriend(UUID profile) {
-        sender.accept(new AddFriendRequest(identity(), null, profile));
+        sender.accept(new AddFriendRequest(null, profile));
     }
 
     /**
@@ -54,7 +54,7 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
      * @param player to remove
      */
     public void removeFriend(MinecraftPlayer player) {
-        sender.accept(new RemoveFriendRequest(identity(), player.id, null));
+        sender.accept(new RemoveFriendRequest(player.id, null));
     }
 
     /**
@@ -62,7 +62,7 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
      * @param profile id
      */
     public void removeFriend(UUID profile) {
-        sender.accept(new RemoveFriendRequest(identity(), null, profile));
+        sender.accept(new RemoveFriendRequest(null, profile));
     }
 
     @Override
@@ -107,7 +107,7 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
     public void onStateChanged(State state) {
         switch (state) {
             case CONNECTED:
-                sender.accept(new GetFriendListRequest(identity()));
+                sender.accept(new GetFriendListRequest());
                 break;
             case DISCONNECTED:
                 friends.clear();

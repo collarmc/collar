@@ -1,5 +1,15 @@
 package com.collarmc.server.services.profiles;
 
+import com.collarmc.api.http.HttpException.BadRequestException;
+import com.collarmc.api.http.HttpException.ConflictException;
+import com.collarmc.api.http.HttpException.NotFoundException;
+import com.collarmc.api.http.HttpException.ServerErrorException;
+import com.collarmc.api.http.RequestContext;
+import com.collarmc.api.profiles.Profile;
+import com.collarmc.api.profiles.ProfileService;
+import com.collarmc.api.profiles.Role;
+import com.collarmc.api.profiles.TexturePreference;
+import com.collarmc.security.PublicKey;
 import com.collarmc.server.security.hashing.PasswordHashing;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -11,15 +21,6 @@ import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
-import com.collarmc.api.http.HttpException.BadRequestException;
-import com.collarmc.api.http.HttpException.ConflictException;
-import com.collarmc.api.http.HttpException.NotFoundException;
-import com.collarmc.api.http.HttpException.ServerErrorException;
-import com.collarmc.api.http.RequestContext;
-import com.collarmc.api.profiles.Profile;
-import com.collarmc.api.profiles.ProfileService;
-import com.collarmc.api.profiles.Role;
-import com.collarmc.api.profiles.TexturePreference;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,11 +36,11 @@ public class ProfileServiceServer implements ProfileService {
     private static final String FIELD_NAME = "name";
     private static final String FIELD_HASHED_PASSWORD = "hashedPassword";
     private static final String FIELD_EMAIL_VERIFIED = "emailVerified";
-    private static final String FIELD_PRIVATE_IDENTITY_TOKEN = "privateIdentityToken";
     private static final String FIELD_CAPE_TEXTURE = "capeTexture";
     private static final String FIELD_CAPE_TEXTURE_ID = "texture";
     private static final String FIELD_KNOWN_ACCOUNTS = "knownAccounts";
     private static final String FIELD_ROLES = "roles";
+    private static final String FIELD_PUBLIC_KEY = "publicKey";
 
     private final MongoCollection<Document> docs;
     private final PasswordHashing passwordHashing;
@@ -123,9 +124,8 @@ public class ProfileServiceServer implements ProfileService {
             result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_EMAIL_VERIFIED, req.emailVerified)));
         } else if (req.hashedPassword != null) {
             result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_HASHED_PASSWORD, req.hashedPassword)));
-        } else if (req.privateIdentityToken != null) {
-            Binary token = req.privateIdentityToken.length == 0 ? null : new Binary(req.privateIdentityToken);
-            result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_PRIVATE_IDENTITY_TOKEN, token)));
+        } else if (req.publicKey != null) {
+            result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(Map.of(FIELD_PUBLIC_KEY, new Binary(req.publicKey.key)))));
         } else if (req.cape != null) {
             result = docs.updateOne(eq(FIELD_PROFILE_ID, req.profile), new Document("$set", new Document(FIELD_CAPE_TEXTURE, map(req.cape))));
         } else if (req.addMinecraftAccount != null) {
@@ -155,10 +155,11 @@ public class ProfileServiceServer implements ProfileService {
         String name = doc.getString(FIELD_NAME);
         String hashedPassword = doc.getString(FIELD_HASHED_PASSWORD);
         boolean emailVerified = doc.getBoolean(FIELD_EMAIL_VERIFIED, false);
-        Binary privateIdentityToken = doc.get(FIELD_PRIVATE_IDENTITY_TOKEN, Binary.class);
         TexturePreference capeTexture = mapTexturePreference(doc.get(FIELD_CAPE_TEXTURE, Document.class));
-        List<UUID> knownAccounts = doc.getList("knownAccounts", UUID.class);
+        Binary publicKeyBinary = doc.get(FIELD_PUBLIC_KEY, Binary.class);
+        List<UUID> knownAccounts = doc.getList(FIELD_KNOWN_ACCOUNTS, UUID.class);
         Set<Role> roles = doc.getList(FIELD_ROLES, String.class, List.of()).stream().map(Role::valueOf).collect(Collectors.toSet());
+        PublicKey publicKey = publicKeyBinary == null || publicKeyBinary.getData().length == 0 ? null : new PublicKey(publicKeyBinary.getData());
         return new Profile(
                 profileId,
                 roles,
@@ -166,9 +167,9 @@ public class ProfileServiceServer implements ProfileService {
                 name,
                 hashedPassword,
                 emailVerified,
-                privateIdentityToken != null ? privateIdentityToken.getData() : null,
                 capeTexture,
-                knownAccounts == null ? Set.of() : Set.copyOf(knownAccounts)
+                knownAccounts == null ? Set.of() : Set.copyOf(knownAccounts),
+                publicKey
         );
     }
 

@@ -1,17 +1,14 @@
 package com.collarmc.protocol.sdht;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.sdht.events.AbstractSDHTEvent;
-import com.collarmc.security.ClientIdentity;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public final class SDHTEventRequest extends ProtocolRequest {
     @JsonProperty("event")
     public final AbstractSDHTEvent event;
 
-    public SDHTEventRequest(@JsonProperty("identity") ClientIdentity identity,
-                            @JsonProperty("event") AbstractSDHTEvent event) {
-        super(identity);
+    public SDHTEventRequest(@JsonProperty("event") AbstractSDHTEvent event) {
         this.event = event;
     }
 }

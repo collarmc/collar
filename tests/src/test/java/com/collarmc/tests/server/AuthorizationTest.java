@@ -1,8 +1,8 @@
 package com.collarmc.tests.server;
 
-import org.junit.Test;
 import com.collarmc.client.Collar;
 import com.collarmc.tests.junit.CollarTest;
+import org.junit.Test;
 
 import static com.collarmc.tests.junit.CollarAssert.waitForCondition;
 

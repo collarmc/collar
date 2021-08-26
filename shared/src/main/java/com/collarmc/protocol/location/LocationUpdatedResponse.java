@@ -1,11 +1,11 @@
 package com.collarmc.protocol.location;
 
-import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
-import com.collarmc.security.ServerIdentity;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.collarmc.api.session.Player;
+import com.collarmc.protocol.ProtocolResponse;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 /**
@@ -14,25 +14,24 @@ import java.util.UUID;
  * It is never sent to the sender
  */
 public final class LocationUpdatedResponse extends ProtocolResponse {
-
-    @JsonProperty("sender")
-    public final ClientIdentity sender;
+    /** group the location is shared with */
     @JsonProperty("group")
+    @Nonnull
     public final UUID group;
+    /** Sender player **/
     @JsonProperty("player")
-    public final Player player;
+    @Nonnull
+    public final Player sender;
+    /** Location of player **/
     @JsonProperty("location")
+    @Nullable
     public final byte[] location;
 
-    public LocationUpdatedResponse(@JsonProperty("identity") ServerIdentity identity,
-                                   @JsonProperty("sender") ClientIdentity sender,
-                                   @JsonProperty("groupId") UUID group,
-                                   @JsonProperty("player") Player player,
-                                   @JsonProperty("location") byte[] location) {
-        super(identity);
-        this.sender = sender;
+    public LocationUpdatedResponse(@Nonnull @JsonProperty("groupId") UUID group,
+                                   @Nonnull @JsonProperty("player") Player sender,
+                                   @Nullable @JsonProperty("location") byte[] location) {
         this.group = group;
-        this.player = player;
+        this.sender = sender;
         this.location = location;
     }
 }

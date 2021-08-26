@@ -1,21 +1,23 @@
 package com.collarmc.protocol;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.collarmc.api.identity.Identity;
 import com.collarmc.io.ByteBufferInputStream;
-import com.collarmc.security.Identity;
-import com.collarmc.security.cipher.Cipher;
 import com.collarmc.io.IO;
-import com.collarmc.security.cipher.CipherException;
+import com.collarmc.security.messages.Cipher;
+import com.collarmc.security.messages.CipherException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Optional;
 
 /**
  * Encodes and decodes packets for/from the wire, handling encryption and different types of signal messages
- * Packet format is int(0x22)+int(version)+int(ENCRYPTEDMODE)+int(SIGNAL_MESSAGE_TYPE)+CiphertextMessage()
+ * Packet format is int(0x22)+int(version)+int(ENCRYPTEDMODE)+CiphertextMessage()
  */
 public final class PacketIO {
 
@@ -23,14 +25,17 @@ public final class PacketIO {
 
     /** UwU **/
     private static final int PACKET_MARKER = 0x22;
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     private static final int MODE_PLAIN = 0xc001;
     private static final int MODE_ENCRYPTED = 0xba5ed;
+    public static final short MAX_PACKET_SIZE = Short.MAX_VALUE;
 
+    @Nonnull
     private final ObjectMapper mapper;
+    @Nullable
     private final Cipher cipher;
 
-    public PacketIO(ObjectMapper mapper, Cipher cipher) {
+    public PacketIO(@Nonnull ObjectMapper mapper, @Nullable Cipher cipher) {
         this.mapper = mapper;
         this.cipher = cipher;
     }
@@ -57,11 +62,14 @@ public final class PacketIO {
                 checkPacketSize(remainingBytes);
                 decoded = mapper.readValue(remainingBytes, type);
             } else if (packetType == MODE_ENCRYPTED) {
+                if (cipher == null) {
+                    throw new IllegalStateException("cipher was not set when mode is expecting encrypted");
+                }
                 if (sender == null) {
                     LOGGER.error("Cannot read encrypted packets with no sender");
                     decoded = null;
                 } else {
-                    remainingBytes = cipher.decrypt(sender, remainingBytes);
+                    remainingBytes = cipher.decrypt(remainingBytes, sender);
                     checkPacketSize(remainingBytes);
                     decoded = mapper.readValue(remainingBytes, type);
                 }
@@ -89,6 +97,9 @@ public final class PacketIO {
     }
 
     public byte[] encodeEncrypted(Identity recipient, Object object) throws IOException, CipherException {
+        if (cipher == null) {
+            throw new IllegalStateException("cipher was not set when mode is expecting encrypted");
+        }
         byte[] rawBytes = mapper.writeValueAsBytes(object);
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             try (DataOutputStream objectStream = new DataOutputStream(outputStream)) {
@@ -98,7 +109,7 @@ public final class PacketIO {
                 if (recipient == null) {
                     throw new IllegalArgumentException("recipient cannot be null when sending MODE_ENCRYPTED packets");
                 }
-                objectStream.write(cipher.crypt(recipient, rawBytes));
+                objectStream.write(cipher.encrypt(rawBytes, recipient));
             }
             byte[] bytes = outputStream.toByteArray();
             checkPacketSize(bytes);
@@ -107,8 +118,8 @@ public final class PacketIO {
     }
 
     private void checkPacketSize(byte[] bytes) {
-        if (bytes.length > Short.MAX_VALUE) {
-            throw new IllegalStateException("Packet is too large. Size " + bytes.length + " bytes");
+        if (bytes.length > PacketIO.MAX_PACKET_SIZE) {
+            throw new IllegalStateException("Packet is too large. Size is " + bytes.length + " bytes when maximum is " + MAX_PACKET_SIZE);
         }
     }
 }

@@ -1,9 +1,9 @@
 package com.collarmc.api.http;
 
-import com.google.common.collect.ImmutableSet;
 import com.collarmc.api.http.HttpException.UnauthorisedException;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Role;
-import com.collarmc.security.ClientIdentity;
+import com.google.common.collect.ImmutableSet;
 
 import java.util.Objects;
 import java.util.Set;
@@ -27,7 +27,7 @@ public final class RequestContext {
     }
 
     public static RequestContext from(ClientIdentity identity) {
-        return new RequestContext(identity.owner, ImmutableSet.of(Role.PLAYER));
+        return new RequestContext(identity.profile, ImmutableSet.of(Role.PLAYER));
     }
 
     public void assertAnonymous() {

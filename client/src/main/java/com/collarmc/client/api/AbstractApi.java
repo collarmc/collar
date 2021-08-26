@@ -1,12 +1,12 @@
 package com.collarmc.client.api;
 
-import com.collarmc.client.security.ClientIdentityStore;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.client.Collar;
+import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
-import com.collarmc.security.ClientIdentity;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -33,7 +33,7 @@ public abstract class AbstractApi<T extends ApiListener> {
         if (clientIdentityStore == null) {
             throw new IllegalStateException("Client is not ready");
         }
-        return identityStoreSupplier.get().currentIdentity();
+        return identityStoreSupplier.get().identity();
     }
 
     protected ClientIdentityStore identityStore() {

@@ -1,14 +1,5 @@
 package com.collarmc.server.services.friends;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.InsertOneResult;
-import org.bson.BsonValue;
-import org.bson.Document;
-import org.bson.types.ObjectId;
 import com.collarmc.api.friends.Friend;
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.http.HttpException;
@@ -18,7 +9,17 @@ import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
+import org.bson.BsonValue;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -99,11 +100,13 @@ public final class FriendsService {
         return new GetFriendsResponse(StreamSupport.stream(documents.map(this::mapFriend).spliterator(), false).collect(Collectors.toList()));
     }
 
+    @Nonnull
     private Friend mapFriend(Document document) {
         UUID owner = document.get(FIELD_OWNER, UUID.class);
         UUID friend = document.get(FIELD_FRIEND, UUID.class);
         PublicProfile profile = profiles.getById(friend).orElseThrow(() -> new IllegalStateException("could not find profile " + friend)).toPublic();
         return sessions.getSessionStateByOwner(friend)
+                .filter(sessionState -> sessionState.minecraftPlayer != null)
                 .map(sessionState -> new Friend(owner, profile, Status.ONLINE, Set.of(sessionState.minecraftPlayer.id)))
                 .orElse(new Friend(friend, profile, Status.OFFLINE, Set.of()));
     }

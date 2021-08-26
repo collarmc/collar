@@ -1,16 +1,17 @@
 package com.collarmc.client.api.groups;
 
+import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
+import com.collarmc.api.session.Player;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.sdht.SDHTApi;
 import com.collarmc.client.security.ClientIdentityStore;
-import com.collarmc.protocol.groups.*;
-import com.google.common.collect.ImmutableList;
-import com.collarmc.api.friends.Status;
-import com.collarmc.api.session.Player;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
+import com.collarmc.protocol.groups.*;
+import com.collarmc.security.messages.GroupSession;
+import com.google.common.collect.ImmutableList;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
 
 public final class GroupsApi extends AbstractApi<GroupsListener> {
     private final ConcurrentMap<UUID, Group> groups = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, GroupSession> sessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, GroupInvitation> invitations = new ConcurrentHashMap<>();
     private final SDHTApi sdhtApi;
 
@@ -102,7 +104,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param players players
      */
     public void create(String name, GroupType type, List<UUID> players) {
-        sender.accept(new CreateGroupRequest(collar.identity(), UUID.randomUUID(), name, type, players));
+        sender.accept(new CreateGroupRequest(UUID.randomUUID(), name, type, players));
     }
 
     /**
@@ -110,7 +112,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param group the group to leave
      */
     public void leave(Group group) {
-        sender.accept(new LeaveGroupRequest(identity(), group.id));
+        sender.accept(new LeaveGroupRequest(group.id));
     }
 
     /**
@@ -119,7 +121,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param players to invite
      */
     public void invite(Group group, List<UUID> players) {
-        sender.accept(new GroupInviteRequest(identity(), group.id, players));
+        sender.accept(new GroupInviteRequest(group.id, players));
     }
 
     /**
@@ -136,7 +138,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param invitation to accept
      */
     public void accept(GroupInvitation invitation) {
-        sender.accept(identityStore().createJoinGroupRequest(identity(), invitation.group));
+        sender.accept(identityStore().createJoinGroupRequest(invitation.group));
         invitations.remove(invitation.group);
     }
 
@@ -147,7 +149,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param member the member to remove
      */
     public void removeMember(Group group, Member member) {
-        sender.accept(new EjectGroupMemberRequest(identity(), group.id, member.player.minecraftPlayer.id));
+        sender.accept(new EjectGroupMemberRequest(group.id, member.player.minecraftPlayer.id));
     }
 
     /**
@@ -155,7 +157,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param group to delete
      */
     public void delete(Group group) {
-        sender.accept(new DeleteGroupRequest(identity(), group.id));
+        sender.accept(new DeleteGroupRequest(group.id));
     }
 
     /**
@@ -164,7 +166,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param player to transfer to
      */
     public void transferOwnership(Group group, Player player) {
-        sender.accept(new TransferGroupOwnershipRequest(identity(), group.id, player.profile));
+        sender.accept(new TransferGroupOwnershipRequest(group.id, player.identity.profile));
     }
 
     private List<Group> filter(GroupType party) {
@@ -188,6 +190,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                 CreateGroupResponse response = (CreateGroupResponse)resp;
                 Group group = response.group;
                 groups.put(response.group.id, group);
+                sessions.compute(response.group.id, (uuid, groupSession) -> identityStore().createSession(response.group));
                 fireListener("onGroupCreated", groupsListener -> {
                     groupsListener.onGroupCreated(collar, this, group);
                 });
@@ -213,6 +216,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
             if (response.player.equals(collar.player())) {
                 sdhtApi.table.sync(response.group.id);
             }
+            sessions.compute(response.group.id, (uuid, groupSession) -> identityStore().createSession(response.group));
             fireListener("onGroupJoined", groupsListener -> {
                 groupsListener.onGroupJoined(collar, this, response.group, response.player);
             });
@@ -224,6 +228,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                     Group removed = groups.remove(response.groupId);
                     if (removed != null) {
                         sdhtApi.table.remove(removed.id);
+                        sessions.remove(removed.id);
                         fireListener("onGroupLeft", groupsListener -> {
                             groupsListener.onGroupLeft(collar, this, removed, response.player);
                         });
@@ -235,6 +240,12 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                     if (group != null) {
                         Group updatedGroup = group.removeMember(response.player);
                         groups.put(updatedGroup.id, updatedGroup);
+                        sessions.compute(updatedGroup.id, (uuid, groupSession) -> {
+                            if (groupSession != null) {
+                                return groupSession.remove(response.player.identity);
+                            }
+                            return null;
+                        });
                         fireListener("onGroupLeft", groupsListener -> {
                             groupsListener.onGroupLeft(collar, this, updatedGroup, response.player);
                         });
@@ -270,7 +281,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
             return true;
         } else if (resp instanceof RejoinGroupResponse) {
             // Rejoin the group
-            sender.accept(identityStore().createJoinGroupRequest(identity(), ((RejoinGroupResponse) resp).group));
+            sender.accept(identityStore().createJoinGroupRequest(((RejoinGroupResponse) resp).group));
         } else if (resp instanceof UpdateGroupMemberResponse) {
             synchronized (this) {
                 UpdateGroupMemberResponse response = (UpdateGroupMemberResponse) resp;
@@ -286,6 +297,18 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                     }
                     if (updatedGroup != null) {
                         groups.put(updatedGroup.id, updatedGroup);
+                        sessions.compute(updatedGroup.id, (uuid, groupSession) -> {
+                            if (groupSession == null) {
+                                return null;
+                            }
+                            switch (response.status) {
+                                case ONLINE:
+                                    return groupSession.add(response.player.identity);
+                                case OFFLINE:
+                                default:
+                                    return groupSession.remove(response.player.identity);
+                            }
+                        });
                         fireListener("onGroupMemberUpdated", groupsListener -> {
                             groupsListener.onGroupMemberUpdated(collar, this, updatedGroup, response.player);
                         });

@@ -1,5 +1,7 @@
 package com.collarmc.security;
 
+import com.collarmc.api.identity.Identity;
+import com.collarmc.utils.Hex;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Arrays;
@@ -8,10 +10,10 @@ import java.util.Arrays;
  * Represents a {@link Identity}'s public key
  */
 public final class PublicKey {
-    @JsonProperty("bytes")
+    @JsonProperty("b")
     public final byte[] key;
 
-    public PublicKey(@JsonProperty("key") byte[] key) {
+    public PublicKey(@JsonProperty("k") byte[] key) {
         this.key = key;
     }
 
@@ -26,5 +28,10 @@ public final class PublicKey {
     @Override
     public int hashCode() {
         return Arrays.hashCode(key);
+    }
+
+    @Override
+    public String toString() {
+        return Hex.hexString(key);
     }
 }

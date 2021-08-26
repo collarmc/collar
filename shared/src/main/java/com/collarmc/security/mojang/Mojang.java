@@ -1,5 +1,11 @@
 package com.collarmc.security.mojang;
 
+import com.collarmc.api.http.HttpException;
+import com.collarmc.http.HttpClient;
+import com.collarmc.http.Request;
+import com.collarmc.http.Response;
+import com.collarmc.security.TokenGenerator;
+import com.collarmc.utils.Utils;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Suppliers;
@@ -7,18 +13,16 @@ import com.google.common.io.BaseEncoding;
 import io.mikael.urlbuilder.UrlBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import com.collarmc.api.http.HttpException;
-import com.collarmc.http.HttpClient;
-import com.collarmc.http.Request;
-import com.collarmc.http.Response;
-import com.collarmc.utils.Utils;
 
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -413,6 +417,10 @@ public final class Mojang {
         printWriter.println(BaseEncoding.base32().encode(SERVER_KEY_PAIR.get().getPublic().getEncoded()));
         printWriter.println("-----END PUBLIC KEY-----");
         return writer.toString();
+    }
+
+    public static byte[] generateSharedSecret() {
+        return TokenGenerator.byteToken(16);
     }
 
     public static String toProfileId(UUID id) {

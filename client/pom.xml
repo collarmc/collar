@@ -65,6 +65,10 @@
                     <artifactSet>
                     <excludes>
                         <exclude>com.google.guava:guava</exclude>
+                        <exclude>org.bouncycastle:*</exclude>
+                        <exclude>org.apache.logging.log4j:*</exclude>
+                        <exclude>com.google.code.findbugs:*</exclude>
+                        <exclude>net.jcip:jcip-annotations:*</exclude>
                     </excludes>
                     </artifactSet>
                     <relocations>

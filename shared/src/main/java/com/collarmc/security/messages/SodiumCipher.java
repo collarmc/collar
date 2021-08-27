@@ -2,6 +2,7 @@ package com.collarmc.security.messages;
 
 import com.collarmc.api.identity.Identity;
 import com.collarmc.security.PublicKey;
+import com.google.common.io.ByteStreams;
 import com.goterl.lazysodium.LazySodiumJava;
 import com.goterl.lazysodium.SodiumJava;
 import com.goterl.lazysodium.exceptions.SodiumException;
@@ -10,9 +11,31 @@ import com.goterl.lazysodium.interfaces.Sign;
 import com.goterl.lazysodium.utils.KeyPair;
 import com.goterl.lazysodium.utils.LibraryLoader;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 public final class SodiumCipher implements Cipher {
 
-    private static final LazySodiumJava SODIUM = new LazySodiumJava(new SodiumJava(LibraryLoader.Mode.BUNDLED_ONLY));
+    private static final LazySodiumJava SODIUM;
+
+    static {
+        String path = LibraryLoader.getSodiumPathInResources();
+        File jar;
+        try {
+            jar = File.createTempFile("sodium", ".lib");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        try (InputStream is = SodiumCipher.class.getResourceAsStream("/" + path);
+            FileOutputStream os = new FileOutputStream(jar)) {
+            ByteStreams.copy(is, os);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        SODIUM = new LazySodiumJava(new SodiumJava(jar.getAbsolutePath()));
+    }
 
     private final KeyPair keyPair;
 

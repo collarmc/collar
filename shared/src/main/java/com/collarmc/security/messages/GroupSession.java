@@ -16,7 +16,7 @@ public final class GroupSession {
     public GroupSession(UUID group, IdentityStore<ClientIdentity> store, CollarIdentity collarIdentity, Set<ClientIdentity> recipients) {
         this.group = group;
         this.collarIdentity = collarIdentity;
-        this.cipher = new Cipher(collarIdentity);
+        this.cipher = store.cipher();
         this.store = store;
         this.recipients = recipients;
     }

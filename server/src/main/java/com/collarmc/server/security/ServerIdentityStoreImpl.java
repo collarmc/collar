@@ -4,6 +4,7 @@ import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.SodiumCipher;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -31,8 +32,8 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
             collarIdentity = CollarIdentity.createServerIdentity();
             Document document = new Document(Map.of(
                     "serverId", collarIdentity.id,
-                    "publicKey", new Binary(collarIdentity.keyPair.getPublic().getEncoded()),
-                    "privateKey", new Binary(collarIdentity.keyPair.getPrivate().getEncoded())
+                    "publicKey", new Binary(collarIdentity.keyPair.getPublicKey().getAsBytes()),
+                    "privateKey", new Binary(collarIdentity.keyPair.getSecretKey().getAsBytes())
             ));
             serverIdentityCollection.insertOne(document);
         }
@@ -45,6 +46,6 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
 
     @Override
     public Cipher cipher() {
-        return new Cipher(collarIdentity);
+        return new SodiumCipher(collarIdentity.keyPair);
     }
 }

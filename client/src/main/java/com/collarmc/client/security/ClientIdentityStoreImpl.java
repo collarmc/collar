@@ -16,6 +16,7 @@ import com.collarmc.security.TokenGenerator;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.GroupSession;
+import com.collarmc.security.messages.SodiumCipher;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,7 +95,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public Cipher cipher() {
-        return new Cipher(collarIdentity);
+        return new SodiumCipher(collarIdentity.keyPair);
     }
 
     @Override

@@ -189,9 +189,14 @@
                 <version>4.2.3</version>
             </dependency>
             <dependency>
-                <groupId>org.bouncycastle</groupId>
-                <artifactId>bcprov-jdk15to18</artifactId>
-                <version>1.69</version>
+                <groupId>com.goterl</groupId>
+                <artifactId>lazysodium-java</artifactId>
+                <version>5.1.1</version>
+            </dependency>
+            <dependency>
+                <groupId>net.java.dev.jna</groupId>
+                <artifactId>jna</artifactId>
+                <version>5.7.0</version>
             </dependency>
             <!-- password hashing -->
             <dependency>

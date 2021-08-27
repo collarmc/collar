@@ -2,16 +2,18 @@ package com.collarmc.security;
 
 import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.io.IO;
-import com.collarmc.security.jce.JCECipher;
+import com.collarmc.security.messages.IdentityStore;
 import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.SodiumCipher;
+import com.goterl.lazysodium.utils.Key;
+import com.goterl.lazysodium.utils.KeyPair;
 
 import java.io.*;
-import java.security.KeyPair;
 import java.util.UUID;
 
 /**
  * Represents the private keys and identity of a client or server using the Collar protocol
- * For crypto purposes, use {@link com.collarmc.security.messages.Cipher}
+ * For crypto purposes, use {@link IdentityStore#cipher()}
  * This class represents the identity.cif
  */
 public final class CollarIdentity {
@@ -29,7 +31,7 @@ public final class CollarIdentity {
                     throw new IllegalStateException("invalid version " + version);
                 }
                 id = IO.readUUID(dataStream);
-                keyPair = JCECipher.keyPair(IO.readBytes(dataStream), IO.readBytes(dataStream));
+                keyPair = new KeyPair(Key.fromBytes(IO.readBytes(dataStream)), Key.fromBytes(IO.readBytes(dataStream)));
                 if (dataStream.readBoolean()) {
                     UUID serverId = IO.readUUID(dataStream);
                     byte[] publicKey = IO.readBytes(dataStream);
@@ -44,20 +46,20 @@ public final class CollarIdentity {
     private CollarIdentity(UUID id, ServerIdentity serverIdentity) throws CipherException {
         this.id = id;
         this.serverIdentity = serverIdentity;
-        this.keyPair = JCECipher.generateKeyPair();
+        this.keyPair = SodiumCipher.generateKeyPair();
     }
 
     private CollarIdentity(UUID id, byte[] publicKey, byte[] privateKey) throws CipherException {
         this.id = id;
         this.serverIdentity = null;
-        this.keyPair = JCECipher.keyPair(publicKey, privateKey);
+        this.keyPair = new KeyPair(Key.fromBytes(publicKey), Key.fromBytes(privateKey));
     }
 
     /**
      * @return the identity's public key
      */
     public PublicKey publicKey() {
-        return new PublicKey(keyPair.getPublic().getEncoded());
+        return new PublicKey(keyPair.getPublicKey().getAsBytes());
     }
 
     public byte[] serialize() {
@@ -65,8 +67,8 @@ public final class CollarIdentity {
             try (DataOutputStream dataStream = new DataOutputStream(outputStream)) {
                 dataStream.writeInt(VERSION);
                 IO.writeUUID(dataStream, id);
-                IO.writeBytes(dataStream, keyPair.getPublic().getEncoded());
-                IO.writeBytes(dataStream, keyPair.getPrivate().getEncoded());
+                IO.writeBytes(dataStream, keyPair.getPublicKey().getAsBytes());
+                IO.writeBytes(dataStream, keyPair.getSecretKey().getAsBytes());
                 dataStream.writeBoolean(serverIdentity != null);
                 if (serverIdentity != null) {
                     IO.writeUUID(dataStream, serverIdentity.serverId);

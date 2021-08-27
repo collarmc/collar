@@ -6,10 +6,8 @@ import com.goterl.lazysodium.LazySodiumJava;
 import com.goterl.lazysodium.SodiumJava;
 import com.goterl.lazysodium.exceptions.SodiumException;
 import com.goterl.lazysodium.interfaces.Box;
-import com.goterl.lazysodium.interfaces.SecretBox;
 import com.goterl.lazysodium.interfaces.Sign;
 import com.goterl.lazysodium.utils.KeyPair;
-import org.bouncycastle.util.encoders.Hex;
 
 public final class SodiumCipher implements Cipher {
 

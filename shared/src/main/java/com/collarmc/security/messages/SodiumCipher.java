@@ -8,10 +8,11 @@ import com.goterl.lazysodium.exceptions.SodiumException;
 import com.goterl.lazysodium.interfaces.Box;
 import com.goterl.lazysodium.interfaces.Sign;
 import com.goterl.lazysodium.utils.KeyPair;
+import com.goterl.lazysodium.utils.LibraryLoader;
 
 public final class SodiumCipher implements Cipher {
 
-    private static final LazySodiumJava SODIUM = new LazySodiumJava(new SodiumJava());
+    private static final LazySodiumJava SODIUM = new LazySodiumJava(new SodiumJava(LibraryLoader.Mode.BUNDLED_ONLY));
 
     private final KeyPair keyPair;
 

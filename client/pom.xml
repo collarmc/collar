@@ -143,14 +143,6 @@
                             <pattern>google.protobuf</pattern>
                             <shadedPattern>com.collarmc.libs.google.protobuf</shadedPattern>
                         </relocation>
-                        <relocation>
-                            <pattern>com.goterl.lazysodium</pattern>
-                            <shadedPattern>com.collarmc.libs.com.goterl.lazysodium</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>com.sun.jna</pattern>
-                            <shadedPattern>com.collarmc.libs.com.sun.jna</shadedPattern>
-                        </relocation>
                     </relocations>
                 </configuration>
             </plugin>

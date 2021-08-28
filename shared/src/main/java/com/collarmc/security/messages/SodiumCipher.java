@@ -7,11 +7,9 @@ import com.goterl.lazysodium.LazySodiumJava;
 import com.goterl.lazysodium.SodiumJava;
 import com.goterl.lazysodium.exceptions.SodiumException;
 import com.goterl.lazysodium.interfaces.Box;
-import com.goterl.lazysodium.interfaces.MessageEncoder;
 import com.goterl.lazysodium.interfaces.Sign;
 import com.goterl.lazysodium.utils.KeyPair;
 import com.goterl.lazysodium.utils.LibraryLoader;
-import com.sun.jna.Native;
 import com.sun.jna.Platform;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
@@ -126,7 +124,7 @@ public final class SodiumCipher implements Cipher {
     }
 
     @SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
-    private static void loadLibrary(boolean server) {
+    public static void loadLibrary(boolean server) {
         if (LOADED) {
             return;
         }

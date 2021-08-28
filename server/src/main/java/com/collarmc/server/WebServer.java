@@ -16,6 +16,7 @@ import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.api.profiles.Role;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.textures.TextureType;
+import com.collarmc.security.messages.SodiumCipher;
 import com.collarmc.server.common.ServerStatus;
 import com.collarmc.server.common.ServerVersion;
 import com.collarmc.server.configuration.Configuration;
@@ -56,6 +57,7 @@ public class WebServer {
 
     public void start(Consumer<Services> callback) throws Exception {
         LOGGER.info("Reticulating splines...");
+        SodiumCipher.loadLibrary(true);
         // Set http port
         port(configuration.httpPort);
         // Services

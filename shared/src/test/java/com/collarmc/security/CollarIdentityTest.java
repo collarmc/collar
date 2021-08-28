@@ -16,18 +16,24 @@ public class CollarIdentityTest {
         UUID profile = UUID.randomUUID();
         CollarIdentity identity = CollarIdentity.createClientIdentity(profile, serverIdentity);
         byte[] identityBytes = identity.serialize();
-        identity = CollarIdentity.from(identityBytes);
-        Assert.assertEquals(profile, identity.id);
-        Assert.assertEquals(serverIdentity, identity.serverIdentity);
+        CollarIdentity newIdentity = CollarIdentity.from(identityBytes);
+        Assert.assertEquals(identity.id, newIdentity.id);
+        Assert.assertEquals(identity.serverIdentity, newIdentity.serverIdentity);
+        Assert.assertEquals(identity.publicKey(), newIdentity.publicKey());
+        Assert.assertArrayEquals(identity.keyPair.getPublicKey().getAsBytes(), newIdentity.keyPair.getPublicKey().getAsBytes());
+        Assert.assertArrayEquals(identity.keyPair.getSecretKey().getAsBytes(), newIdentity.keyPair.getSecretKey().getAsBytes());
     }
 
     @Test
     public void roundTripServerIdentity() throws Exception {
         CollarIdentity identity = CollarIdentity.createServerIdentity();
-        UUID id = identity.id;
         byte[] identityBytes = identity.serialize();
-        identity = CollarIdentity.from(identityBytes);
-        Assert.assertEquals(id, identity.id);
-        Assert.assertNull(identity.serverIdentity);
+        CollarIdentity newIdentity = CollarIdentity.from(identityBytes);
+        Assert.assertEquals(identity.id, newIdentity.id);
+        Assert.assertEquals(identity.serverIdentity, newIdentity.serverIdentity);
+        Assert.assertEquals(identity.publicKey(), newIdentity.publicKey());
+        Assert.assertArrayEquals(identity.publicKey().key, newIdentity.publicKey().key);
+        Assert.assertArrayEquals(identity.keyPair.getPublicKey().getAsBytes(), newIdentity.keyPair.getPublicKey().getAsBytes());
+        Assert.assertArrayEquals(identity.keyPair.getSecretKey().getAsBytes(), newIdentity.keyPair.getSecretKey().getAsBytes());
     }
 }

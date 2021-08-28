@@ -13,6 +13,7 @@ import com.goterl.lazysodium.utils.KeyPair;
 import com.goterl.lazysodium.utils.LibraryLoader;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -124,6 +125,7 @@ public final class SodiumCipher implements Cipher {
         public native String sodium_version_string();
     }
 
+    @SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
     private static void loadLibrary(boolean server) {
         if (LOADED) {
             return;

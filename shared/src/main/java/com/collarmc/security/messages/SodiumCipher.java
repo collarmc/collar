@@ -7,18 +7,24 @@ import com.goterl.lazysodium.LazySodiumJava;
 import com.goterl.lazysodium.SodiumJava;
 import com.goterl.lazysodium.exceptions.SodiumException;
 import com.goterl.lazysodium.interfaces.Box;
+import com.goterl.lazysodium.interfaces.MessageEncoder;
 import com.goterl.lazysodium.interfaces.Sign;
 import com.goterl.lazysodium.utils.KeyPair;
 import com.goterl.lazysodium.utils.LibraryLoader;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
 
 public final class SodiumCipher implements Cipher {
 
-    private static final LazySodiumJava SODIUM;
+    private static final Logger LOGGER = LogManager.getLogger(SodiumCipher.class);
+
+    private static final CollarLazySodiumJava SODIUM;
 
     static {
         String path = LibraryLoader.getSodiumPathInResources();
@@ -34,7 +40,8 @@ public final class SodiumCipher implements Cipher {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        SODIUM = new LazySodiumJava(new SodiumJava(jar.getAbsolutePath()));
+        SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(jar.getAbsolutePath()));
+        LOGGER.info("Sodium version: " + SODIUM.sodiumVersion());
     }
 
     private final KeyPair keyPair;
@@ -105,5 +112,28 @@ public final class SodiumCipher implements Cipher {
         } catch (SodiumException e) {
             throw new CipherException("Could not generate key pair", e);
         }
+    }
+
+    public static class CollarLazySodiumJava extends LazySodiumJava {
+
+        private final CollarSodiumJava sodium;
+
+        public CollarLazySodiumJava(CollarSodiumJava sodium) {
+            super(sodium);
+            this.sodium = sodium;
+        }
+
+        public String sodiumVersion() {
+            return sodium.sodium_version_string();
+        }
+    }
+
+    public static class CollarSodiumJava extends SodiumJava {
+        public CollarSodiumJava(String absolutePath) {
+            super(absolutePath);
+            new LibraryLoader(Collections.singletonList(CollarSodiumJava.class)).loadAbsolutePath(absolutePath);
+        }
+
+        public native String sodium_version_string();
     }
 }

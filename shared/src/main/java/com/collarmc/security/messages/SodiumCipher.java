@@ -153,6 +153,7 @@ public final class SodiumCipher implements Cipher {
             }
             SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(lib.getAbsolutePath()));
         }
+        LOADED = true;
         LOGGER.info("Sodium version: " + SODIUM.sodiumVersion());
     }
 }

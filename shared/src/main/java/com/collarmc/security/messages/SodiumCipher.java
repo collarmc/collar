@@ -11,6 +11,8 @@ import com.goterl.lazysodium.interfaces.MessageEncoder;
 import com.goterl.lazysodium.interfaces.Sign;
 import com.goterl.lazysodium.utils.KeyPair;
 import com.goterl.lazysodium.utils.LibraryLoader;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -95,8 +97,12 @@ public final class SodiumCipher implements Cipher {
         if (LOADED) {
             return;
         }
-        if (server) {
-            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava("/usr/lib/x86_64-linux-gnu/libsodium.so.23"));
+        if (server && Platform.is64Bit() && Platform.isLinux()) {
+            File file = new File("/usr/lib/x86_64-linux-gnu/libsodium.so.23");
+            if (!file.exists()) {
+                throw new IllegalStateException("libsodium is not installed");
+            }
+            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(file.getAbsolutePath()));
         } else {
             String path = LibraryLoader.getSodiumPathInResources();
             File jar;

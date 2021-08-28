@@ -8,18 +8,21 @@ import com.collarmc.security.messages.SodiumCipher;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bson.Document;
 import org.bson.types.Binary;
 
-import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
 public class ServerIdentityStoreImpl implements ServerIdentityStore {
 
+    private static final Logger LOGGER = LogManager.getLogger(ServerIdentityStoreImpl.class);
+
     private final CollarIdentity collarIdentity;
 
-    public ServerIdentityStoreImpl(MongoDatabase database) throws CipherException, IOException {
+    public ServerIdentityStoreImpl(MongoDatabase database) throws CipherException {
         MongoCollection<Document> serverIdentityCollection = database.getCollection("server_identity");
         MongoCursor<Document> iterator = serverIdentityCollection.find().iterator();
         if (iterator.hasNext()) {
@@ -28,6 +31,7 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
             Binary privateKey = document.get("privateKey", Binary.class);
             UUID serverId = document.get("serverId", UUID.class);
             collarIdentity = CollarIdentity.createServerIdentity(serverId, publicKey.getData(), privateKey.getData());
+            LOGGER.info("Found server identity " + collarIdentity.id);
         } else {
             collarIdentity = CollarIdentity.createServerIdentity();
             Document document = new Document(Map.of(
@@ -36,6 +40,7 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
                     "privateKey", new Binary(collarIdentity.keyPair.getSecretKey().getAsBytes())
             ));
             serverIdentityCollection.insertOne(document);
+            LOGGER.info("Created new server identity " + collarIdentity.id);
         }
     }
 

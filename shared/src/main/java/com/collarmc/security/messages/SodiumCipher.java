@@ -96,7 +96,7 @@ public final class SodiumCipher implements Cipher {
             return;
         }
         if (server) {
-            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(LibraryLoader.Mode.SYSTEM_ONLY));
+            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava("/usr/lib/x86_64-linux-gnu/libsodium.so.23"));
         } else {
             String path = LibraryLoader.getSodiumPathInResources();
             File jar;

@@ -179,7 +179,7 @@ public class CollarServer {
             LOGGER.log(Level.INFO, "Token from " + profile.id + " was decrypted");
             return token;
         } catch (CipherException e) {
-            LOGGER.log(Level.ERROR, "Could not decrypt token");
+            LOGGER.log(Level.ERROR, "Could not decrypt token", e);
             return null;
         }
     }

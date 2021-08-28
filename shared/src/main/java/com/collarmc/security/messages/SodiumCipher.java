@@ -144,6 +144,9 @@ public final class SodiumCipher implements Cipher {
             }
             try (InputStream is = SodiumCipher.class.getResourceAsStream("/" + path);
                  FileOutputStream os = new FileOutputStream(lib)) {
+                if (is == null) {
+                    throw new IllegalStateException("could not find " + path);
+                }
                 ByteStreams.copy(is, os);
             } catch (IOException e) {
                 throw new RuntimeException(e);

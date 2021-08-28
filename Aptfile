@@ -1,1 +1,2 @@
-libsodium-dev # required for protocol encryption
+# required for protocol encryption
+libsodium-dev

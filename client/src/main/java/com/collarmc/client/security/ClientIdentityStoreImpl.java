@@ -55,7 +55,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     public IdentifyRequest createIdentifyRequest() {
         if (isValid()) {
             try {
-                collarIdentity = new CollarIdentity(IO.readBytesFromFile(getIdentityFile(homeDirectory)));
+                collarIdentity = CollarIdentity.from(IO.readBytesFromFile(getIdentityFile(homeDirectory)));
                 return new IdentifyRequest(identity(), cipher().encrypt(token, collarIdentity.serverIdentity));
             } catch (CipherException e) {
                 LOGGER.log(Level.ERROR, "could not encrypt token", e);
@@ -100,7 +100,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public IdentifyRequest processClientRegisteredResponse(ClientRegisteredResponse response) throws CipherException {
-        CollarIdentity collarIdentity = CollarIdentity.createClientIdentity(response.profile.id, response.serverIdentity);
+        collarIdentity = CollarIdentity.createClientIdentity(response.profile.id, response.serverIdentity);
         try {
             AtomicFile.write(getIdentityFile(homeDirectory), theFile -> IO.writeBytesToFile(theFile, collarIdentity.serialize()));
         } catch (IOException e) {

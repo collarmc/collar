@@ -16,7 +16,7 @@ public class CollarIdentityTest {
         UUID profile = UUID.randomUUID();
         CollarIdentity identity = CollarIdentity.createClientIdentity(profile, serverIdentity);
         byte[] identityBytes = identity.serialize();
-        identity = new CollarIdentity(identityBytes);
+        identity = CollarIdentity.from(identityBytes);
         Assert.assertEquals(profile, identity.id);
         Assert.assertEquals(serverIdentity, identity.serverIdentity);
     }
@@ -26,7 +26,7 @@ public class CollarIdentityTest {
         CollarIdentity identity = CollarIdentity.createServerIdentity();
         UUID id = identity.id;
         byte[] identityBytes = identity.serialize();
-        identity = new CollarIdentity(identityBytes);
+        identity = CollarIdentity.from(identityBytes);
         Assert.assertEquals(id, identity.id);
         Assert.assertNull(identity.serverIdentity);
     }

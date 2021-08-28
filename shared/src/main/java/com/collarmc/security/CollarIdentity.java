@@ -23,7 +23,7 @@ public final class CollarIdentity {
     public final ServerIdentity serverIdentity;
     public final KeyPair keyPair;
 
-    public CollarIdentity(byte[] bytes) throws CipherException, IOException {
+    private CollarIdentity(byte[] bytes) throws IOException {
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes)) {
             try (DataInputStream dataStream = new DataInputStream(inputStream)) {
                 int version = dataStream.readInt();
@@ -45,13 +45,13 @@ public final class CollarIdentity {
         }
     }
 
-    private CollarIdentity(UUID id, ServerIdentity serverIdentity) throws CipherException {
+    private CollarIdentity(UUID id, ServerIdentity serverIdentity, KeyPair keyPair) throws CipherException {
         this.id = id;
         this.serverIdentity = serverIdentity;
-        this.keyPair = SodiumCipher.generateKeyPair();
+        this.keyPair = keyPair;
     }
 
-    private CollarIdentity(UUID id, byte[] publicKey, byte[] privateKey) throws CipherException {
+    private CollarIdentity(UUID id, byte[] publicKey, byte[] privateKey) {
         this.id = id;
         this.serverIdentity = null;
         this.keyPair = new KeyPair(Key.fromBytes(publicKey), Key.fromBytes(privateKey));
@@ -84,14 +84,18 @@ public final class CollarIdentity {
     }
 
     public static CollarIdentity createClientIdentity(UUID profile, ServerIdentity serverIdentity) throws CipherException {
-        return new CollarIdentity(profile, serverIdentity);
+        return new CollarIdentity(profile, serverIdentity, SodiumCipher.generateKeyPair());
     }
 
     public static CollarIdentity createServerIdentity() throws CipherException {
-        return new CollarIdentity(UUID.randomUUID(), null);
+        return new CollarIdentity(UUID.randomUUID(), null, SodiumCipher.generateKeyPair());
     }
 
-    public static CollarIdentity createServerIdentity(UUID profile, byte[] publicKey, byte[] privateKey) throws CipherException {
+    public static CollarIdentity from(UUID profile, byte[] publicKey, byte[] privateKey) throws CipherException {
         return new CollarIdentity(profile, publicKey, privateKey);
+    }
+
+    public static CollarIdentity from(byte[] bytes) throws CipherException, IOException {
+        return new CollarIdentity(bytes);
     }
 }

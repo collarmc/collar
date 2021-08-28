@@ -30,7 +30,7 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
             Binary publicKey = document.get("publicKey", Binary.class);
             Binary privateKey = document.get("privateKey", Binary.class);
             UUID serverId = document.get("serverId", UUID.class);
-            collarIdentity = CollarIdentity.createServerIdentity(serverId, publicKey.getData(), privateKey.getData());
+            collarIdentity = CollarIdentity.from(serverId, publicKey.getData(), privateKey.getData());
             LOGGER.info("Found server identity " + collarIdentity.id);
         } else {
             collarIdentity = CollarIdentity.createServerIdentity();

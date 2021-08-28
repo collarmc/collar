@@ -104,7 +104,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
         try {
             AtomicFile.write(getIdentityFile(homeDirectory), theFile -> IO.writeBytesToFile(theFile, collarIdentity.serialize()));
         } catch (IOException e) {
-            throw new IllegalStateException("could not write private identity", e);
+            throw new IllegalStateException("could not write collar identity", e);
         }
         return createIdentifyRequest();
     }
@@ -138,7 +138,8 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public void reset() throws IOException {
-        if (getIdentityFile(homeDirectory).delete()) {
+        File identityFile = getIdentityFile(homeDirectory);
+        if (!identityFile.exists() || identityFile.delete()) {
             collarIdentity = null;
             token = TokenGenerator.byteToken(256);
             LOGGER.debug("Identity deleted");
@@ -147,7 +148,8 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     public boolean isValid() {
         try {
-            return getIdentityFile(homeDirectory).exists() || collarIdentity != null;
+            File identityFile = getIdentityFile(homeDirectory);
+            return (identityFile.exists() && identityFile.isFile()) || collarIdentity != null;
         } catch (IOException e) {
             return false;
         }

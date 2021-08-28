@@ -51,6 +51,6 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
 
     @Override
     public Cipher cipher() {
-        return new SodiumCipher(collarIdentity.keyPair);
+        return new SodiumCipher(collarIdentity.keyPair, true);
     }
 }

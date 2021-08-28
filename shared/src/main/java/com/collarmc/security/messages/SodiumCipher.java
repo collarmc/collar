@@ -24,30 +24,15 @@ public final class SodiumCipher implements Cipher {
 
     private static final Logger LOGGER = LogManager.getLogger(SodiumCipher.class);
 
-    private static final CollarLazySodiumJava SODIUM;
+    private static boolean LOADED = false;
 
-    static {
-        String path = LibraryLoader.getSodiumPathInResources();
-        File jar;
-        try {
-            jar = File.createTempFile("sodium", ".lib");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        try (InputStream is = SodiumCipher.class.getResourceAsStream("/" + path);
-            FileOutputStream os = new FileOutputStream(jar)) {
-            ByteStreams.copy(is, os);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(jar.getAbsolutePath()));
-        LOGGER.info("Sodium version: " + SODIUM.sodiumVersion());
-    }
+    private static CollarLazySodiumJava SODIUM;
 
     private final KeyPair keyPair;
 
-    public SodiumCipher(KeyPair keyPair) {
+    public SodiumCipher(KeyPair keyPair, boolean server) {
         this.keyPair = keyPair;
+        loadLibrary(server);
     }
 
     @Override
@@ -95,7 +80,7 @@ public final class SodiumCipher implements Cipher {
     }
 
     private byte[] decrypt(byte[] message, byte[] sender) throws CipherException {
-        byte[] messageBytes = new byte[message.length + Box.SEALBYTES];
+        byte[] messageBytes = new byte[message.length - Box.SEALBYTES];
         if (!SODIUM.cryptoBoxSealOpen(messageBytes, message, message.length, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes())) {
             throw new CipherException("Could not decrypt signed message.");
         }
@@ -104,6 +89,31 @@ public final class SodiumCipher implements Cipher {
             throw new CipherException("Could not verify signed message.");
         }
         return signedMessage.contents;
+    }
+
+    private static void loadLibrary(boolean server) {
+        if (LOADED) {
+            return;
+        }
+        if (server) {
+            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(LibraryLoader.Mode.SYSTEM_ONLY));
+        } else {
+            String path = LibraryLoader.getSodiumPathInResources();
+            File jar;
+            try {
+                jar = File.createTempFile("sodium", ".lib");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try (InputStream is = SodiumCipher.class.getResourceAsStream("/" + path);
+                 FileOutputStream os = new FileOutputStream(jar)) {
+                ByteStreams.copy(is, os);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(jar.getAbsolutePath()));
+        }
+        LOGGER.info("Sodium version: " + SODIUM.sodiumVersion());
     }
 
     public static KeyPair generateKeyPair() throws CipherException {
@@ -132,6 +142,10 @@ public final class SodiumCipher implements Cipher {
         public CollarSodiumJava(String absolutePath) {
             super(absolutePath);
             new LibraryLoader(Collections.singletonList(CollarSodiumJava.class)).loadAbsolutePath(absolutePath);
+        }
+
+        public CollarSodiumJava(LibraryLoader.Mode loadingMode) {
+            super(loadingMode);
         }
 
         public native String sodium_version_string();

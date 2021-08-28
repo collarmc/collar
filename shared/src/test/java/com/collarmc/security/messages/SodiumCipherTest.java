@@ -26,11 +26,11 @@ public class SodiumCipherTest {
     public void setup() throws Exception {
         server = CollarIdentity.createServerIdentity();
         bob = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity);
-        bobCipher = new SodiumCipher(bob.keyPair);
+        bobCipher = new SodiumCipher(bob.keyPair, false);
         alice = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity);
-        aliceCipher = new SodiumCipher(alice.keyPair);
+        aliceCipher = new SodiumCipher(alice.keyPair, false);
         eve = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity);
-        eveCipher = new SodiumCipher(eve.keyPair);
+        eveCipher = new SodiumCipher(eve.keyPair, false);
     }
 
     @Test

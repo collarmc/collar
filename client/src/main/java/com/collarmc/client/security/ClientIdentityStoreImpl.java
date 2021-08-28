@@ -95,7 +95,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public Cipher cipher() {
-        return new SodiumCipher(collarIdentity.keyPair);
+        return new SodiumCipher(collarIdentity.keyPair, false);
     }
 
     @Override

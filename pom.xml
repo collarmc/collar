@@ -25,7 +25,7 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <jackson-databind.version>2.12.3</jackson-databind.version>
+        <jackson-databind.version>2.13.0-rc2</jackson-databind.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <minecraft.java.runtime>1.8</minecraft.java.runtime>
@@ -186,7 +186,7 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver-sync</artifactId>
-                <version>4.2.3</version>
+                <version>4.3.1</version>
             </dependency>
             <dependency>
                 <groupId>com.goterl</groupId>
@@ -196,7 +196,7 @@
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>5.7.0</version>
+                <version>5.9.0</version>
             </dependency>
             <!-- password hashing -->
             <dependency>
@@ -258,7 +258,7 @@
             <dependency>
                 <groupId>com.github.vladimir-bukhtoyarov</groupId>
                 <artifactId>bucket4j-core</artifactId>
-                <version>6.2.0</version>
+                <version>7.0.0-beta-2020-04-18</version>
             </dependency>
             <dependency>
                 <groupId>com.mojang</groupId>

@@ -116,7 +116,7 @@ public class GroupsTest extends CollarTest {
         waitForCondition("bob should not have minecraft player", () -> {
             Group group = alicePlayer.collar.groups().findGroupById(theGroup.id).orElse(null);
             if (group == null) return false;
-            Member bobMember = group.members.stream().filter(member -> member.player.identity.profile.equals(bobProfile.get().id)).findFirst().orElseThrow();
+            Member bobMember = group.members.stream().filter(member -> member.player.identity.id().equals(bobProfile.get().id)).findFirst().orElseThrow();
             return bobMember.player.minecraftPlayer == null;
         });
 
@@ -127,7 +127,7 @@ public class GroupsTest extends CollarTest {
         waitForCondition("bob should not have minecraft player", () -> {
             Group group = alicePlayer.collar.groups().findGroupById(theGroup.id).orElse(null);
             if (group == null) return false;
-            Member bobMember = group.members.stream().filter(member -> member.player.identity.profile.equals(bobProfile.get().id)).findFirst().orElseThrow();
+            Member bobMember = group.members.stream().filter(member -> member.player.identity.id().equals(bobProfile.get().id)).findFirst().orElseThrow();
             return bobMember.player.minecraftPlayer == null;
         });
     }
@@ -149,7 +149,7 @@ public class GroupsTest extends CollarTest {
         waitForCondition("bob should not have minecraft player", () -> {
             Group group = alicePlayer.collar.groups().findGroupById(theGroup.id).orElse(null);
             if (group == null) return false;
-            Member bobMember = group.members.stream().filter(member -> member.player.identity.profile.equals(bobProfile.get().id)).findFirst().orElseThrow();
+            Member bobMember = group.members.stream().filter(member -> member.player.identity.id().equals(bobProfile.get().id)).findFirst().orElseThrow();
             return bobMember.player.minecraftPlayer == null;
         });
 

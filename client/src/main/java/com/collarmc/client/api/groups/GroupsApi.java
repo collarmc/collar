@@ -166,7 +166,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
      * @param player to transfer to
      */
     public void transferOwnership(Group group, Player player) {
-        sender.accept(new TransferGroupOwnershipRequest(group.id, player.identity.profile));
+        sender.accept(new TransferGroupOwnershipRequest(group.id, player.identity.id()));
     }
 
     private List<Group> filter(GroupType party) {

@@ -162,7 +162,7 @@ public final class SessionManager {
 
     public Optional<SessionState> getSessionStateByOwner(UUID owner) {
         return sessions.values().stream()
-                .filter(sessionState -> sessionState.identity.profile.equals(owner))
+                .filter(sessionState -> sessionState.identity.id().equals(owner))
                 .findFirst();
     }
 
@@ -173,7 +173,7 @@ public final class SessionManager {
     }
 
     public Optional<ClientIdentity> getIdentity(Player player) {
-        return sessions.values().stream().filter(sessionState -> sessionState.identity.profile.equals(player.identity.profile))
+        return sessions.values().stream().filter(sessionState -> sessionState.identity.id().equals(player.identity.id()))
                 .findAny()
                 .map(sessionState -> sessionState.identity);
     }
@@ -185,7 +185,7 @@ public final class SessionManager {
     }
 
     public Optional<Player> findPlayerByProfile(UUID profile) {
-        return sessions.values().stream().filter(sessionState -> sessionState.identity.profile.equals(profile))
+        return sessions.values().stream().filter(sessionState -> sessionState.identity.id().equals(profile))
                 .findFirst()
                 .map(SessionState::toPlayer);
     }

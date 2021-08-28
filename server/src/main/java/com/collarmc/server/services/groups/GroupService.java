@@ -164,7 +164,7 @@ public final class GroupService {
             BatchProtocolResponse response = new BatchProtocolResponse();
             MembershipState state = req.state;
             MembershipRole role = group.getRole(sendingPlayer.get());
-            group = store.updateMember(group.id, sendingPlayer.get().identity.profile, role, state).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
+            group = store.updateMember(group.id, sendingPlayer.get().identity.id(), role, state).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
             // Let everyone in the group (including sender) know that they have accepted
             Group finalGroup = group;
             BatchProtocolResponse updates = createMemberMessages(
@@ -190,7 +190,7 @@ public final class GroupService {
         return store.findGroup(req.groupId).map(group -> {
             Group finalGroup = group;
             BatchProtocolResponse response = createMemberMessages(group, member -> true, (theIdentity, player, member) -> new LeaveGroupResponse(finalGroup.id, identity, sender.get()));
-            group = store.removeMember(group.id, sender.get().identity.profile).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
+            group = store.removeMember(group.id, sender.get().identity.id()).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
             updateState(group);
             return response;
         });
@@ -213,7 +213,7 @@ public final class GroupService {
                     .orElseThrow(() -> new IllegalStateException("requester is not owner of group"));
             Map<Group, List<Member>> groupToMembers = new HashMap<>();
             List<MemberSource> players = sessions.findPlayers(identity, req.players).stream().map(thePlayer -> {
-                PublicProfile profile = profiles.getById(thePlayer.identity.id()).orElseThrow(() -> new IllegalStateException("cannot find profile " + thePlayer.identity.profile)).toPublic();
+                PublicProfile profile = profiles.getById(thePlayer.identity.id()).orElseThrow(() -> new IllegalStateException("cannot find profile " + thePlayer.identity.id())).toPublic();
                 return new MemberSource(thePlayer, profile);
             }).collect(Collectors.toList());
             // TODO: replace line below with a method that can do the diff of existing players and new players invited
@@ -248,7 +248,7 @@ public final class GroupService {
                 return null;
             }
             BatchProtocolResponse response = createMemberMessages(group, member -> true, (theIdentity, thePlayer, member) -> new LeaveGroupResponse(req.groupId, identityToRemove.get(), playerToRemove));
-            group = store.removeMember(group.id, playerToRemove.identity.profile).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
+            group = store.removeMember(group.id, playerToRemove.identity.id()).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
             updateState(group);
             return response;
         });
@@ -268,9 +268,9 @@ public final class GroupService {
         GroupMessageEnvelope envelope = new GroupMessageEnvelope(req.message);
         return store.findGroup(req.group).map(group -> createMemberMessages(
                 group,
-                member -> member.membershipState.equals(MembershipState.ACCEPTED) && !member.player.equals(player.get()) && envelope.messages.containsKey(member.player.identity.profile),
+                member -> member.membershipState.equals(MembershipState.ACCEPTED) && !member.player.equals(player.get()) && envelope.messages.containsKey(member.player.identity.id()),
                 (theIdentity, thePlayer, member) -> {
-                    GroupMessage message = envelope.messages.get(theIdentity.profile);
+                    GroupMessage message = envelope.messages.get(theIdentity.id());
                     return new SendMessageResponse(identity, group.id, thePlayer, message.contents);
                 })
         );
@@ -370,7 +370,7 @@ public final class GroupService {
             );
 
             // Set original owner as member
-            group = store.updateMember(groupId, currentPlayer.get().identity.profile, MembershipRole.MEMBER, MembershipState.ACCEPTED).orElseThrow(() -> new IllegalStateException("cant find group " + groupId));
+            group = store.updateMember(groupId, currentPlayer.get().identity.id(), MembershipRole.MEMBER, MembershipState.ACCEPTED).orElseThrow(() -> new IllegalStateException("cant find group " + groupId));
             BatchProtocolResponse addNewOwnerMessages = createMemberMessages(
                     group,
                     member -> true,

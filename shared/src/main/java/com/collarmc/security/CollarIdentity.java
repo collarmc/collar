@@ -73,8 +73,8 @@ public final class CollarIdentity {
                 IO.writeBytes(dataStream, keyPair.getSecretKey().getAsBytes());
                 dataStream.writeBoolean(serverIdentity != null);
                 if (serverIdentity != null) {
-                    IO.writeUUID(dataStream, serverIdentity.serverId);
-                    IO.writeBytes(dataStream, serverIdentity.publicKey.key);
+                    IO.writeUUID(dataStream, serverIdentity.id());
+                    IO.writeBytes(dataStream, serverIdentity.publicKey().key);
                 }
             }
             return outputStream.toByteArray();

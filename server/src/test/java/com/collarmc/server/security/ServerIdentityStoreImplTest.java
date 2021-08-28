@@ -15,8 +15,8 @@ public class ServerIdentityStoreImplTest {
         ServerIdentityStoreImpl identityStore = new ServerIdentityStoreImpl(dbRule.db);
         ServerIdentityStoreImpl identityStore2 = new ServerIdentityStoreImpl(dbRule.db);
         Assert.assertEquals(identityStore.identity(), identityStore2.identity());
-        Assert.assertEquals(identityStore.identity().serverId, identityStore2.identity().serverId);
-        Assert.assertArrayEquals(identityStore.identity().publicKey.key, identityStore2.identity().publicKey.key);
+        Assert.assertEquals(identityStore.identity().id(), identityStore2.identity().id());
+        Assert.assertArrayEquals(identityStore.identity().publicKey().key, identityStore2.identity().publicKey().key);
     }
 
     @Test

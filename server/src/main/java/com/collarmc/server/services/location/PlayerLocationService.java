@@ -96,7 +96,7 @@ public class PlayerLocationService {
         if (player.isEmpty()) {
             return Optional.empty();
         }
-        PublicProfile profile = services.profileCache.getById(player.get().identity.profile).orElseThrow(() -> new IllegalStateException("could not find profile " + player.get().identity.profile)).toPublic();
+        PublicProfile profile = services.profileCache.getById(player.get().identity.id()).orElseThrow(() -> new IllegalStateException("could not find profile " + player.get().identity.id())).toPublic();
         NearbyGroups.Result result = this.nearbyGroups.updateNearbyGroups(new MemberSource(player.get(), profile), req.nearbyHashes);
         return services.groups.updateNearbyGroups(result);
     }

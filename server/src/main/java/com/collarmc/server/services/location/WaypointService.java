@@ -23,15 +23,15 @@ public final class WaypointService {
     }
 
     public void createWaypoint(ClientIdentity identity, CreateWaypointRequest req) {
-        storage.store(identity.profile, req.waypointId, req.waypoint, WAYPOINT_BLOB_TYPE);
+        storage.store(identity.id(), req.waypointId, req.waypoint, WAYPOINT_BLOB_TYPE);
     }
 
     public void removeWaypoint(ClientIdentity identity, RemoveWaypointRequest req) {
-        storage.delete(identity.profile, req.waypointId);
+        storage.delete(identity.id(), req.waypointId);
     }
 
     public List<EncryptedWaypoint> getWaypoints(ClientIdentity identity, GetWaypointsRequest req) {
-        List<ProfileStorage.Blob> blobs = storage.find(identity.profile, WAYPOINT_BLOB_TYPE);
+        List<ProfileStorage.Blob> blobs = storage.find(identity.id(), WAYPOINT_BLOB_TYPE);
         return blobs.stream().map(blob -> new EncryptedWaypoint(blob.key, blob.data)).collect(Collectors.toList());
     }
 }

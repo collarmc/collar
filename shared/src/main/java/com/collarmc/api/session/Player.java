@@ -36,17 +36,17 @@ public final class Player {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Player player = (Player) o;
-        return identity.profile.equals(player.identity.profile);
+        return identity.id().equals(player.identity.id());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(identity.profile);
+        return Objects.hash(identity.id());
     }
 
     @Override
     public String toString() {
         String player = minecraftPlayer == null ? "<none>" : minecraftPlayer.toString();
-        return identity.profile + ":" + player;
+        return identity.id() + ":" + player;
     }
 }

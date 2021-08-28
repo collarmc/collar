@@ -36,7 +36,7 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         if (req instanceof AddFriendRequest) {
             AddFriendRequest request = (AddFriendRequest) req;
             findFriendProfileId(request.profile, request.player).ifPresentOrElse(friendProfileId -> {
-                Friend friend = services.friends.createFriend(caller, new FriendsService.CreateFriendRequest(identity.profile, friendProfileId)).friend;
+                Friend friend = services.friends.createFriend(caller, new FriendsService.CreateFriendRequest(identity.id(), friendProfileId)).friend;
                 sender.accept(identity, new AddFriendResponse(friend));
             }, () -> {
                 LOGGER.error("Could not add friend with profileId " + request.profile  + " or playerId " + request.player);
@@ -45,14 +45,14 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         } else if (req instanceof RemoveFriendRequest) {
             RemoveFriendRequest request = (RemoveFriendRequest) req;
             findFriendProfileId(request.profile, request.player).ifPresentOrElse(friendProfileId -> {
-                UUID deletedFriend = services.friends.deleteFriend(caller, new FriendsService.DeleteFriendRequest(identity.profile, friendProfileId)).friend;
+                UUID deletedFriend = services.friends.deleteFriend(caller, new FriendsService.DeleteFriendRequest(identity.id(), friendProfileId)).friend;
                 sender.accept(identity, new RemoveFriendResponse(deletedFriend));
             }, () -> {
                 LOGGER.error("Could not add friend with profileId " + request.profile + " or playerId " + request.player);
             });
             return true;
         } else if (req instanceof GetFriendListRequest) {
-            List<Friend> friends = services.friends.getFriends(caller, new FriendsService.GetFriendsRequest(identity.profile, null)).friends;
+            List<Friend> friends = services.friends.getFriends(caller, new FriendsService.GetFriendsRequest(identity.id(), null)).friends;
             sender.accept(identity, new GetFriendListResponse(friends));
             return true;
         }
@@ -64,7 +64,7 @@ public class FriendsProtocolHandler extends ProtocolHandler {
         if (profile != null) {
             profileId = Optional.of(profile);
         } else if (player != null) {
-            profileId = services.sessions.getSessionStateByPlayer(player).map(sessionState -> sessionState.identity.profile);
+            profileId = services.sessions.getSessionStateByPlayer(player).map(sessionState -> sessionState.identity.id());
         } else {
             profileId = Optional.empty();
         }
@@ -74,10 +74,10 @@ public class FriendsProtocolHandler extends ProtocolHandler {
     @Override
     public void onSessionStopping(ClientIdentity identity, Player player, BiConsumer<Session, ProtocolResponse> sender) {
         // Broadcast to the players friends that the player is now offline
-        services.friends.getFriends(RequestContext.from(identity), new FriendsService.GetFriendsRequest(null, identity.profile)).friends.forEach(friend -> {
+        services.friends.getFriends(RequestContext.from(identity), new FriendsService.GetFriendsRequest(null, identity.id())).friends.forEach(friend -> {
             services.sessions.getSessionStateByOwner(friend.owner).ifPresentOrElse(sessionState -> {
-                PublicProfile profile = services.profileCache.getById(identity.profile).orElseThrow(() -> new IllegalStateException("could not find profile " + identity.profile)).toPublic();
-                Friend offline = new Friend(sessionState.identity.profile, profile, Status.OFFLINE, Set.of());
+                PublicProfile profile = services.profileCache.getById(identity.id()).orElseThrow(() -> new IllegalStateException("could not find profile " + identity.id())).toPublic();
+                Friend offline = new Friend(sessionState.identity.id(), profile, Status.OFFLINE, Set.of());
                 LOGGER.info("Notifying " + sessionState.identity + " that player " + identity + " is OFFLINE");
                 sender.accept(sessionState.session, new FriendChangedResponse(offline));
             }, () -> {

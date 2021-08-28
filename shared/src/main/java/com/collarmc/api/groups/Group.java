@@ -91,7 +91,7 @@ public final class Group {
     }
 
     public MembershipRole getRole(Player sendingPlayer) {
-        return members.stream().filter(member -> sendingPlayer.identity.profile.equals(member.player.identity.profile))
+        return members.stream().filter(member -> sendingPlayer.identity.id().equals(member.player.identity.id()))
                 .findFirst().map(member -> member.membershipRole).orElse(null);
     }
 }

@@ -53,26 +53,26 @@ public class GroupStoreTest {
         Assert.assertNotNull(group);
 
         Member member1 = group.members.stream().filter(member -> member.player.equals(player1)).findFirst().orElseThrow();
-        Assert.assertEquals(player1.identity.profile, member1.player.identity.profile);
+        Assert.assertEquals(player1.identity.id(), member1.player.identity.id());
         Assert.assertEquals(MembershipRole.MEMBER, member1.membershipRole);
         Assert.assertEquals(MembershipState.ACCEPTED, member1.membershipState);
 
         Member member2 = group.members.stream().filter(member -> member.player.equals(player2)).findFirst().orElseThrow();
-        Assert.assertEquals(player2.identity.profile, member2.player.identity.profile);
+        Assert.assertEquals(player2.identity.id(), member2.player.identity.id());
         Assert.assertEquals(MembershipRole.MEMBER, member2.membershipRole);
         Assert.assertEquals(MembershipState.ACCEPTED, member2.membershipState);
 
-        Assert.assertEquals(groupId, store.findGroupsContaining(player1.identity.profile).findFirst().map(group1 -> group1.id).orElse(null));
+        Assert.assertEquals(groupId, store.findGroupsContaining(player1.identity.id()).findFirst().map(group1 -> group1.id).orElse(null));
 
-        group = store.updateMember(groupId, player1.identity.profile, MembershipRole.MEMBER, MembershipState.DECLINED).orElse(null);
+        group = store.updateMember(groupId, player1.identity.id(), MembershipRole.MEMBER, MembershipState.DECLINED).orElse(null);
         Assert.assertNotNull(group);
         member1 = group.members.stream().filter(member -> member.player.equals(player1)).findFirst().orElseThrow();
-        Assert.assertEquals(player1.identity.profile, member1.player.identity.profile);
+        Assert.assertEquals(player1.identity.id(), member1.player.identity.id());
         Assert.assertEquals(MembershipRole.MEMBER, member1.membershipRole);
         Assert.assertEquals(MembershipState.DECLINED, member1.membershipState);
         Assert.assertEquals(3, group.members.size());
 
-        group = store.removeMember(groupId, player1.identity.profile).orElse(null);
+        group = store.removeMember(groupId, player1.identity.id()).orElse(null);
         Assert.assertNotNull(group);
         Assert.assertEquals(2, group.members.size());
         Assert.assertFalse(group.members.stream().anyMatch(member -> member.player.equals(player1)));

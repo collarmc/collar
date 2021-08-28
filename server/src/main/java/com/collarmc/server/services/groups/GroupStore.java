@@ -182,7 +182,7 @@ public final class GroupStore {
         return Map.of(
                 FIELD_MEMBER_ROLE, member.membershipRole.name(),
                 FIELD_MEMBER_STATE, member.membershipState.name(),
-                FIELD_MEMBER_PROFILE_ID, member.player.identity.profile
+                FIELD_MEMBER_PROFILE_ID, member.player.identity.id()
         );
     }
 

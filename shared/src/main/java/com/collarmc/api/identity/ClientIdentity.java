@@ -12,9 +12,10 @@ import java.util.UUID;
 public final class ClientIdentity implements Identity {
 
     @JsonProperty("profile")
-    public final UUID profile;
+    private final UUID profile;
     @JsonProperty("publicKey")
-    public final PublicKey publicKey;
+    private final PublicKey publicKey;
+
     public ClientIdentity(@JsonProperty("profile") UUID profile,
                           @JsonProperty("publicKey") PublicKey publicKey) {
         this.profile = profile;

@@ -189,7 +189,7 @@ public class WebServer {
                         TextureService.CreateTextureRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), TextureService.CreateTextureRequest.class);
                         if (req.group != null) {
                             Group group = services.groups.findGroup(req.group).orElseThrow(() -> new NotFoundException("could not find group " + req.group));
-                            if (group.members.stream().noneMatch(member -> member.player.identity.profile.equals(context.owner) && member.membershipRole == MembershipRole.OWNER)) {
+                            if (group.members.stream().noneMatch(member -> member.player.identity.id().equals(context.owner) && member.membershipRole == MembershipRole.OWNER)) {
                                 throw new NotFoundException("could not find group " + req.group);
                             }
                         }

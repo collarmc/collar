@@ -11,18 +11,18 @@ import java.util.UUID;
  */
 public final class ServerIdentity implements Identity {
     @JsonProperty("publicKey")
-    public final PublicKey publicKey;
-    @JsonProperty("serverId")
-    public final UUID serverId;
+    private final PublicKey publicKey;
+    @JsonProperty("id")
+    private final UUID id;
 
-    public ServerIdentity(@JsonProperty("serverId") UUID serverId, @JsonProperty("publicKey") PublicKey publicKey) {
+    public ServerIdentity(@JsonProperty("id") UUID id, @JsonProperty("publicKey") PublicKey publicKey) {
+        this.id = id;
         this.publicKey = publicKey;
-        this.serverId = serverId;
     }
 
     @Override
     public UUID id() {
-        return serverId;
+        return id;
     }
 
     @Override

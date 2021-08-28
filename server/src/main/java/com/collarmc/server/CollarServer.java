@@ -162,7 +162,7 @@ public class CollarServer {
 
     private byte[] processIdentityRequestToken(Profile profile, IdentifyRequest req) {
         if (profile.publicKey == null) {
-            profile = services.profiles.updateProfile(RequestContext.SERVER, UpdateProfileRequest.keys(profile.id, req.identity.publicKey)).profile;
+            profile = services.profiles.updateProfile(RequestContext.SERVER, UpdateProfileRequest.keys(profile.id, req.identity.publicKey())).profile;
             LOGGER.log(Level.ERROR, "Identity for " + profile.id + " was set");
         }
         ClientIdentity storedIdentity = new ClientIdentity(profile.id, profile.publicKey);
@@ -171,7 +171,7 @@ public class CollarServer {
             return null;
         }
         try {
-            byte[] token = services.identityStore.cipher().decrypt(req.token, req.identity.publicKey);
+            byte[] token = services.identityStore.cipher().decrypt(req.token, req.identity.publicKey());
             LOGGER.log(Level.INFO, "Token from " + profile.id + " was decrypted");
             return token;
         } catch (CipherException e) {

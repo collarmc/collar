@@ -93,35 +93,6 @@ public final class SodiumCipher implements Cipher {
         return signedMessage.contents;
     }
 
-    private static void loadLibrary(boolean server) {
-        if (LOADED) {
-            return;
-        }
-        if (server && Platform.is64Bit() && Platform.isLinux()) {
-            File file = new File("/usr/lib/x86_64-linux-gnu/libsodium.so.23");
-            if (!file.exists()) {
-                throw new IllegalStateException("libsodium is not installed");
-            }
-            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(file.getAbsolutePath()));
-        } else {
-            String path = LibraryLoader.getSodiumPathInResources();
-            File jar;
-            try {
-                jar = File.createTempFile("sodium", ".lib");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            try (InputStream is = SodiumCipher.class.getResourceAsStream("/" + path);
-                 FileOutputStream os = new FileOutputStream(jar)) {
-                ByteStreams.copy(is, os);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(jar.getAbsolutePath()));
-        }
-        LOGGER.info("Sodium version: " + SODIUM.sodiumVersion());
-    }
-
     public static KeyPair generateKeyPair() throws CipherException {
         try {
             return SODIUM.cryptoBoxKeypair();
@@ -150,10 +121,35 @@ public final class SodiumCipher implements Cipher {
             new LibraryLoader(Collections.singletonList(CollarSodiumJava.class)).loadAbsolutePath(absolutePath);
         }
 
-        public CollarSodiumJava(LibraryLoader.Mode loadingMode) {
-            super(loadingMode);
-        }
-
         public native String sodium_version_string();
+    }
+
+    private static void loadLibrary(boolean server) {
+        if (LOADED) {
+            return;
+        }
+        if (server && Platform.is64Bit() && Platform.isLinux()) {
+            File file = new File("/usr/lib/x86_64-linux-gnu/libsodium.so.23");
+            if (!file.exists()) {
+                throw new IllegalStateException("libsodium is not installed");
+            }
+            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(file.getAbsolutePath()));
+        } else {
+            String path = LibraryLoader.getSodiumPathInResources();
+            File lib;
+            try {
+                lib = File.createTempFile("sodium", ".lib");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            try (InputStream is = SodiumCipher.class.getResourceAsStream("/" + path);
+                 FileOutputStream os = new FileOutputStream(lib)) {
+                ByteStreams.copy(is, os);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(lib.getAbsolutePath()));
+        }
+        LOGGER.info("Sodium version: " + SODIUM.sodiumVersion());
     }
 }

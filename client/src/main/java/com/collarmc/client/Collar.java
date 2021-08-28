@@ -22,7 +22,6 @@ import com.collarmc.client.sdht.cipher.ContentCiphers;
 import com.collarmc.client.sdht.cipher.GroupContentCipher;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.client.security.ClientIdentityStoreImpl;
-import com.collarmc.client.utils.Crypto;
 import com.collarmc.client.utils.Http;
 import com.collarmc.http.Request;
 import com.collarmc.http.Response;
@@ -260,7 +259,11 @@ public final class Collar {
      */
     public Player player() {
         assertConnected();
-        return new Player(identity(), configuration.sessionSupplier.get().toPlayer());
+        ClientIdentity identity = identity();
+        if (identity == null) {
+            throw new IllegalStateException("connected but not identified");
+        }
+        return new Player(identity, configuration.sessionSupplier.get().toPlayer());
     }
 
     private void assertConnected() {
@@ -487,9 +490,5 @@ public final class Collar {
         DISCONNECTED,
         CONNECTING,
         CONNECTED
-    }
-
-    static {
-        Crypto.removeCryptographyRestrictions();
     }
 }

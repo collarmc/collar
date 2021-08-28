@@ -91,7 +91,7 @@ public final class CollarIdentity {
         return new CollarIdentity(UUID.randomUUID(), null, SodiumCipher.generateKeyPair());
     }
 
-    public static CollarIdentity from(UUID profile, byte[] publicKey, byte[] privateKey) throws CipherException {
+    public static CollarIdentity serverIdentityFrom(UUID profile, byte[] publicKey, byte[] privateKey) {
         return new CollarIdentity(profile, publicKey, privateKey);
     }
 

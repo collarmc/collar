@@ -1,4 +1,4 @@
-package com.collarmc.security.messages;
+package com.collarmc.security;
 
 import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.security.CollarIdentity;

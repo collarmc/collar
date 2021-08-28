@@ -75,8 +75,8 @@ public class SodiumCipherTest {
     public void differentLengthMessages() throws Exception {
         for (int i = 0; i < Short.MAX_VALUE; i++) {
             byte[] token = TokenGenerator.byteToken(i);
-            byte[] bytes = bobCipher.encrypt(token);
-            byte[] plainText = bobCipher.decrypt(bytes, bob.publicKey());
+            byte[] bytes = bobCipher.encrypt(token, alice.publicKey());
+            byte[] plainText = aliceCipher.decrypt(bytes, bob.publicKey());
             Assert.assertArrayEquals(token, plainText);
         }
     }

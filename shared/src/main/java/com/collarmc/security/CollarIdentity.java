@@ -31,11 +31,13 @@ public final class CollarIdentity {
                     throw new IllegalStateException("invalid version " + version);
                 }
                 id = IO.readUUID(dataStream);
-                keyPair = new KeyPair(Key.fromBytes(IO.readBytes(dataStream)), Key.fromBytes(IO.readBytes(dataStream)));
+                Key publicKey = Key.fromBytes(IO.readBytes(dataStream));
+                Key privateKey = Key.fromBytes(IO.readBytes(dataStream));
+                keyPair = new KeyPair(publicKey, privateKey);
                 if (dataStream.readBoolean()) {
                     UUID serverId = IO.readUUID(dataStream);
-                    byte[] publicKey = IO.readBytes(dataStream);
-                    this.serverIdentity = new ServerIdentity(serverId, new PublicKey(publicKey));
+                    byte[] serverKey = IO.readBytes(dataStream);
+                    this.serverIdentity = new ServerIdentity(serverId, new PublicKey(serverKey));
                 } else {
                     this.serverIdentity = null;
                 }

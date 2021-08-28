@@ -10,7 +10,7 @@ import java.util.UUID;
 
 import static org.junit.Assert.fail;
 
-public class CipherTest {
+public class SodiumCipherTest {
 
     @Test
     public void roundTrip() throws Exception {

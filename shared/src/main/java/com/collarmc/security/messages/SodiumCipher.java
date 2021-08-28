@@ -76,7 +76,6 @@ public final class SodiumCipher implements Cipher {
         SignedMessage signedMessage = new SignedMessage(sig, plain);
         byte[] signedMessageBytes = signedMessage.serialize();
         byte[] cipherTextBytes = new byte[Box.SEALBYTES + signedMessageBytes.length];
-
         if (!SODIUM.cryptoBoxSeal(cipherTextBytes, signedMessageBytes, signedMessageBytes.length, recipient)) {
             throw new CipherException("Could not encrypt message.");
         }
@@ -86,11 +85,11 @@ public final class SodiumCipher implements Cipher {
     private byte[] decrypt(byte[] message, byte[] sender) throws CipherException {
         byte[] messageBytes = new byte[message.length - Box.SEALBYTES];
         if (!SODIUM.cryptoBoxSealOpen(messageBytes, message, message.length, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes())) {
-            throw new CipherException("Could not decrypt signedMessage.");
+            throw new CipherException("Could not decrypt signed message.");
         }
         SignedMessage signedMessage = new SignedMessage(messageBytes);
         if (SODIUM.cryptoSignOpen(signedMessage.signature, signedMessage.contents, signedMessage.contents.length, sender)) {
-            throw new CipherException("Could not verify signedMessage.");
+            throw new CipherException("Could not verify signed message.");
         }
         return signedMessage.contents;
     }
@@ -99,7 +98,7 @@ public final class SodiumCipher implements Cipher {
         try {
             return SODIUM.cryptoBoxKeypair();
         } catch (SodiumException e) {
-            throw new CipherException("could not generate key pair", e);
+            throw new CipherException("Could not generate key pair", e);
         }
     }
 }

@@ -23,6 +23,7 @@ public final class IdentifyRequest extends ProtocolRequest {
         this.identity = identity;
         this.token = token;
         if (token != null) {
+            System.out.println(Hashing.sha256().hashBytes(identity.publicKey.key).toString());
             System.err.println(Hashing.sha256().hashBytes(token).toString());
         }
     }

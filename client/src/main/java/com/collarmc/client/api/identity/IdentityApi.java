@@ -55,6 +55,7 @@ public class IdentityApi extends AbstractApi<IdentityListener> {
 
     private final ConcurrentMapWithTimedEviction<Long, CompletableFuture<Optional<ClientIdentity>>> identifyFutures = new ConcurrentHashMapWithTimedEviction<>(identifyFuturesScheduler);
 
+    @SuppressWarnings("unchecked")
     private final Cache<UUID, CompletableFuture<Optional<PublicProfile>>> profileFutures = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.SECONDS)
             .removalListener(removalNotification -> {

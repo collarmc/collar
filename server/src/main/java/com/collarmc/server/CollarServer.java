@@ -175,7 +175,7 @@ public class CollarServer {
             return null;
         }
         try {
-            byte[] token = services.identityStore.cipher().decrypt(req.token, storedIdentity);
+            byte[] token = services.identityStore.cipher().decrypt(req.token, req.identity);
             LOGGER.log(Level.INFO, "Token from " + profile.id + " was decrypted");
             return token;
         } catch (CipherException e) {

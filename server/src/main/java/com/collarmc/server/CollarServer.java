@@ -166,10 +166,6 @@ public class CollarServer {
             LOGGER.log(Level.ERROR, "Identity for " + profile.id + " was set");
         }
         ClientIdentity storedIdentity = new ClientIdentity(profile.id, profile.publicKey);
-        LOGGER.error("request: " + req.identity);
-        LOGGER.error("request: " + req.identity.publicKey);
-        LOGGER.error(" stored: " + storedIdentity);
-        LOGGER.error(" stored: " + storedIdentity.publicKey);
         if (!storedIdentity.equals(req.identity)) {
             LOGGER.log(Level.ERROR, "Identity for " + profile.id + " did not match what was registered");
             return null;

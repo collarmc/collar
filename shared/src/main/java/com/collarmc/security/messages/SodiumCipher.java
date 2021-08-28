@@ -95,7 +95,7 @@ public final class SodiumCipher implements Cipher {
     }
 
     private byte[] decrypt(byte[] message, byte[] sender) throws CipherException {
-        byte[] messageBytes = new byte[message.length - Box.SEALBYTES];
+        byte[] messageBytes = new byte[message.length + Box.SEALBYTES];
         if (!SODIUM.cryptoBoxSealOpen(messageBytes, message, message.length, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes())) {
             throw new CipherException("Could not decrypt signed message.");
         }

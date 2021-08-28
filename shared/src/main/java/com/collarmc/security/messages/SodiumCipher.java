@@ -64,6 +64,11 @@ public final class SodiumCipher implements Cipher {
     }
 
     @Override
+    public byte[] encrypt(byte[] plain, PublicKey recipient) throws CipherException {
+        return encrypt(plain, recipient.key);
+    }
+
+    @Override
     public byte[] encrypt(byte[] plain) throws CipherException {
         return encrypt(plain, keyPair.getPublicKey().getAsBytes());
     }

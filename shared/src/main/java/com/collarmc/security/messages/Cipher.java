@@ -44,6 +44,16 @@ public interface Cipher {
     byte[] encrypt(byte[] plain, Identity recipient) throws CipherException;
 
     /**
+     * Encrypts data for an intended recipient
+     *
+     * @param plain     to encrypt
+     * @param recipient receiving the message
+     * @return cipher text
+     * @throws CipherException if encryption fails
+     */
+    byte[] encrypt(byte[] plain, PublicKey recipient) throws CipherException;
+
+    /**
      * Encrypt for self storage
      *
      * @param plain to encrypt

@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.UUID;
 
 import static org.junit.Assert.fail;
@@ -18,6 +19,8 @@ public class SodiumCipherTest {
     Cipher bobCipher;
     CollarIdentity alice;
     Cipher aliceCipher;
+    CollarIdentity eve;
+    Cipher eveCipher;
 
     @Before
     public void setup() throws Exception {
@@ -26,12 +29,16 @@ public class SodiumCipherTest {
         bobCipher = new SodiumCipher(bob.keyPair);
         alice = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity);
         aliceCipher = new SodiumCipher(alice.keyPair);
+        eve = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity);
+        eveCipher = new SodiumCipher(eve.keyPair);
     }
 
     @Test
     public void bobEncryptsDataForHimself() throws Exception {
-        byte[] bytes = bobCipher.encrypt("hello world".getBytes(StandardCharsets.UTF_8));
-        byte[] plainText = bobCipher.decrypt(bytes, bob.publicKey());
+        byte[] message = "hello world".getBytes(StandardCharsets.UTF_8);
+        byte[] cipherText = bobCipher.encrypt(message);
+        Assert.assertFalse(Arrays.equals(cipherText, message));
+        byte[] plainText = bobCipher.decrypt(cipherText, bob.publicKey());
         Assert.assertEquals("hello world", new String(plainText, StandardCharsets.UTF_8));
     }
 
@@ -39,8 +46,29 @@ public class SodiumCipherTest {
     public void bobSendsMessageToAlice() throws Exception {
         byte[] message = TokenGenerator.byteToken(256);
         byte[] cipherText = bobCipher.encrypt(message, alice.publicKey());
+        Assert.assertFalse(Arrays.equals(cipherText, message));
         byte[] decrypted = aliceCipher.decrypt(cipherText, bob.publicKey());
         Assert.assertArrayEquals(message, decrypted);
+    }
+
+    @Test
+    public void eveCantReadBobsMessageToAlice() throws Exception {
+        byte[] message = TokenGenerator.byteToken(256);
+        byte[] cipherText = bobCipher.encrypt(message, alice.publicKey());
+        try {
+            eveCipher.decrypt(cipherText, bob.publicKey());
+            fail("eve could read bobs message to alice!");
+        } catch (CipherException ignored) {}
+
+        try {
+            eveCipher.decrypt(cipherText, alice.publicKey());
+            fail("eve could read bobs message to alice!");
+        } catch (CipherException ignored) {}
+
+        try {
+            eveCipher.decrypt(cipherText, eve.publicKey());
+            fail("eve could read bobs message to alice!");
+        } catch (CipherException ignored) {}
     }
 
     @Test

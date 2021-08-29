@@ -95,7 +95,7 @@ public class CollarServer {
     }
 
     @OnWebSocketMessage
-    public void message(Session session, InputStream is) throws IOException {
+    public void message(Session session, InputStream is) {
         Bucket bucket = buckets.get(session);
         if (bucket.tryConsume(1)) {
             processMessage(session, is);

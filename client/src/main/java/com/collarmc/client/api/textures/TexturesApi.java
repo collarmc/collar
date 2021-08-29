@@ -5,6 +5,7 @@ import com.collarmc.api.session.Player;
 import com.collarmc.api.textures.TextureType;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
+import com.collarmc.client.api.textures.events.TextureReceivedEvent;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class TexturesApi extends AbstractApi<TexturesListener> {
+public class TexturesApi extends AbstractApi {
 
     private final RegularTaskEvictionScheduler<TextureKey, CompletableFuture<Optional<Texture>>> texturesFutureScheduler = new RegularTaskEvictionScheduler<TextureKey, CompletableFuture<Optional<Texture>>>(1, TimeUnit.SECONDS) {
         @Override
@@ -68,9 +69,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
                 removed.complete(optionalTexture);
             }
             if (texture != null) {
-                fireListener("onTextureReceived", texturesListener -> {
-                    texturesListener.onTextureReceived(collar, this, texture);
-                });
+                collar.configuration.eventBus.dispatch(new TextureReceivedEvent(texture));
             }
             return true;
         }
@@ -98,9 +97,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
     public void requestPlayerTexture(Player player, TextureType type) {
         Optional<Texture> texture = textureCache.asMap().getOrDefault(new TextureKey(player.identity.id(), type), Optional.empty());
         if (texture.isPresent()) {
-            fireListener("onTextureReceived", texturesListener -> {
-                texturesListener.onTextureReceived(collar, this, texture.get());
-            });
+            collar.configuration.eventBus.dispatch(new TextureReceivedEvent(texture.get()));
         } else {
             sender.accept(new GetTextureRequest(player.minecraftPlayer.id, null, type));
         }
@@ -127,9 +124,7 @@ public class TexturesApi extends AbstractApi<TexturesListener> {
     public void requestGroupTexture(Group group, TextureType type) {
         Optional<Texture> texture = textureCache.asMap().getOrDefault(new TextureKey(group.id, type), Optional.empty());
         if (texture.isPresent()) {
-            fireListener("onTextureReceived", texturesListener -> {
-                texturesListener.onTextureReceived(collar, this, texture.get());
-            });
+            collar.configuration.eventBus.dispatch(new TextureReceivedEvent(texture.get()));
         } else {
             sender.accept(new GetTextureRequest(null, group.id, type));
         }

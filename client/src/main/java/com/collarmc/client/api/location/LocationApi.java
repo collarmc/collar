@@ -9,11 +9,14 @@ import com.collarmc.api.waypoints.Waypoint;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.api.groups.GroupsApi;
-import com.collarmc.client.api.groups.GroupsListener;
+import com.collarmc.client.api.groups.events.GroupLeftEvent;
+import com.collarmc.client.api.location.events.*;
 import com.collarmc.client.minecraft.Ticks;
 import com.collarmc.client.sdht.SDHTApi;
-import com.collarmc.client.sdht.SDHTListener;
+import com.collarmc.client.sdht.event.SDHTRecordAddedEvent;
+import com.collarmc.client.sdht.event.SDHTRecordRemovedEvent;
 import com.collarmc.client.security.ClientIdentityStore;
+import com.collarmc.pounce.Subscribe;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.location.*;
@@ -39,7 +42,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class LocationApi extends AbstractApi<LocationListener> {
+public class LocationApi extends AbstractApi {
 
     private static final Logger LOGGER = LogManager.getLogger(LocationApi.class);
 
@@ -51,7 +54,6 @@ public class LocationApi extends AbstractApi<LocationListener> {
     private final LocationUpdater updater;
     private final NearbyUpdater nearbyUpdater;
     private final SDHTApi sdhtApi;
-    private final SDHTListenerImpl sdhtListener;
 
     public LocationApi(Collar collar,
                        Supplier<ClientIdentityStore> identityStoreSupplier,
@@ -65,10 +67,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
         this.locationSupplier = locationSupplier;
         this.updater = new LocationUpdater(this, ticks);
         this.nearbyUpdater = new NearbyUpdater(entityListSupplier, this, ticks);
-        groupsApi.subscribe(new GroupListenerImpl());
         this.sdhtApi = sdhtApi;
-        this.sdhtListener = new SDHTListenerImpl(this);
-        this.sdhtApi.subscribe(sdhtListener);
     }
 
     /**
@@ -111,7 +110,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                 updater.start();
             }
         }
-        fireListener("onStartedSharingLocation", listener -> listener.onStartedSharingLocation(collar, this, group));
+        collar.configuration.eventBus.dispatch(new LocationSharingStartedEvent(collar, group));
     }
 
     /**
@@ -123,7 +122,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
             stopSharingForGroup(group);
             sender.accept(new StopSharingLocationRequest(group.id));
         }
-        fireListener("onStoppedSharingLocation", listener -> listener.onStoppedSharingLocation(collar, this, group));
+        collar.configuration.eventBus.dispatch(new LocationSharingStoppedEvent(collar, group));
     }
 
     /**
@@ -160,7 +159,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
         });
         Content content = Content.from(waypoint.serialize(), Waypoint.class);
         sdhtApi.table.put(new Key(group.id, waypoint.id), content);
-        fireListener("onWaypointCreated", listener -> listener.onWaypointCreated(collar, this, group, waypoint));
+        collar.configuration.eventBus.dispatch(new WaypointCreatedEvent(collar, waypoint, group));
     }
 
     /**
@@ -183,7 +182,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
         });
         sdhtApi.table.delete(new Key(group.id, waypoint.id));
         if (removedWaypoint.get() != null) {
-            fireListener("onWaypointRemoved", listener -> listener.onWaypointRemoved(collar, this, group, waypoint));
+            collar.configuration.eventBus.dispatch(new WaypointRemovedEvent(collar, waypoint, group));
         }
     }
 
@@ -202,7 +201,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
             throw new IllegalStateException(e);
         }
         sender.accept(new CreateWaypointRequest(waypoint.id, encryptedBytes));
-        fireListener("onWaypointCreated", listener -> listener.onWaypointCreated(collar, this, null, waypoint));
+        collar.configuration.eventBus.dispatch(new WaypointCreatedEvent(collar, waypoint, null));
     }
 
     /**
@@ -212,7 +211,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
     public void removeWaypoint(Waypoint waypoint) {
         privateWaypoints.remove(waypoint.id);
         sender.accept(new RemoveWaypointRequest(waypoint.id));
-        fireListener("onWaypointRemoved", listener -> listener.onWaypointRemoved(collar, this, null, waypoint));
+        collar.configuration.eventBus.dispatch(new WaypointRemovedEvent(collar, waypoint, null));
     }
 
     private void stopSharingForGroup(Group group) {
@@ -279,7 +278,7 @@ public class LocationApi extends AbstractApi<LocationListener> {
                         // Remove if stooped sharing
                         playerLocations.remove(response.sender);
                     }
-                    fireListener("onLocationUpdated", listener -> listener.onLocationUpdated(collar, this, response.sender, location.orElse(Location.UNKNOWN)));
+                    collar.configuration.eventBus.dispatch(new LocationUpdatedEvent(collar, response.sender, location.orElse(Location.UNKNOWN)));
                 });
             }
             return true;
@@ -297,10 +296,53 @@ public class LocationApi extends AbstractApi<LocationListener> {
                         .filter(waypoint -> waypoint.server.equals(collar.player().minecraftPlayer.server))
                         .collect(Collectors.toMap(o -> o.id, o -> o));
                 privateWaypoints.putAll(waypoints);
-                fireListener("onPrivateWaypointsReceived", listener -> listener.onPrivateWaypointsReceived(collar, this, ImmutableSet.copyOf(waypoints.values())));
+                collar.configuration.eventBus.dispatch(new PrivateWaypointsReceivedEvent(collar, ImmutableSet.copyOf(waypoints.values())));
             }
         }
         return false;
+    }
+
+    @Subscribe
+    public void onGroupLeft(GroupLeftEvent e) {
+        stopSharingForGroup(e.group);
+    }
+
+    public void onRecordAdded(Collar collar, SDHTApi sdhtApi, Key key, Content content) {
+        if (Waypoint.class.equals(content.type)) {
+            collar.groups().findGroupById(key.namespace).ifPresent(group -> {
+                AtomicReference<Waypoint> waypointAdded = new AtomicReference<>();
+                groupWaypoints.compute(key.namespace, (uuid, waypointMap) -> {
+                    waypointMap = waypointMap == null ? new ConcurrentHashMap<>() : waypointMap;
+                    Waypoint waypoint = new Waypoint(content.bytes);
+                    waypointMap.put(key.id, waypoint);
+                    waypointAdded.set(waypoint);
+                    return waypointMap;
+                });
+                if (waypointAdded.get() != null) {
+                    collar.configuration.eventBus.dispatch(new WaypointCreatedEvent(collar, waypointAdded.get(), group));
+                }
+            });
+        }
+    }
+
+    @Subscribe
+    public void onRecordRemoved(Collar collar, SDHTApi sdhtApi, Key key, Content content) {
+        if (Waypoint.class.equals(content.type)) {
+            collar.groups().findGroupById(key.namespace).ifPresent(group -> {
+                AtomicReference<Waypoint> waypointRemoved = new AtomicReference<>();
+                groupWaypoints.compute(key.namespace, (uuid, waypointMap) -> {
+                    if (waypointMap == null) {
+                        return null;
+                    }
+                    Waypoint removed = waypointMap.remove(key.id);
+                    waypointRemoved.set(removed);
+                    return waypointMap.isEmpty() ? null : waypointMap;
+                });
+                if (waypointRemoved.get() != null) {
+                    collar.configuration.eventBus.dispatch(new WaypointRemovedEvent(collar, waypointRemoved.get(), group));
+                }
+            });
+        }
     }
 
     @Override
@@ -315,62 +357,45 @@ public class LocationApi extends AbstractApi<LocationListener> {
                 groupsSharingWith.clear();
             }
             nearbyUpdater.stop();
-            this.sdhtApi.unsubscribe(sdhtListener);
         }
     }
 
-    class GroupListenerImpl implements GroupsListener {
-        @Override
-        public void onGroupLeft(Collar collar, GroupsApi groupsApi, Group group, Player player) {
-            stopSharingForGroup(group);
+    @Subscribe
+    public void onRecordAdded(SDHTRecordAddedEvent event) {
+        if (Waypoint.class.equals(event.content.type)) {
+            collar.groups().findGroupById(event.key.namespace).ifPresent(group -> {
+                AtomicReference<Waypoint> waypointAdded = new AtomicReference<>();
+                groupWaypoints.compute(event.key.namespace, (uuid, waypointMap) -> {
+                    waypointMap = waypointMap == null ? new ConcurrentHashMap<>() : waypointMap;
+                    Waypoint waypoint = new Waypoint(event.content.bytes);
+                    waypointMap.put(event.key.id, waypoint);
+                    waypointAdded.set(waypoint);
+                    return waypointMap;
+                });
+                if (waypointAdded.get() != null) {
+                    collar.configuration.eventBus.dispatch(new WaypointCreatedEvent(collar, waypointAdded.get(), group));
+                }
+            });
         }
     }
 
-    class SDHTListenerImpl implements SDHTListener {
-
-        private final LocationApi locationApi;
-
-        public SDHTListenerImpl(LocationApi locationApi) {
-            this.locationApi = locationApi;
-        }
-
-        @Override
-        public void onRecordAdded(Collar collar, SDHTApi sdhtApi, Key key, Content content) {
-            if (Waypoint.class.equals(content.type)) {
-                collar.groups().findGroupById(key.namespace).ifPresent(group -> {
-                    AtomicReference<Waypoint> waypointAdded = new AtomicReference<>();
-                    groupWaypoints.compute(key.namespace, (uuid, waypointMap) -> {
-                        waypointMap = waypointMap == null ? new ConcurrentHashMap<>() : waypointMap;
-                        Waypoint waypoint = new Waypoint(content.bytes);
-                        waypointMap.put(key.id, waypoint);
-                        waypointAdded.set(waypoint);
-                        return waypointMap;
-                    });
-                    if (waypointAdded.get() != null) {
-                        fireListener("onWaypointCreated", listener -> listener.onWaypointCreated(collar, locationApi, group, waypointAdded.get()));
+    @Subscribe
+    public void onRecordRemoved(SDHTRecordRemovedEvent event) {
+        if (Waypoint.class.equals(event.content.type)) {
+            collar.groups().findGroupById(event.key.namespace).ifPresent(group -> {
+                AtomicReference<Waypoint> waypointRemoved = new AtomicReference<>();
+                groupWaypoints.compute(event.key.namespace, (uuid, waypointMap) -> {
+                    if (waypointMap == null) {
+                        return null;
                     }
+                    Waypoint removed = waypointMap.remove(event.key.id);
+                    waypointRemoved.set(removed);
+                    return waypointMap.isEmpty() ? null : waypointMap;
                 });
-            }
-        }
-
-        @Override
-        public void onRecordRemoved(Collar collar, SDHTApi sdhtApi, Key key, Content content) {
-            if (Waypoint.class.equals(content.type)) {
-                collar.groups().findGroupById(key.namespace).ifPresent(group -> {
-                    AtomicReference<Waypoint> waypointRemoved = new AtomicReference<>();
-                    groupWaypoints.compute(key.namespace, (uuid, waypointMap) -> {
-                        if (waypointMap == null) {
-                            return null;
-                        }
-                        Waypoint removed = waypointMap.remove(key.id);
-                        waypointRemoved.set(removed);
-                        return waypointMap.isEmpty() ? null : waypointMap;
-                    });
-                    if (waypointRemoved.get() != null) {
-                        fireListener("onWaypointCreated", listener -> listener.onWaypointCreated(collar, locationApi, group, waypointRemoved.get()));
-                    }
-                });
-            }
+                if (waypointRemoved.get() != null) {
+                    collar.configuration.eventBus.dispatch(new WaypointRemovedEvent(collar, waypointRemoved.get(), group));
+                }
+            });
         }
     }
 }

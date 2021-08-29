@@ -3,6 +3,8 @@ package com.collarmc.client.sdht;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.minecraft.Ticks;
+import com.collarmc.client.sdht.event.SDHTRecordAddedEvent;
+import com.collarmc.client.sdht.event.SDHTRecordRemovedEvent;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
@@ -26,7 +28,7 @@ import java.util.function.Supplier;
  * If you want access to this API, please file an issue in Github, do NOT use reflection to put shit in here
  * We are happy to make a nice future proof API for you to use it if you've got a good use case
  */
-public class SDHTApi extends AbstractApi<SDHTListener> implements Ticks.TickListener {
+public class SDHTApi extends AbstractApi implements Ticks.TickListener {
 
     public final DistributedHashTable table;
 
@@ -81,12 +83,12 @@ public class SDHTApi extends AbstractApi<SDHTListener> implements Ticks.TickList
 
         @Override
         public void onAdd(Key key, Content content) {
-            fireListener("onRecordAdded", listener -> listener.onRecordAdded(collar, sdhtApi, key, content));
+            collar.configuration.eventBus.dispatch(new SDHTRecordAddedEvent(collar, key, content));
         }
 
         @Override
         public void onRemove(Key key, Content content) {
-            fireListener("onRecordRemoved", listener -> listener.onRecordRemoved(collar, sdhtApi, key, content));
+            collar.configuration.eventBus.dispatch(new SDHTRecordRemovedEvent(collar, key, content));
         }
     }
 }

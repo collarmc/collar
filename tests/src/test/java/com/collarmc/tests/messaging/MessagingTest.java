@@ -4,9 +4,11 @@ import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.messaging.Message;
 import com.collarmc.api.messaging.TextMessage;
 import com.collarmc.api.session.Player;
-import com.collarmc.client.Collar;
-import com.collarmc.client.api.messaging.MessagingApi;
-import com.collarmc.client.api.messaging.MessagingListener;
+import com.collarmc.client.api.messaging.events.PrivateMessageReceivedEvent;
+import com.collarmc.client.api.messaging.events.PrivateMessageSentEvent;
+import com.collarmc.client.api.messaging.events.UntrustedPrivateMessageReceivedEvent;
+import com.collarmc.pounce.EventBus;
+import com.collarmc.pounce.Subscribe;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.tests.junit.CollarTest;
 import org.junit.Assert;
@@ -19,10 +21,8 @@ import static com.collarmc.tests.junit.CollarAssert.waitForCondition;
 public class MessagingTest extends CollarTest {
     @Test
     public void aliceSendsBobAnUwU() {
-        MessagingListenerImpl bobMessageListener = new MessagingListenerImpl();
-        MessagingListenerImpl aliceListener = new MessagingListenerImpl();
-        bobPlayer.collar.messaging().subscribe(bobMessageListener);
-        alicePlayer.collar.messaging().subscribe(aliceListener);
+        MessagingListenerImpl bobMessageListener = new MessagingListenerImpl(bobPlayer.eventBus);
+        MessagingListenerImpl aliceListener = new MessagingListenerImpl(alicePlayer.eventBus);
         alicePlayer.collar.messaging().sendPrivateMessage(bobPlayer.collar.player(), new TextMessage("UwU"));
         waitForCondition("Alice sent an UwU to Bob", () -> {
             if (!(bobMessageListener.lastMessage instanceof TextMessage)) {
@@ -36,8 +36,7 @@ public class MessagingTest extends CollarTest {
 
     @Test
     public void aliceSendsNonCollarPlayerAnUwU() {
-        MessagingListenerImpl aliceListener = new MessagingListenerImpl();
-        alicePlayer.collar.messaging().subscribe(aliceListener);
+        MessagingListenerImpl aliceListener = new MessagingListenerImpl(alicePlayer.eventBus);
         alicePlayer.collar.messaging().sendPrivateMessage(new Player(new ClientIdentity(UUID.randomUUID(), null), new MinecraftPlayer(UUID.randomUUID(), "hypixel.net", 1)), new TextMessage("UwU"));
         waitForCondition("Alice could not send private message", () -> {
             if (!(aliceListener.lastUntrustedMessage instanceof TextMessage)) {
@@ -48,24 +47,28 @@ public class MessagingTest extends CollarTest {
         });
     }
 
-    private static final class MessagingListenerImpl implements MessagingListener {
+    private static final class MessagingListenerImpl {
         Message lastMessage;
         Message lastUntrustedMessage;
         Message lastMessageSent;
 
-        @Override
-        public void onPrivateMessageReceived(Collar collar, MessagingApi messagingApi, Player sender, Message message) {
-            this.lastMessage = message;
+        public MessagingListenerImpl(EventBus eventBus) {
+            eventBus.subscribe(this);
         }
 
-        @Override
-        public void onPrivateMessageRecipientIsUntrusted(Collar collar, MessagingApi messagingApi, MinecraftPlayer player, Message message) {
-            this.lastUntrustedMessage = message;
+        @Subscribe
+        public void onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
+            this.lastMessage = event.message;
         }
 
-        @Override
-        public void onPrivateMessageSent(Collar collar, MessagingApi messagingApi, Player player, Message message) {
-            this.lastMessageSent = message;
+        @Subscribe
+        public void onPrivateMessageRecipientIsUntrusted(UntrustedPrivateMessageReceivedEvent event) {
+            this.lastUntrustedMessage = event.message;
+        }
+
+        @Subscribe
+        public void onPrivateMessageSent(PrivateMessageSentEvent event) {
+            this.lastMessageSent = event.message;
         }
     }
 }

@@ -36,7 +36,7 @@ import java.util.function.Supplier;
 /**
  * Identity API used for resolving Collar identities from minecraft player IDs
  */
-public class IdentityApi extends AbstractApi<IdentityListener> {
+public class IdentityApi extends AbstractApi {
 
     private static final Logger LOGGER = LogManager.getLogger(IdentityApi.class.getName());
 

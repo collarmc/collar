@@ -7,11 +7,14 @@ import com.collarmc.api.location.Location;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.waypoints.Waypoint;
 import com.collarmc.client.Collar;
-import com.collarmc.client.api.groups.GroupInvitation;
-import com.collarmc.client.api.groups.GroupsApi;
-import com.collarmc.client.api.groups.GroupsListener;
-import com.collarmc.client.api.location.LocationApi;
-import com.collarmc.client.api.location.LocationListener;
+import com.collarmc.client.api.groups.events.GroupInvitationEvent;
+import com.collarmc.client.api.groups.events.GroupJoinedEvent;
+import com.collarmc.client.api.location.events.LocationUpdatedEvent;
+import com.collarmc.client.api.location.events.PrivateWaypointsReceivedEvent;
+import com.collarmc.client.api.location.events.WaypointCreatedEvent;
+import com.collarmc.client.api.location.events.WaypointRemovedEvent;
+import com.collarmc.pounce.EventBus;
+import com.collarmc.pounce.Subscribe;
 import com.collarmc.tests.groups.GroupsTest;
 import com.collarmc.tests.junit.CollarTest;
 import org.junit.Assert;
@@ -28,20 +31,14 @@ public class LocationTest extends CollarTest {
 
     @Test
     public void startAndStopSharing() {
-        LocationSharingTestGroupListener aliceGroupListener = new LocationSharingTestGroupListener();
-        LocationSharingListener aliceLocationListener = new LocationSharingListener();
-        alicePlayer.collar.groups().subscribe(aliceGroupListener);
-        alicePlayer.collar.location().subscribe(aliceLocationListener);
+        LocationSharingTestGroupListener aliceGroupListener = new LocationSharingTestGroupListener(alicePlayer.eventBus);
+        LocationSharingListener aliceLocationListener = new LocationSharingListener(alicePlayer.eventBus);
 
-        LocationSharingTestGroupListener bobGroupListener = new LocationSharingTestGroupListener();
-        LocationSharingListener bobLocationListener = new LocationSharingListener();
-        bobPlayer.collar.groups().subscribe(bobGroupListener);
-        bobPlayer.collar.location().subscribe(bobLocationListener);
+        LocationSharingTestGroupListener bobGroupListener = new LocationSharingTestGroupListener(bobPlayer.eventBus);
+        LocationSharingListener bobLocationListener = new LocationSharingListener(bobPlayer.eventBus);
 
-        LocationSharingTestGroupListener eveGroupListener = new LocationSharingTestGroupListener();
-        LocationSharingListener eveLocationListener = new LocationSharingListener();
-        evePlayer.collar.groups().subscribe(eveGroupListener);
-        evePlayer.collar.location().subscribe(eveLocationListener);
+        LocationSharingTestGroupListener eveGroupListener = new LocationSharingTestGroupListener(evePlayer.eventBus);
+        LocationSharingListener eveLocationListener = new LocationSharingListener(evePlayer.eventBus);
 
         // Put alice and bob in a group
         alicePlayer.collar.groups().create("cute group", GroupType.PARTY, List.of(bobPlayerId));
@@ -107,8 +104,7 @@ public class LocationTest extends CollarTest {
 
     @Test
     public void privateWaypointsArriveOnConnect() {
-        PrivateWaypointListener listener = new PrivateWaypointListener();
-        alicePlayer.collar.location().subscribe(listener);
+        PrivateWaypointListener listener = new PrivateWaypointListener(alicePlayer.eventBus);
         Assert.assertTrue(alicePlayer.collar.location().privateWaypoints().isEmpty());
         Location location = new Location(-3000d, 64d, -3000d, Dimension.OVERWORLD);
         alicePlayer.collar.location().addWaypoint("My base", location);
@@ -128,18 +124,11 @@ public class LocationTest extends CollarTest {
     @Test
     public void groupWaypointsCreateAndDelete() {
 
-        GroupsTest.TestGroupsListener aliceListener = new GroupsTest.TestGroupsListener();
-        WaypointListener aliceWaypointListener = new WaypointListener();
-        alicePlayer.collar.groups().subscribe(aliceListener);
-        alicePlayer.collar.location().subscribe(aliceWaypointListener);
-        GroupsTest.TestGroupsListener bobListener = new GroupsTest.TestGroupsListener();
-        WaypointListener bobWaypointListener = new WaypointListener();
-        bobPlayer.collar.groups().subscribe(bobListener);
-        bobPlayer.collar.location().subscribe(bobWaypointListener);
-        GroupsTest.TestGroupsListener eveListener = new GroupsTest.TestGroupsListener();
-        WaypointListener eveWaypointListener = new WaypointListener();
-        evePlayer.collar.groups().subscribe(eveListener);
-        evePlayer.collar.location().subscribe(eveWaypointListener);
+        WaypointListener aliceWaypointListener = new WaypointListener(alicePlayer.eventBus);
+        GroupsTest.TestGroupsListener bobListener = new GroupsTest.TestGroupsListener(bobPlayer.eventBus);
+        WaypointListener bobWaypointListener = new WaypointListener(bobPlayer.eventBus);
+        GroupsTest.TestGroupsListener eveListener = new GroupsTest.TestGroupsListener(evePlayer.eventBus);
+        WaypointListener eveWaypointListener = new WaypointListener(evePlayer.eventBus);
 
         // Alice creates a new group with bob and eve
         alicePlayer.collar.groups().create("cute group", GroupType.PARTY, List.of(bobPlayerId, evePlayerId));
@@ -194,18 +183,11 @@ public class LocationTest extends CollarTest {
 
     @Test
     public void newGroupMemberReceivesWaypoints() throws Exception {
-        GroupsTest.TestGroupsListener aliceListener = new GroupsTest.TestGroupsListener();
-        WaypointListener aliceWaypointListener = new WaypointListener();
-        alicePlayer.collar.groups().subscribe(aliceListener);
-        alicePlayer.collar.location().subscribe(aliceWaypointListener);
-        GroupsTest.TestGroupsListener bobListener = new GroupsTest.TestGroupsListener();
-        WaypointListener bobWaypointListener = new WaypointListener();
-        bobPlayer.collar.groups().subscribe(bobListener);
-        bobPlayer.collar.location().subscribe(bobWaypointListener);
-        GroupsTest.TestGroupsListener eveListener = new GroupsTest.TestGroupsListener();
-        WaypointListener eveWaypointListener = new WaypointListener();
-        evePlayer.collar.groups().subscribe(eveListener);
-        evePlayer.collar.location().subscribe(eveWaypointListener);
+        WaypointListener aliceWaypointListener = new WaypointListener(alicePlayer.eventBus);
+        GroupsTest.TestGroupsListener bobListener = new GroupsTest.TestGroupsListener(bobPlayer.eventBus);
+        WaypointListener bobWaypointListener = new WaypointListener(bobPlayer.eventBus);
+        GroupsTest.TestGroupsListener eveListener = new GroupsTest.TestGroupsListener(evePlayer.eventBus);
+        WaypointListener eveWaypointListener = new WaypointListener(evePlayer.eventBus);
 
         // Alice creates a new group with bob and eve
         alicePlayer.collar.groups().create("cute group", GroupType.PARTY, List.of(bobPlayerId));
@@ -263,52 +245,68 @@ public class LocationTest extends CollarTest {
         }
     }
 
-    public static class WaypointListener implements LocationListener {
+    public static class WaypointListener {
         public Waypoint lastWaypointCreated;
         public Waypoint lastWaypointDeleted;
 
-        @Override
-        public void onWaypointCreated(Collar collar, LocationApi locationApi, Group group, Waypoint waypoint) {
-            this.lastWaypointCreated = waypoint;
+        public WaypointListener(EventBus eventBus) {
+            eventBus.subscribe(this);
         }
 
-        @Override
-        public void onWaypointRemoved(Collar collar, LocationApi locationApi, Group group, Waypoint waypoint) {
-            this.lastWaypointDeleted = waypoint;
+        @Subscribe
+        public void onWaypointCreated(WaypointCreatedEvent event) {
+            this.lastWaypointCreated = event.waypoint;
+        }
+
+        @Subscribe
+        public void onWaypointRemoved(WaypointRemovedEvent event) {
+            this.lastWaypointDeleted = event.waypoint;
         }
     }
 
-    public static class LocationSharingListener implements LocationListener {
+    public static class LocationSharingListener {
 
         public final LinkedList<Event> events = new LinkedList<>();
 
-        @Override
-        public void onLocationUpdated(Collar collar, LocationApi locationApi, Player player, Location location) {
-            events.add(new Event(player, location));
+        public LocationSharingListener(EventBus eventBus) {
+            eventBus.subscribe(this);
+        }
+
+        @Subscribe
+        public void onLocationUpdated(LocationUpdatedEvent event) {
+            events.add(new Event(event.player, event.location));
         }
     }
 
-    public static class LocationSharingTestGroupListener implements GroupsListener {
+    public static class LocationSharingTestGroupListener {
 
         public Group group;
 
-        @Override
-        public void onGroupJoined(Collar collar, GroupsApi groupsApi, Group group, Player player) {
-            this.group = group;
+        public LocationSharingTestGroupListener(EventBus eventBus) {
+            eventBus.subscribe(this);
         }
 
-        @Override
-        public void onGroupInvited(Collar collar, GroupsApi groupsApi, GroupInvitation invitation) {
-            groupsApi.accept(invitation);
+        @Subscribe
+        public void onGroupJoined(GroupJoinedEvent event) {
+            this.group = event.group;
+        }
+
+        @Subscribe
+        public void onGroupInvited(GroupInvitationEvent event) {
+            event.collar.groups().accept(event.invitation);
         }
     }
 
-    public static class PrivateWaypointListener implements LocationListener {
+    public static class PrivateWaypointListener {
         public Set<Waypoint> privateWaypoints;
 
-        @Override
-        public void onPrivateWaypointsReceived(Collar collar, LocationApi locationApi, Set<Waypoint> privateWaypoints) {
-            this.privateWaypoints = privateWaypoints;
+        public PrivateWaypointListener(EventBus eventBus) {
+            eventBus.subscribe(this);
+        }
+
+        @Subscribe
+        public void onPrivateWaypointsReceived(PrivateWaypointsReceivedEvent event) {
+            this.privateWaypoints = event.privateWaypoints;
         }
     }
 }

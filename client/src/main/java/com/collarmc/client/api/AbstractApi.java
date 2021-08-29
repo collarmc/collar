@@ -8,16 +8,13 @@ import com.collarmc.protocol.ProtocolResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public abstract class AbstractApi<T extends ApiListener> {
+public abstract class AbstractApi {
 
     private static final Logger LOGGER = LogManager.getLogger(AbstractApi.class.getName());
 
-    private final Set<T> listeners = new HashSet<>();
     protected final Collar collar;
     private final Supplier<ClientIdentityStore> identityStoreSupplier;
     protected final Consumer<ProtocolRequest> sender;
@@ -38,25 +35,6 @@ public abstract class AbstractApi<T extends ApiListener> {
 
     protected ClientIdentityStore identityStore() {
         return identityStoreSupplier.get();
-    }
-
-    public void subscribe(T listener) {
-        listeners.add(listener);
-    }
-
-    public void unsubscribe(T listener) {
-        listeners.remove(listener);
-    }
-
-    protected void fireListener(String name, Consumer<T> listener) {
-        LOGGER.info("Firing " + name + " listeners");
-        listeners.forEach(t -> {
-            try {
-                listener.accept(t);
-            } catch (Throwable e) {
-                LOGGER.info("Listener threw exception", e);
-            }
-        });
     }
 
     /**

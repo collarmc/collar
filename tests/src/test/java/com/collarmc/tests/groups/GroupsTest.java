@@ -6,13 +6,16 @@ import com.collarmc.api.groups.Member;
 import com.collarmc.api.groups.MembershipRole;
 import com.collarmc.api.messaging.Message;
 import com.collarmc.api.messaging.TextMessage;
-import com.collarmc.api.session.Player;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.groups.GroupInvitation;
-import com.collarmc.client.api.groups.GroupsApi;
-import com.collarmc.client.api.groups.GroupsListener;
-import com.collarmc.client.api.messaging.MessagingApi;
-import com.collarmc.client.api.messaging.MessagingListener;
+import com.collarmc.client.api.groups.events.GroupCreatedEvent;
+import com.collarmc.client.api.groups.events.GroupInvitationEvent;
+import com.collarmc.client.api.groups.events.GroupJoinedEvent;
+import com.collarmc.client.api.groups.events.GroupLeftEvent;
+import com.collarmc.client.api.messaging.events.GroupMessageReceivedEvent;
+import com.collarmc.client.api.messaging.events.GroupMessageSentEvent;
+import com.collarmc.pounce.EventBus;
+import com.collarmc.pounce.Subscribe;
 import com.collarmc.tests.junit.CollarTest;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,14 +34,9 @@ public class GroupsTest extends CollarTest {
 
     @Before
     public void createListeners() {
-        aliceListener = new TestGroupsListener();
-        alicePlayer.collar.groups().subscribe(aliceListener);
-
-        bobListener = new TestGroupsListener();
-        bobPlayer.collar.groups().subscribe(bobListener);
-
-        eveListener = new TestGroupsListener();
-        evePlayer.collar.groups().subscribe(eveListener);
+        aliceListener = new TestGroupsListener(alicePlayer.eventBus);
+        bobListener = new TestGroupsListener(bobPlayer.eventBus);
+        eveListener = new TestGroupsListener(evePlayer.eventBus);
     }
 
     @Test
@@ -222,14 +220,9 @@ public class GroupsTest extends CollarTest {
 
     @Test
     public void sendGroupMessage() {
-        MessagingListenerImpl aliceMessages = new MessagingListenerImpl();
-        alicePlayer.collar.messaging().subscribe(aliceMessages);
-
-        MessagingListenerImpl bobMessages = new MessagingListenerImpl();
-        bobPlayer.collar.messaging().subscribe(bobMessages);
-
-        MessagingListenerImpl eveMessages = new MessagingListenerImpl();
-        evePlayer.collar.messaging().subscribe(eveMessages);
+        MessagingListenerImpl aliceMessages = new MessagingListenerImpl(alicePlayer.eventBus);
+        MessagingListenerImpl bobMessages = new MessagingListenerImpl(bobPlayer.eventBus);
+        MessagingListenerImpl eveMessages = new MessagingListenerImpl(evePlayer.eventBus);
 
         // Alice creates a new group with bob and eve
         alicePlayer.collar.groups().create("cute group", GroupType.PARTY, List.of(bobPlayerId, evePlayerId));
@@ -258,50 +251,58 @@ public class GroupsTest extends CollarTest {
         waitForCondition("bobs last message was UwU", () -> bobMessages.lastReceivedMessage instanceof TextMessage && "UwU".equals(((TextMessage) bobMessages.lastReceivedMessage).content));
     }
 
-    public static class TestGroupsListener implements GroupsListener {
+    public static class TestGroupsListener {
 
         public boolean createdGroup = false;
         public boolean joinedGroup = false;
         public boolean leftGroup = false;
         public GroupInvitation invitation;
 
-        @Override
-        public void onGroupCreated(Collar collar, GroupsApi groupsApi, Group group) {
+        public TestGroupsListener(EventBus eventBus) {
+            eventBus.subscribe(this);
+        }
+
+        @Subscribe
+        public void onGroupCreated(GroupCreatedEvent ignored) {
             createdGroup = true;
         }
 
-        @Override
-        public void onGroupJoined(Collar collar, GroupsApi groupsApi, Group group, Player player) {
-            if (collar.player().equals(player)) {
+        @Subscribe
+        public void onGroupJoined(GroupJoinedEvent event) {
+            if (event.collar.player().equals(event.player)) {
                 joinedGroup = true;
             }
         }
 
-        @Override
-        public void onGroupLeft(Collar collar, GroupsApi groupsApi, Group group, Player player) {
-            if (collar.player().equals(player)) {
+        @Subscribe
+        public void onGroupLeft(GroupLeftEvent event) {
+            if (event.collar.player().equals(event.player)) {
                 leftGroup = true;
             }
         }
 
-        @Override
-        public void onGroupInvited(Collar collar, GroupsApi groupsApi, GroupInvitation invitation) {
-            this.invitation = invitation;
+        @Subscribe
+        public void onGroupInvited(GroupInvitationEvent event) {
+            this.invitation = event.invitation;
         }
     }
 
-    public static class MessagingListenerImpl implements MessagingListener {
+    public static class MessagingListenerImpl {
         public Message lastSentMessage;
         public Message lastReceivedMessage;
 
-        @Override
-        public void onGroupMessageSent(Collar collar, MessagingApi messagingApi, Group group, Message message) {
-            this.lastSentMessage = message;
+        public MessagingListenerImpl(EventBus eventBus) {
+            eventBus.subscribe(this);
         }
 
-        @Override
-        public void onGroupMessageReceived(Collar collar, MessagingApi messagingApi, Group group, Player sender, Message message) {
-            this.lastReceivedMessage = message;
+        @Subscribe
+        public void onGroupMessageSent(GroupMessageSentEvent event) {
+            this.lastSentMessage = event.message;
+        }
+
+        @Subscribe
+        public void onGroupMessageReceived(GroupMessageReceivedEvent event) {
+            this.lastReceivedMessage = event.message;
         }
     }
 }

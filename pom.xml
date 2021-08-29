@@ -154,6 +154,11 @@
                 <version>${project.version}</version>
                 <scope>compile</scope>
             </dependency>
+            <dependency>
+                <groupId>com.collarmc.pounce</groupId>
+                <artifactId>pounce</artifactId>
+                <version>0.5-SNAPSHOT</version>
+            </dependency>
             <!-- used by mc 1.12.2 -->
             <dependency>
                 <groupId>com.google.guava</groupId>

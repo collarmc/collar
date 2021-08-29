@@ -5,7 +5,6 @@ import com.collarmc.api.entities.EntityType;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.messaging.TextMessage;
 import com.collarmc.tests.groups.GroupsTest.MessagingListenerImpl;
-import com.collarmc.tests.groups.GroupsTest.TestGroupsListener;
 import com.collarmc.tests.junit.CollarTest;
 import com.collarmc.utils.Utils;
 import org.junit.Assert;
@@ -23,20 +22,9 @@ public class NearbyMessagingTest extends CollarTest {
 
     @Test
     public void sendNearbyMessage() {
-        TestGroupsListener aliceGroups = new TestGroupsListener();
-        MessagingListenerImpl aliceMessages = new MessagingListenerImpl();
-        alicePlayer.collar.messaging().subscribe(aliceMessages);
-        alicePlayer.collar.groups().subscribe(aliceGroups);
-
-        MessagingListenerImpl bobMessages = new MessagingListenerImpl();
-        TestGroupsListener bobGroups = new TestGroupsListener();
-        bobPlayer.collar.messaging().subscribe(bobMessages);
-        bobPlayer.collar.groups().subscribe(bobGroups);
-
-        MessagingListenerImpl eveMessages = new MessagingListenerImpl();
-        TestGroupsListener eveGroups = new TestGroupsListener();
-        evePlayer.collar.messaging().subscribe(eveMessages);
-        evePlayer.collar.groups().subscribe(eveGroups);
+        MessagingListenerImpl aliceMessages = new MessagingListenerImpl(alicePlayer.eventBus);
+        MessagingListenerImpl bobMessages = new MessagingListenerImpl(bobPlayer.eventBus);
+        MessagingListenerImpl eveMessages = new MessagingListenerImpl(evePlayer.eventBus);
 
         waitForCondition("Alice joined nearby group", () -> !alicePlayer.collar.groups().nearby().isEmpty());
         waitForCondition("Bob joined nearby group", () -> !bobPlayer.collar.groups().nearby().isEmpty());

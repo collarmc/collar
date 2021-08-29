@@ -9,13 +9,13 @@ import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.api.session.Player;
 import com.collarmc.client.CollarException.ConnectionException;
 import com.collarmc.client.api.AbstractApi;
-import com.collarmc.client.api.ApiListener;
 import com.collarmc.client.api.friends.FriendsApi;
 import com.collarmc.client.api.groups.GroupsApi;
 import com.collarmc.client.api.identity.IdentityApi;
 import com.collarmc.client.api.location.LocationApi;
 import com.collarmc.client.api.messaging.MessagingApi;
 import com.collarmc.client.api.textures.TexturesApi;
+import com.collarmc.client.events.*;
 import com.collarmc.client.minecraft.Ticks;
 import com.collarmc.client.sdht.SDHTApi;
 import com.collarmc.client.sdht.cipher.ContentCiphers;
@@ -76,7 +76,7 @@ public final class Collar {
     private final SDHTApi sdhtApi;
     private WebSocket webSocket;
     private volatile State state;
-    private final List<AbstractApi<? extends ApiListener>> apis;
+    private final List<AbstractApi> apis;
     private Consumer<ProtocolRequest> sender;
     private ClientIdentityStore identityStore;
     private final Supplier<ClientIdentityStore> identityStoreSupplier;
@@ -113,6 +113,7 @@ public final class Collar {
         this.apis.add(identityApi);
         this.apis.add(messagingApi);
         this.apis.add(sdhtApi);
+        this.apis.forEach(configuration.eventBus::subscribe);
     }
 
     /**
@@ -247,9 +248,10 @@ public final class Collar {
                 }
             }
             if (previousState != null) {
-                this.configuration.listener.onStateChanged(this, state);
+                configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
                 apis.forEach(abstractApi -> abstractApi.onStateChanged(state));
             }
+            configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
         }
     }
 
@@ -352,7 +354,7 @@ public final class Collar {
                 this.keepAlive.stop();
             }
             if (code != SessionStopReason.NORMAL_CLOSE.code) {
-                collar.configuration.listener.onError(collar, message);
+                collar.configuration.eventBus.dispatch(new CollarErrorEvent(collar, message, null));
             }
             if (state != State.DISCONNECTED) {
                 collar.changeState(State.DISCONNECTED);
@@ -374,13 +376,13 @@ public final class Collar {
                     ServerIdentity storedServerIdentity = identityStore.serverIdentity();
                     IdentifyResponse response = (IdentifyResponse) resp;
                     if (!response.identity.equals(storedServerIdentity)) {
-                        configuration.listener.onClientUntrusted(collar, identityStore);
-                        disconnect();
+                        configuration.eventBus.dispatch(new ClientUntrustedEvent(collar, identityStore));
+                        changeState(State.DISCONNECTED);
                         return;
                     }
                     if (!identityStore.verifyIdentityResponse(response)) {
-                        configuration.listener.onClientUntrusted(collar, identityStore);
-                        disconnect();
+                        configuration.eventBus.dispatch(new ClientUntrustedEvent(collar, identityStore));
+                        changeState(State.DISCONNECTED);
                         return;
                     }
                     MinecraftSession session = configuration.sessionSupplier.get();
@@ -405,13 +407,13 @@ public final class Collar {
                 } else if (resp instanceof RegisterClientResponse) {
                     RegisterClientResponse registerClientResponse = (RegisterClientResponse) resp;
                     LOGGER.info("RegisterDeviceResponse received with registration url " + ((RegisterClientResponse) resp).approvalUrl);
-                    configuration.listener.onConfirmDeviceRegistration(collar, registerClientResponse.approvalToken, registerClientResponse.approvalUrl);
+                    configuration.eventBus.dispatch(new ConfirmClientRegistrationEvent(collar, registerClientResponse.approvalToken, registerClientResponse.approvalUrl));
                 } else if (resp instanceof ClientRegisteredResponse) {
                     ClientRegisteredResponse response = (ClientRegisteredResponse) resp;
                     try {
                         sendRequest(webSocket, identityStore.processClientRegisteredResponse(response));
                     } catch (CipherException e) {
-                        configuration.listener.onError(collar, e);
+                        configuration.eventBus.dispatch(new CollarErrorEvent(collar, "Could not register client", e));
                         collar.changeState(State.DISCONNECTED);
                     }
                 } else if (resp instanceof StartSessionResponse) {
@@ -422,22 +424,22 @@ public final class Collar {
                     if (resp instanceof MojangVerificationFailedResponse) {
                         MojangVerificationFailedResponse response = (MojangVerificationFailedResponse) resp;
                         LOGGER.info("SessionFailedResponse with mojang session verification failure");
-                        configuration.listener.onMinecraftAccountVerificationFailed(collar, response.minecraftSession);
+                        configuration.eventBus.dispatch(new MinecraftAccountVerificationFailedEvent(collar, response.minecraftSession));
                     } else if (resp instanceof PrivateIdentityMismatchResponse) {
                         PrivateIdentityMismatchResponse response = (PrivateIdentityMismatchResponse) resp;
                         LOGGER.info("SessionFailedResponse with private identity mismatch");
-                        configuration.listener.onPrivateIdentityMismatch(collar, response.url);
+                        configuration.eventBus.dispatch(new PrivateIdentityMismatchEvent(collar, response.url));
                     } else if (resp instanceof SessionErrorResponse) {
                         SessionErrorResponse response = (SessionErrorResponse) resp;
                         String message = response.reason.message(response.message);
                         LOGGER.info("SessionFailedResponse Reason: " + message);
                         if (response.reason != SessionStopReason.NORMAL_CLOSE) {
-                            collar.configuration.listener.onError(collar, response.reason.message(response.message));
+                            collar.configuration.eventBus.dispatch(new CollarErrorEvent(collar, response.reason.message(response.message), null));
                         }
                     }
                     collar.changeState(State.DISCONNECTED);
                 } else {
-                    for (AbstractApi<?> api : collar.apis) {
+                    for (AbstractApi api : collar.apis) {
                         if (api.handleResponse(resp)) {
                             break;
                         }
@@ -466,7 +468,7 @@ public final class Collar {
                     }
                     bytes = packets().encodeEncrypted(serverIdentity, req);
                 } catch (InvalidCipherSessionException e) {
-                    collar.configuration.listener.onClientUntrusted(collar, identityStore);
+                    collar.configuration.eventBus.dispatch(new ClientUntrustedEvent(collar, identityStore));
                     return;
                 } catch (IOException | CipherException e) {
                     throw new IllegalStateException(e);

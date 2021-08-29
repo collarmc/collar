@@ -5,6 +5,7 @@ import com.collarmc.api.groups.*;
 import com.collarmc.api.session.Player;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
+import com.collarmc.client.api.groups.events.*;
 import com.collarmc.client.sdht.SDHTApi;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
@@ -20,7 +21,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public final class GroupsApi extends AbstractApi<GroupsListener> {
+public final class GroupsApi extends AbstractApi {
     private final ConcurrentMap<UUID, Group> groups = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, GroupSession> sessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, GroupInvitation> invitations = new ConcurrentHashMap<>();
@@ -191,12 +192,8 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                 Group group = response.group;
                 groups.put(response.group.id, group);
                 sessions.compute(response.group.id, (uuid, groupSession) -> identityStore().createSession(response.group));
-                fireListener("onGroupCreated", groupsListener -> {
-                    groupsListener.onGroupCreated(collar, this, group);
-                });
-                fireListener("onGroupJoined", groupsListener -> {
-                    groupsListener.onGroupJoined(collar, this, group, collar.player());
-                });
+                collar.configuration.eventBus.dispatch(new GroupCreatedEvent(collar, group));
+                collar.configuration.eventBus.dispatch(new GroupJoinedEvent(collar, group, collar.player()));
             }
             return true;
         } else if (resp instanceof JoinGroupResponse) {
@@ -217,9 +214,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                 sdhtApi.table.sync(response.group.id);
             }
             sessions.compute(response.group.id, (uuid, groupSession) -> identityStore().createSession(response.group));
-            fireListener("onGroupJoined", groupsListener -> {
-                groupsListener.onGroupJoined(collar, this, response.group, response.player);
-            });
+            collar.configuration.eventBus.dispatch(new GroupJoinedEvent(collar, response.group, response.player));
         } else if (resp instanceof LeaveGroupResponse) {
             synchronized (this) {
                 LeaveGroupResponse response = (LeaveGroupResponse)resp;
@@ -229,9 +224,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                     if (removed != null) {
                         sdhtApi.table.remove(removed.id);
                         sessions.remove(removed.id);
-                        fireListener("onGroupLeft", groupsListener -> {
-                            groupsListener.onGroupLeft(collar, this, removed, response.player);
-                        });
+                        collar.configuration.eventBus.dispatch(new GroupLeftEvent(collar, removed, response.player));
                     }
                     invitations.remove(response.groupId);
                 } else {
@@ -246,9 +239,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                             }
                             return null;
                         });
-                        fireListener("onGroupLeft", groupsListener -> {
-                            groupsListener.onGroupLeft(collar, this, updatedGroup, response.player);
-                        });
+                        collar.configuration.eventBus.dispatch(new GroupLeftEvent(collar, updatedGroup, response.player));
                     }
                 }
                 // Remove the group sessions of the player who left the group so that any messages they send
@@ -266,9 +257,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                     case GROUP:
                     case PARTY:
                         invitations.put(invitation.group, invitation);
-                        fireListener("onGroupInvited", groupsListener -> {
-                            groupsListener.onGroupInvited(collar, this, invitation);
-                        });
+                        collar.configuration.eventBus.dispatch(new GroupInvitationEvent(collar, invitation));
                         break;
                     case NEARBY:
                         // Auto-accept invitations from location typed groups
@@ -309,9 +298,7 @@ public final class GroupsApi extends AbstractApi<GroupsListener> {
                                     return groupSession.remove(response.player.identity);
                             }
                         });
-                        fireListener("onGroupMemberUpdated", groupsListener -> {
-                            groupsListener.onGroupMemberUpdated(collar, this, updatedGroup, response.player);
-                        });
+                        collar.configuration.eventBus.dispatch(new GroupMemberUpdatedEvent(collar, updatedGroup, response.player));
                     }
                 }
             }

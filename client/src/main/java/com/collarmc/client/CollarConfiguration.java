@@ -4,6 +4,7 @@ import com.collarmc.api.entities.Entity;
 import com.collarmc.api.location.Location;
 import com.collarmc.client.debug.DebugConfiguration;
 import com.collarmc.client.minecraft.Ticks;
+import com.collarmc.pounce.EventBus;
 import com.collarmc.security.mojang.MinecraftSession;
 import com.google.common.base.MoreObjects;
 import org.apache.logging.log4j.Level;
@@ -26,9 +27,9 @@ public final class CollarConfiguration {
     public final Supplier<MinecraftSession> sessionSupplier;
     public final Supplier<Set<Entity>> entitiesSupplier;
     public final HomeDirectory homeDirectory;
+    public final EventBus eventBus;
     public final DebugConfiguration debugConfiguration;
     public final URL collarServerURL;
-    public final CollarListener listener;
     public final Ticks ticks;
     public final boolean debugMode;
 
@@ -36,39 +37,31 @@ public final class CollarConfiguration {
                                 Supplier<MinecraftSession> sessionSupplier,
                                 Supplier<Set<Entity>> entitiesSupplier,
                                 HomeDirectory homeDirectory,
-                                DebugConfiguration debugConfiguration, URL collarServerURL,
-                                CollarListener listener,
+                                EventBus eventBus,
+                                DebugConfiguration debugConfiguration,
+                                URL collarServerURL,
                                 Ticks ticks) {
         this.playerLocation = playerLocation;
         this.sessionSupplier = sessionSupplier;
         this.entitiesSupplier = entitiesSupplier;
         this.homeDirectory = homeDirectory;
+        this.eventBus = eventBus;
         this.debugConfiguration = debugConfiguration;
         this.collarServerURL = collarServerURL;
-        this.listener = listener;
         this.ticks = ticks;
         this.debugMode = homeDirectory.debugFile().exists();
     }
 
     public final static class Builder {
-        private CollarListener listener;
         private Supplier<Location> playerLocation;
         private Supplier<MinecraftSession> sessionSupplier;
         private Supplier<Set<Entity>> entitiesSupplier;
         private File homeDirectory;
         private URL collarServerURL;
         private Ticks ticks;
+        private EventBus eventBus;
 
         public Builder() {}
-
-        /**
-         * @param listener for client lifecycle
-         * @return builder
-         */
-        public Builder withListener(CollarListener listener) {
-            this.listener = listener;
-            return this;
-        }
 
         /**
          * Use an alternate collar server
@@ -164,18 +157,28 @@ public final class CollarConfiguration {
         }
 
         /**
+         * Provides Collar with the mods event bus
+         * @param eventBus to use
+         * @return builder
+         */
+        public Builder withEventBus(EventBus eventBus) {
+            this.eventBus = eventBus;
+            return this;
+        }
+
+        /**
          * Builds the new configuration
          * @return configuration of the collar client
          * @throws IOException if collar state directories cant be created
          */
         public CollarConfiguration build() throws IOException {
             HomeDirectory homeDirectory = HomeDirectory.from(this.homeDirectory, collarServerURL.getHost());
-            Objects.requireNonNull(listener, "Collar listener was not set");
             Objects.requireNonNull(collarServerURL, "Collar server URL must be set");
             Objects.requireNonNull(homeDirectory, "Minecraft home directory must be set");
             Objects.requireNonNull(sessionSupplier, "Session supplier not set");
             Objects.requireNonNull(entitiesSupplier, "Entities supplier not set");
             Objects.requireNonNull(ticks, "Ticks not set");
+            Objects.requireNonNull(eventBus, "EventBus not set");
             DebugConfiguration debugging = DebugConfiguration.load(homeDirectory);
             if (debugging.serverUrl.isPresent()) {
                 LOGGER.info("Debug file has specified an alternate collar server url " + collarServerURL + " that will be used instead of " + this.collarServerURL);
@@ -200,9 +203,9 @@ public final class CollarConfiguration {
                     sessionSupplier,
                     entitiesSupplier,
                     homeDirectory,
+                    eventBus,
                     debugging,
                     collarServerURL,
-                    listener,
                     ticks
             );
         }

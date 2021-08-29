@@ -101,8 +101,7 @@ public class MessagingApi extends AbstractApi {
                         message = null;
                     }
                     if (message != null) {
-                        Message finalMessage = message;
-                        collar.configuration.eventBus.dispatch(new GroupMessageReceivedEvent(collar, group, message));
+                        collar.configuration.eventBus.dispatch(new GroupMessageReceivedEvent(collar, group, response.player, message));
                     }});
                 });
             } else if (response.sender != null) {

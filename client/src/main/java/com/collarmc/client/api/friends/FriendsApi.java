@@ -73,23 +73,23 @@ public class FriendsApi extends AbstractApi {
         if (resp instanceof GetFriendListResponse) {
             GetFriendListResponse response = (GetFriendListResponse) resp;
             response.friends.forEach(friend -> {
-                friends.put(friend.friend.id, friend);
+                friends.put(friend.profile.id, friend);
                 collar.configuration.eventBus.dispatch(new FriendChangedEvent(collar, friend));
             });
             return true;
         } else if (resp instanceof FriendChangedResponse) {
             FriendChangedResponse response = (FriendChangedResponse) resp;
-            friends.put(response.friend.friend.id, response.friend);
+            friends.put(response.friend.profile.id, response.friend);
             collar.configuration.eventBus.dispatch(new FriendChangedEvent(collar, response.friend));
             return true;
         } else if (resp instanceof AddFriendResponse) {
             AddFriendResponse response = (AddFriendResponse) resp;
-            friends.put(response.friend.friend.id, response.friend);
+            friends.put(response.friend.profile.id, response.friend);
             collar.configuration.eventBus.dispatch(new FriendAddedEvent(collar, response.friend));
             return true;
         } else if (resp instanceof RemoveFriendResponse) {
             RemoveFriendResponse response = (RemoveFriendResponse) resp;
-            Friend removed = friends.remove(response.friend);
+            Friend removed = friends.remove(response.friend.id);
             if (removed != null) {
                 collar.configuration.eventBus.dispatch(new FriendRemovedEvent(removed));
             }

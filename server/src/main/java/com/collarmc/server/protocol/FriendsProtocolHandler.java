@@ -46,7 +46,9 @@ public class FriendsProtocolHandler extends ProtocolHandler {
             RemoveFriendRequest request = (RemoveFriendRequest) req;
             findFriendProfileId(request.profile, request.player).ifPresentOrElse(friendProfileId -> {
                 UUID deletedFriend = services.friends.deleteFriend(caller, new FriendsService.DeleteFriendRequest(identity.id(), friendProfileId)).friend;
-                sender.accept(identity, new RemoveFriendResponse(deletedFriend));
+                services.profileCache.getById(deletedFriend).ifPresent(profile -> {
+                    sender.accept(identity, new RemoveFriendResponse(profile.toPublic()));
+                });
             }, () -> {
                 LOGGER.error("Could not add friend with profileId " + request.profile + " or playerId " + request.player);
             });

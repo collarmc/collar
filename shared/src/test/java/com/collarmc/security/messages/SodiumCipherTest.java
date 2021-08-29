@@ -73,7 +73,8 @@ public class SodiumCipherTest {
 
     @Test
     public void differentLengthMessages() throws Exception {
-        for (int i = 0; i < Short.MAX_VALUE; i++) {
+        int MAX_SIZE = Short.MAX_VALUE / 2;
+        for (int i = 0; i < MAX_SIZE; i++) {
             byte[] token = TokenGenerator.byteToken(i);
             byte[] bytes = bobCipher.encrypt(token, alice.publicKey());
             byte[] plainText = aliceCipher.decrypt(bytes, bob.publicKey());
@@ -102,5 +103,9 @@ public class SodiumCipherTest {
                 bytes[i]--;
             }
         }
+    }
+
+    static {
+        SodiumCipher.loadLibrary(false);
     }
 }

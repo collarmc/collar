@@ -1,9 +1,7 @@
 package com.collarmc.security;
 
 import com.collarmc.api.identity.ServerIdentity;
-import com.collarmc.security.CollarIdentity;
-import com.collarmc.security.PublicKey;
-import com.collarmc.security.TokenGenerator;
+import com.collarmc.security.messages.SodiumCipher;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -35,5 +33,9 @@ public class CollarIdentityTest {
         Assert.assertArrayEquals(identity.publicKey().key, newIdentity.publicKey().key);
         Assert.assertArrayEquals(identity.keyPair.getPublicKey().getAsBytes(), newIdentity.keyPair.getPublicKey().getAsBytes());
         Assert.assertArrayEquals(identity.keyPair.getSecretKey().getAsBytes(), newIdentity.keyPair.getSecretKey().getAsBytes());
+    }
+
+    static {
+        SodiumCipher.loadLibrary(false);
     }
 }

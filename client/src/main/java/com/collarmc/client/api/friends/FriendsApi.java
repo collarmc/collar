@@ -4,6 +4,9 @@ import com.collarmc.api.friends.Friend;
 import com.collarmc.client.Collar;
 import com.collarmc.client.Collar.State;
 import com.collarmc.client.api.AbstractApi;
+import com.collarmc.client.api.friends.events.FriendAddedEvent;
+import com.collarmc.client.api.friends.events.FriendChangedEvent;
+import com.collarmc.client.api.friends.events.FriendRemovedEvent;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
@@ -18,7 +21,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class FriendsApi extends AbstractApi<FriendsListener> {
+public class FriendsApi extends AbstractApi {
 
     private final ConcurrentMap<UUID, Friend> friends = new ConcurrentHashMap<>();
 
@@ -71,32 +74,24 @@ public class FriendsApi extends AbstractApi<FriendsListener> {
             GetFriendListResponse response = (GetFriendListResponse) resp;
             response.friends.forEach(friend -> {
                 friends.put(friend.friend.id, friend);
-                fireListener("onFriendStatusChanged", listener -> {
-                    listener.onFriendChanged(collar, this, friend);
-                });
+                collar.configuration.eventBus.dispatch(new FriendChangedEvent(collar, friend));
             });
             return true;
         } else if (resp instanceof FriendChangedResponse) {
             FriendChangedResponse response = (FriendChangedResponse) resp;
             friends.put(response.friend.friend.id, response.friend);
-            fireListener("onFriendChanged", listener -> {
-                listener.onFriendChanged(collar, this, response.friend);
-            });
+            collar.configuration.eventBus.dispatch(new FriendChangedEvent(collar, response.friend));
             return true;
         } else if (resp instanceof AddFriendResponse) {
             AddFriendResponse response = (AddFriendResponse) resp;
             friends.put(response.friend.friend.id, response.friend);
-            fireListener("onFriendAdded", listener -> {
-                listener.onFriendAdded(collar, this, response.friend);
-            });
+            collar.configuration.eventBus.dispatch(new FriendAddedEvent(collar, response.friend));
             return true;
         } else if (resp instanceof RemoveFriendResponse) {
             RemoveFriendResponse response = (RemoveFriendResponse) resp;
             Friend removed = friends.remove(response.friend);
             if (removed != null) {
-                fireListener("onFriendRemoved", listener -> {
-                    listener.onFriendRemoved(collar, this, removed);
-                });
+                collar.configuration.eventBus.dispatch(new FriendRemovedEvent(removed));
             }
             return true;
         }

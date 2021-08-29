@@ -14,6 +14,10 @@
             <artifactId>shared</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.collarmc.pounce</groupId>
+            <artifactId>pounce</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.stoyanr</groupId>
             <artifactId>evictor</artifactId>
         </dependency>

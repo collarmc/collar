@@ -25,6 +25,7 @@ public final class CollarServerRule implements TestRule {
     private Thread serverThread;
     private final Configuration configuration;
     public WebServer webServer;
+    public Services services;
 
     public CollarServerRule(Consumer<Services> setupState, Configuration configuration) {
         this.setupState = setupState;
@@ -35,6 +36,7 @@ public final class CollarServerRule implements TestRule {
     public Statement apply(Statement base, Description description) {
         Mongo.getTestingDatabase().drop();
         MongoDatabase db = Mongo.getTestingDatabase();
+        CollarServerRule serverRule = this;
         return new Statement() {
             @Override public void evaluate() throws Throwable {
                 stopServer();
@@ -42,6 +44,7 @@ public final class CollarServerRule implements TestRule {
                     webServer = new WebServer(configuration);
                     try {
                         webServer.start(services -> {
+                            serverRule.services = services;
                             setupState.accept(services);
                             started.set(true);
                         });

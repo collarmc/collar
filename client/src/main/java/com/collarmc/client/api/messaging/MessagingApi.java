@@ -6,6 +6,7 @@ import com.collarmc.api.session.Player;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
 import com.collarmc.client.api.identity.IdentityApi;
+import com.collarmc.client.api.messaging.events.*;
 import com.collarmc.client.security.ClientIdentityStore;
 import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
@@ -22,7 +23,7 @@ import java.io.IOException;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class MessagingApi extends AbstractApi<MessagingListener> {
+public class MessagingApi extends AbstractApi {
 
     private static final Logger LOGGER = LogManager.getLogger(MessagingApi.class.getName());
 
@@ -48,14 +49,10 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                             throw new IllegalStateException(collar.identity() + " could not process private message from " + sender, e);
                         }
                         this.sender.accept(new SendMessageRequest(sender.get(), null, messageBytes));
-                        fireListener("onPrivateMessageSent", listener -> {
-                            listener.onPrivateMessageSent(collar, this, player, message);
-                        });
+                        collar.configuration.eventBus.dispatch(new PrivateMessageSentEvent(collar, player, message));
                     } else {
                         LOGGER.info(collar.identity() + " could not locate identity for " + player + ". The private message was not sent.");
-                        fireListener("onPrivateMessageRecipientIsUntrusted", listener -> {
-                            listener.onPrivateMessageRecipientIsUntrusted(collar, this, player.minecraftPlayer, message);
-                        });
+                        collar.configuration.eventBus.dispatch(new UntrustedPrivateMessageReceivedEvent(collar, player.minecraftPlayer, message));
                     }
                 });
     }
@@ -76,9 +73,7 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
         }
         sender.accept(new SendMessageRequest(null, group.id, messageBytes));
         LOGGER.info(identity() + " sent message to group " + group.id);
-        fireListener("onGroupMessageSent", listener -> {
-            listener.onGroupMessageSent(collar, this, group, message);
-        });
+        collar.configuration.eventBus.dispatch(new GroupMessageSentEvent(collar, group, message));
     }
 
     /**
@@ -100,18 +95,15 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                         try {
                             byte[] contents = groupSession.decrypt(response.message, response.sender);
                             message = Utils.messagePackMapper().readValue(contents, Message.class);
-                        } catch (IOException | CipherException e) {
-                            // We don't throw an exception here in case someone is doing something naughty to disrupt the group and cause the client to exit
-                            LOGGER.error(collar.identity() + "could not read group message from group " + group.id, e);
-                            message = null;
-                        }
-                        if (message != null) {
-                            Message finalMessage = message;
-                            fireListener("onGroupMessageReceived", listener -> {
-                                listener.onGroupMessageReceived(collar, this, group, response.player, finalMessage);
-                            });
-                        }
-                    });
+                    } catch (IOException | CipherException e) {
+                        // We don't throw an exception here in case someone is doing something naughty to disrupt the group and cause the client to exit
+                        LOGGER.error(collar.identity() + "could not read group message from group " + group.id, e);
+                        message = null;
+                    }
+                    if (message != null) {
+                        Message finalMessage = message;
+                        collar.configuration.eventBus.dispatch(new GroupMessageReceivedEvent(collar, group, message));
+                    }});
                 });
             } else if (response.sender != null) {
                 Message message;
@@ -121,11 +113,9 @@ public class MessagingApi extends AbstractApi<MessagingListener> {
                 } catch (IOException | CipherException e) {
                     throw new IllegalStateException(collar.identity() + "Could not read private message from " + response.sender, e);
                 }
-                fireListener("onPrivateMessageReceived", listener -> {
-                    listener.onPrivateMessageReceived(collar, this, response.player, message);
-                });
+                collar.configuration.eventBus.dispatch(new PrivateMessageReceivedEvent(collar, response.player, message));
             } else {
-                LOGGER.warn( collar.identity() + "could not process message. It was not addressed correctly.");
+                LOGGER.warn( collar.identity() + " could not process message. It was not addressed correctly.");
             }
             return true;
         }

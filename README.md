@@ -10,7 +10,7 @@ Online services for minecraft mods.
 * Custom message formats for private, group and nearby messaging (build your own mod!)
 
 ## Security
-* Messaging and coordinte sharing is end to end encrypted using an implementation of [Signal's](https://signal.org) encryption protocol
+* Messaging and coordinte sharing is end to end encrypted using libsodium
 * Profile data, such as your private waypoints, is encrypted before sending to the collar server.
 
 ## Coming soon

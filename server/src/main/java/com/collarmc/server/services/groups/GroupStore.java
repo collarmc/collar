@@ -2,7 +2,6 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.groups.*;
 import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.api.session.Player;
 import com.collarmc.server.services.profiles.ProfileCache;

@@ -2,8 +2,8 @@ package com.collarmc.security;
 
 import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.io.IO;
-import com.collarmc.security.messages.IdentityStore;
 import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.IdentityStore;
 import com.collarmc.security.messages.SodiumCipher;
 import com.goterl.lazysodium.utils.Key;
 import com.goterl.lazysodium.utils.KeyPair;

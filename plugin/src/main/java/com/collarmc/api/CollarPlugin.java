@@ -1,7 +1,5 @@
 package com.collarmc.api;
 
-import com.collarmc.client.Collar;
-
 /**
  * Used for Minecraft mod's to hook into the collar core mod
  */
@@ -12,22 +10,4 @@ public interface CollarPlugin {
      * @param event of load
      */
     default void onLoad(CollarPluginLoadedEvent event) {}
-
-    /**
-     * When the client is connecting
-     * @param collar client instance
-     */
-    default void onConnecting(Collar collar) {}
-
-    /**
-     * When the client is connected
-     * @param collar client instance
-     */
-    default void onConnected(Collar collar) {}
-
-    /**
-     * When the client is disconnected
-     * @param collar client instance
-     */
-    default void onDisconnected(Collar collar) {}
 }

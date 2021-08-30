@@ -273,8 +273,8 @@ public final class Collar {
     }
 
     private void assertConnected() {
-        if (state != State.CONNECTED) {
-            throw new IllegalStateException("Cannot use the API until client is CONNECTED");
+        if (state != State.CONNECTED || state != State.DISCONNECTING) {
+            throw new IllegalStateException("Cannot use the API until client is CONNECTED or DISCONNECTING");
         }
     }
 

@@ -234,10 +234,14 @@ public final class Collar {
     private void changeState(State state) {
         State previousState = this.state;
         if (previousState != state) {
-            this.state = state;
             if (previousState != null && previousState != State.DISCONNECTED && state == State.DISCONNECTED) {
+                this.state = State.DISCONNECTING;
+                LOGGER.info("state changed from " + previousState + " to " + this.state);
+                configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
+                this.state = state;
                 disconnect();
             }
+            this.state = state;
             if (previousState == null) {
                 LOGGER.info("client in state " + state);
             } else {
@@ -491,6 +495,7 @@ public final class Collar {
     public enum State {
         DISCONNECTED,
         CONNECTING,
-        CONNECTED
+        CONNECTED,
+        DISCONNECTING;
     }
 }

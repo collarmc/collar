@@ -107,7 +107,6 @@ public final class FriendsService {
 
     @Nonnull
     private Friend mapFriend(Document document) {
-        UUID owner = document.get(FIELD_OWNER, UUID.class);
         UUID friend = document.get(FIELD_FRIEND, UUID.class);
         PublicProfile profile = profiles.getById(friend).orElseThrow(() -> new IllegalStateException("could not find profile " + friend)).toPublic();
         return sessions.getSessionStateByOwner(friend)

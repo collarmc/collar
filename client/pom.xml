@@ -14,7 +14,7 @@
             <artifactId>shared</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.collarmc.pounce</groupId>
+            <groupId>com.collarmc</groupId>
             <artifactId>pounce</artifactId>
         </dependency>
         <dependency>

@@ -157,7 +157,7 @@
             <dependency>
                 <groupId>com.collarmc.pounce</groupId>
                 <artifactId>pounce</artifactId>
-                <version>0.5-SNAPSHOT</version>
+                <version>0.5</version>
             </dependency>
             <!-- used by mc 1.12.2 -->
             <dependency>
@@ -290,8 +290,8 @@
 
     <repositories>
         <repository>
-            <id>jitpack</id>
-            <url>https://jitpack.io</url>
+            <id>collar</id>
+            <url>https://raw.githubusercontent.com/collarmc/maven/main/</url>
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
@@ -304,12 +304,4 @@
             </snapshots>
         </repository>
     </repositories>
-
-    <distributionManagement>
-        <repository>
-            <id>github</id>
-            <name>Github Collar</name>
-            <url>https://maven.pkg.github.com/team-catgirl/collar</url>
-        </repository>
-    </distributionManagement>
 </project>

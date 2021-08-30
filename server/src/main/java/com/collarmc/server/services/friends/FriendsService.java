@@ -10,6 +10,7 @@ import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.ArrayListMultimap;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -20,11 +21,9 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import javax.annotation.Nonnull;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.mongodb.client.model.Filters.and;
@@ -97,7 +96,13 @@ public final class FriendsService {
         } else {
             throw new BadRequestException("use either byOwner or byFriend");
         }
-        return new GetFriendsResponse(StreamSupport.stream(documents.map(this::mapFriend).spliterator(), false).collect(Collectors.toList()));
+        ArrayListMultimap<UUID, Friend> results = ArrayListMultimap.create();
+        documents.forEach(document -> {
+            UUID owner = document.get(FIELD_OWNER, UUID.class);
+            Friend friend = mapFriend(document);
+            results.put(owner, friend);
+        });
+        return new GetFriendsResponse(results.asMap());
     }
 
     @Nonnull
@@ -107,8 +112,8 @@ public final class FriendsService {
         PublicProfile profile = profiles.getById(friend).orElseThrow(() -> new IllegalStateException("could not find profile " + friend)).toPublic();
         return sessions.getSessionStateByOwner(friend)
                 .filter(sessionState -> sessionState.minecraftPlayer != null)
-                .map(sessionState -> new Friend(owner, profile, Status.ONLINE, Set.of(sessionState.minecraftPlayer.id)))
-                .orElse(new Friend(friend, profile, Status.OFFLINE, Set.of()));
+                .map(sessionState -> new Friend(profile, Status.ONLINE, Set.of(sessionState.minecraftPlayer.id)))
+                .orElse(new Friend(profile, Status.OFFLINE, Set.of()));
     }
 
     public static final class CreateFriendRequest {
@@ -167,9 +172,9 @@ public final class FriendsService {
 
     public static final class GetFriendsResponse {
         @JsonProperty("friends")
-        public final List<Friend> friends;
+        public final Map<UUID, Collection<Friend>> friends;
 
-        public GetFriendsResponse(@JsonProperty("friends") List<Friend> friends) {
+        public GetFriendsResponse(@JsonProperty("friends") Map<UUID, Collection<Friend>> friends) {
             this.friends = friends;
         }
     }

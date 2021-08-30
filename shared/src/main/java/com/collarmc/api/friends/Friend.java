@@ -12,11 +12,6 @@ import java.util.UUID;
  * Represents a Friend
  */
 public final class Friend {
-    /** The profile that owns this record */
-    @Deprecated
-    @JsonProperty("owner")
-    public final UUID owner;
-
     /**
      * Who the owner is friends with
      */
@@ -37,11 +32,9 @@ public final class Friend {
     public final Set<UUID> playerIds;
 
     @JsonCreator
-    public Friend(@JsonProperty("owner") UUID owner,
-                  @JsonProperty("profile") PublicProfile profile,
+    public Friend(@JsonProperty("profile") PublicProfile profile,
                   @JsonProperty("status") Status status,
                   @JsonProperty("playerIds") Set<UUID> playerIds) {
-        this.owner = owner;
         this.profile = profile;
         this.status = status;
         this.playerIds = playerIds;
@@ -51,12 +44,12 @@ public final class Friend {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Friend friend1 = (Friend) o;
-        return owner.equals(friend1.owner) && profile.equals(friend1.profile);
+        Friend friend = (Friend) o;
+        return profile.equals(friend.profile);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(owner, profile);
+        return Objects.hash(profile);
     }
 }

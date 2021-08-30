@@ -13,13 +13,14 @@ import java.util.UUID;
  */
 public final class Friend {
     /** The profile that owns this record */
+    @Deprecated
     @JsonProperty("owner")
     public final UUID owner;
 
     /**
      * Who the owner is friends with
      */
-    @JsonProperty("friend")
+    @JsonProperty("profile")
     public final PublicProfile profile;
 
     /**
@@ -37,7 +38,7 @@ public final class Friend {
 
     @JsonCreator
     public Friend(@JsonProperty("owner") UUID owner,
-                  @JsonProperty("friendsWith") PublicProfile profile,
+                  @JsonProperty("profile") PublicProfile profile,
                   @JsonProperty("status") Status status,
                   @JsonProperty("playerIds") Set<UUID> playerIds) {
         this.owner = owner;

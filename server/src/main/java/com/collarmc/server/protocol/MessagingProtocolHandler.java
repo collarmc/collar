@@ -30,7 +30,9 @@ public class MessagingProtocolHandler extends ProtocolHandler {
                 services.groups.createMessages(identity, request).ifPresent(response -> sender.accept(null, response));
             } else if (request.recipient != null) {
                 services.sessions.findPlayer(identity).ifPresentOrElse(player -> {
-                    sender.accept(request.recipient, new SendMessageResponse(identity, null, player, request.message));
+                    services.profileCache.getById(player.identity.id()).ifPresent(profile -> {
+                        sender.accept(request.recipient, new SendMessageResponse(identity, null, player, profile.toPublic(), request.message));
+                    });
                 }, () -> {
                     LOGGER.info("could not find player for " + identity);
                 });

@@ -93,7 +93,7 @@ public final class GroupService {
                     throw new IllegalStateException(identity + " is not owner of group " + theGroup.id);
                 }
                 store.delete(theGroup.id);
-                return createMemberMessages(theGroup, member -> true, (theIdentity, thePlayer, updatedMember) -> new LeaveGroupResponse(theGroup.id, null, null));
+                return createMemberMessages(theGroup, member -> true, (thePlayer, updatedMember) -> new LeaveGroupResponse(theGroup.id, null, null));
             });
         }
         return Optional.empty();
@@ -137,7 +137,7 @@ public final class GroupService {
             BatchProtocolResponse updates = createMemberMessages(
                     group,
                     member -> member.membershipState.equals(MembershipState.ACCEPTED) && !member.player.equals(player),
-                    ((memberIdentity, memberPlayer, updatedMember) -> {
+                    ((memberPlayer, updatedMember) -> {
                         // As they are not playing any more, we need to clear their minecraft player and send it to all members
                         Player clearedPlayer = new Player(player.identity, null);
                         return new UpdateGroupMemberResponse(finalGroup.id, clearedPlayer, profile, Status.OFFLINE, null);
@@ -170,7 +170,7 @@ public final class GroupService {
             BatchProtocolResponse updates = createMemberMessages(
                     group,
                     member -> member.membershipState.equals(MembershipState.ACCEPTED),
-                    ((theIdentity, player, updatedMember) -> new JoinGroupResponse(finalGroup, identity, player)));
+                    ((player, updatedMember) -> new JoinGroupResponse(finalGroup, identity, player)));
             response.concat(updates);
             updateState(group);
             return response;
@@ -189,7 +189,7 @@ public final class GroupService {
         }
         return store.findGroup(req.groupId).map(group -> {
             Group finalGroup = group;
-            BatchProtocolResponse response = createMemberMessages(group, member -> true, (theIdentity, player, member) -> new LeaveGroupResponse(finalGroup.id, identity, sender.get()));
+            BatchProtocolResponse response = createMemberMessages(group, member -> true, (player, member) -> new LeaveGroupResponse(finalGroup.id, identity, sender.get()));
             group = store.removeMember(group.id, sender.get().identity.id()).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
             updateState(group);
             return response;
@@ -247,7 +247,7 @@ public final class GroupService {
             if (identityToRemove.isEmpty()) {
                 return null;
             }
-            BatchProtocolResponse response = createMemberMessages(group, member -> true, (theIdentity, thePlayer, member) -> new LeaveGroupResponse(req.groupId, identityToRemove.get(), playerToRemove));
+            BatchProtocolResponse response = createMemberMessages(group, member -> true, (thePlayer, member) -> new LeaveGroupResponse(req.groupId, identityToRemove.get(), playerToRemove));
             group = store.removeMember(group.id, playerToRemove.identity.id()).orElseThrow(() -> new IllegalStateException("could not reload group " + req.groupId));
             updateState(group);
             return response;
@@ -269,9 +269,10 @@ public final class GroupService {
         return store.findGroup(req.group).map(group -> createMemberMessages(
                 group,
                 member -> member.membershipState.equals(MembershipState.ACCEPTED) && !member.player.equals(player.get()) && envelope.messages.containsKey(member.player.identity.id()),
-                (theIdentity, thePlayer, member) -> {
-                    GroupMessage message = envelope.messages.get(theIdentity.id());
-                    return new SendMessageResponse(identity, group.id, thePlayer, message.contents);
+                (thePlayer, member) -> {
+                    GroupMessage message = envelope.messages.get(thePlayer.identity.id());
+                    Profile profile = profiles.getById(thePlayer.identity.id()).orElseThrow(() -> new IllegalStateException("could not find profile " + thePlayer.identity.id()));
+                    return new SendMessageResponse(identity, group.id, thePlayer, profile.toPublic(), message.contents);
                 })
         );
     }
@@ -363,7 +364,7 @@ public final class GroupService {
             BatchProtocolResponse removeOldOwnerMessages = createMemberMessages(
                     group,
                     member -> true,
-                    (theIdentity, player, updatedMember) -> {
+                    (player, updatedMember) -> {
                         PublicProfile profile = profiles.getById(player.identity.id()).orElseThrow(() -> new IllegalStateException("cannot find profile " + player.identity.id())).toPublic();
                         return new UpdateGroupMemberResponse(groupId, newOwner.player, profile, player.status, MembershipRole.OWNER);
                     }
@@ -374,7 +375,7 @@ public final class GroupService {
             BatchProtocolResponse addNewOwnerMessages = createMemberMessages(
                     group,
                     member -> true,
-                    (theIdentity, player, updatedMember) -> {
+                    (player, updatedMember) -> {
                         PublicProfile profile = profiles.getById(player.identity.id()).orElseThrow(() -> new IllegalStateException("cannot find profile " + player.identity.id())).toPublic();
                         return new UpdateGroupMemberResponse(groupId, currentPlayer.get(), profile, player.status, MembershipRole.MEMBER);
                     });
@@ -393,13 +394,10 @@ public final class GroupService {
     public BatchProtocolResponse createMemberMessages(Group group, Predicate<Member> filter, MessageCreator messageCreator) {
         final Map<ProtocolResponse, ClientIdentity> responses = new HashMap<>();
         for (Member member : group.members) {
-            if (!filter.test(member) && member.player != null) {
-                continue;
+            if (filter.test(member) && member.player != null) {
+                ProtocolResponse resp = messageCreator.create(member.player, member);
+                responses.put(resp, member.player.identity);
             }
-            sessions.getIdentity(member.player).ifPresent(clientIdentity -> {
-                ProtocolResponse resp = messageCreator.create(clientIdentity, member.player, member);
-                responses.put(resp, clientIdentity);
-            });
         }
         return new BatchProtocolResponse(responses);
     }
@@ -409,6 +407,6 @@ public final class GroupService {
     }
 
     public interface MessageCreator {
-        ProtocolResponse create(ClientIdentity identity, Player player, Member updatedMember);
+        ProtocolResponse create(Player player, Member updatedMember);
     }
 }

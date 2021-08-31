@@ -55,7 +55,6 @@ public class WebServer {
 
     public void start(Consumer<Services> callback) throws Exception {
         LOGGER.info("Reticulating splines...");
-        SodiumCipher.loadLibrary(true);
         // Set http port
         port(configuration.httpPort);
         // Services

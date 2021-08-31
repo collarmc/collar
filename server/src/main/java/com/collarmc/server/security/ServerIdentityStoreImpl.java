@@ -4,6 +4,7 @@ import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.CollarSodium;
 import com.collarmc.security.messages.SodiumCipher;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -21,8 +22,10 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
     private static final Logger LOGGER = LogManager.getLogger(ServerIdentityStoreImpl.class);
 
     private final CollarIdentity collarIdentity;
+    private final CollarSodium sodium;
 
-    public ServerIdentityStoreImpl(MongoDatabase database) throws CipherException {
+    public ServerIdentityStoreImpl(MongoDatabase database, CollarSodium sodium) throws CipherException {
+        this.sodium = sodium;
         MongoCollection<Document> serverIdentityCollection = database.getCollection("server_identity");
         MongoCursor<Document> iterator = serverIdentityCollection.find().iterator();
         if (iterator.hasNext()) {
@@ -33,7 +36,7 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
             collarIdentity = CollarIdentity.serverIdentityFrom(serverId, publicKey.getData(), privateKey.getData());
             LOGGER.info("Found server identity " + collarIdentity.id);
         } else {
-            collarIdentity = CollarIdentity.createServerIdentity();
+            collarIdentity = CollarIdentity.createServerIdentity(sodium);
             Document document = new Document(Map.of(
                     "serverId", collarIdentity.id,
                     "publicKey", new Binary(collarIdentity.keyPair.getPublicKey().getAsBytes()),
@@ -51,6 +54,6 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
 
     @Override
     public Cipher cipher() {
-        return new SodiumCipher(collarIdentity.keyPair, true);
+        return new SodiumCipher(this.sodium, collarIdentity.keyPair, true);
     }
 }

@@ -132,10 +132,6 @@
                             <shadedPattern>com.collarmc.libs.com.google.gson</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>net.chris54721</pattern>
-                            <shadedPattern>com.collarmc.libs.net.chris54721</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>com.stoyanr.evict</pattern>
                             <shadedPattern>com.collarmc.libs.com.stoyanr.evict</shadedPattern>
                         </relocation>
@@ -144,8 +140,8 @@
                             <shadedPattern>com.collarmc.libs.org.msgpack</shadedPattern>
                         </relocation>
                         <relocation>
-                            <pattern>google.protobuf</pattern>
-                            <shadedPattern>com.collarmc.libs.google.protobuf</shadedPattern>
+                            <pattern>org.slf4j</pattern>
+                            <shadedPattern>com.collarmc.libs.org.slf4j</shadedPattern>
                         </relocation>
                     </relocations>
                 </configuration>

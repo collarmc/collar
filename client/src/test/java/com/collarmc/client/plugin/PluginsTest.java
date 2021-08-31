@@ -16,6 +16,10 @@ public class PluginsTest {
         Optional<CollarPlugin> collarPlugin = plugins.find("MyModId", "MyCollarPlugin");
         Assert.assertTrue(collarPlugin.isPresent());
 
+        MyCutePlugin cutePlugin = (MyCutePlugin) collarPlugin.get();
+        Assert.assertTrue(cutePlugin.loaded);
+        Assert.assertEquals(eventBus, cutePlugin.eventBus);
+
         Optional<CollarPlugin> notFoundById = plugins.find("MyModId111", "MyCollarPlugin");
         Assert.assertFalse(notFoundById.isPresent());
 

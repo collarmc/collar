@@ -1,0 +1,6 @@
+{
+  "id" : "MyModId",
+  "entrypoints": {
+    "MyCollarPlugin" : "com.collarmc.client.plugin.MyCutePlugin"
+  }
+}

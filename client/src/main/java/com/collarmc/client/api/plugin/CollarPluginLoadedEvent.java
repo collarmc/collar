@@ -1,4 +1,4 @@
-package com.collarmc.api;
+package com.collarmc.client.api.plugin;
 
 import com.collarmc.pounce.EventBus;
 

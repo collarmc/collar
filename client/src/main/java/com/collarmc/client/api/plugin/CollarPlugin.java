@@ -1,4 +1,4 @@
-package com.collarmc.api;
+package com.collarmc.client.api.plugin;
 
 /**
  * Used for Minecraft mod's to hook into the collar core mod

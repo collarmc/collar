@@ -4,8 +4,6 @@ import com.collarmc.client.api.plugin.CollarPlugin;
 import com.collarmc.client.api.plugin.CollarPluginLoadedEvent;
 import com.collarmc.pounce.EventBus;
 import com.collarmc.utils.Utils;
-import com.google.common.collect.Multimap;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

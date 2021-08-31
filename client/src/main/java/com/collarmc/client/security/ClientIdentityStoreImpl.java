@@ -38,6 +38,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     private byte[] token = TokenGenerator.byteToken(256);
 
     public ClientIdentityStoreImpl(HomeDirectory homeDirectory) throws IOException, CipherException {
+        SodiumCipher.loadLibrary(false);
         this.homeDirectory = homeDirectory;
     }
 

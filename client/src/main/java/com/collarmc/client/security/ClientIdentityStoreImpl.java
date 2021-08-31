@@ -13,10 +13,7 @@ import com.collarmc.protocol.identity.IdentifyRequest;
 import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.TokenGenerator;
-import com.collarmc.security.messages.Cipher;
-import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.messages.GroupSession;
-import com.collarmc.security.messages.SodiumCipher;
+import com.collarmc.security.messages.*;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,12 +30,14 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     private static final Logger LOGGER = LogManager.getLogger(ClientIdentityStoreImpl.class);
     private final GroupSessionManager groupSessionManager = new GroupSessionManager(this);
     private final HomeDirectory homeDirectory;
+    private final CollarSodium sodium;
     private CollarIdentity collarIdentity;
 
     private byte[] token = TokenGenerator.byteToken(256);
 
-    public ClientIdentityStoreImpl(HomeDirectory homeDirectory) throws IOException, CipherException {
+    public ClientIdentityStoreImpl(HomeDirectory homeDirectory, CollarSodium sodium) throws IOException, CipherException {
         this.homeDirectory = homeDirectory;
+        this.sodium = sodium;
     }
 
     @Override
@@ -95,12 +94,12 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
 
     @Override
     public Cipher cipher() {
-        return new SodiumCipher(collarIdentity.keyPair, false);
+        return new SodiumCipher(this.sodium, collarIdentity.keyPair, false);
     }
 
     @Override
     public IdentifyRequest processClientRegisteredResponse(ClientRegisteredResponse response) throws CipherException {
-        collarIdentity = CollarIdentity.createClientIdentity(response.profile.id, response.serverIdentity);
+        collarIdentity = CollarIdentity.createClientIdentity(response.profile.id, response.serverIdentity, this.sodium);
         try {
             AtomicFile.write(getIdentityFile(homeDirectory), theFile -> IO.writeBytesToFile(theFile, collarIdentity.serialize()));
         } catch (IOException e) {

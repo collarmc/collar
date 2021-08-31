@@ -21,19 +21,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 
+import static java.util.Objects.isNull;
+
 public final class SodiumCipher implements Cipher {
 
     private static final Logger LOGGER = LogManager.getLogger(SodiumCipher.class);
-
     private static boolean LOADED = false;
-
-    private static CollarLazySodiumJava SODIUM;
-
     private final KeyPair keyPair;
+    private CollarSodium sodium;
 
-    public SodiumCipher(KeyPair keyPair, boolean server) {
+    public SodiumCipher(CollarSodium sodium, KeyPair keyPair, boolean server) {
+        this.sodium = sodium;
         this.keyPair = keyPair;
-        loadLibrary(server);
     }
 
     @Override
@@ -68,13 +67,13 @@ public final class SodiumCipher implements Cipher {
 
     private byte[] encrypt(byte[] plain, byte[] recipient) throws CipherException {
         byte[] sig = new byte[Sign.BYTES + plain.length];
-        if (!SODIUM.cryptoSign(sig, plain, plain.length, keyPair.getSecretKey().getAsBytes())) {
+        if (!sodium.getSodium().cryptoSign(sig, plain, plain.length, keyPair.getSecretKey().getAsBytes())) {
             throw new CipherException("Could not sign message.");
         }
         SignedMessage signedMessage = new SignedMessage(sig, plain);
         byte[] signedMessageBytes = signedMessage.serialize();
         byte[] cipherTextBytes = new byte[Box.SEALBYTES + signedMessageBytes.length];
-        if (!SODIUM.cryptoBoxSeal(cipherTextBytes, signedMessageBytes, signedMessageBytes.length, recipient)) {
+        if (!sodium.getSodium().cryptoBoxSeal(cipherTextBytes, signedMessageBytes, signedMessageBytes.length, recipient)) {
             throw new CipherException("Could not encrypt message.");
         }
         return cipherTextBytes;
@@ -82,78 +81,13 @@ public final class SodiumCipher implements Cipher {
 
     private byte[] decrypt(byte[] message, byte[] sender) throws CipherException {
         byte[] messageBytes = new byte[message.length - Box.SEALBYTES];
-        if (!SODIUM.cryptoBoxSealOpen(messageBytes, message, message.length, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes())) {
+        if (!sodium.getSodium().cryptoBoxSealOpen(messageBytes, message, message.length, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes())) {
             throw new CipherException("Could not decrypt signed message.");
         }
         SignedMessage signedMessage = new SignedMessage(messageBytes);
-        if (SODIUM.cryptoSignOpen(signedMessage.signature, signedMessage.contents, signedMessage.contents.length, sender)) {
+        if (sodium.getSodium().cryptoSignOpen(signedMessage.signature, signedMessage.contents, signedMessage.contents.length, sender)) {
             throw new CipherException("Could not verify signed message.");
         }
         return signedMessage.contents;
-    }
-
-    public static KeyPair generateKeyPair() throws CipherException {
-        try {
-            return SODIUM.cryptoBoxKeypair();
-        } catch (SodiumException e) {
-            throw new CipherException("Could not generate key pair", e);
-        }
-    }
-
-    public static class CollarLazySodiumJava extends LazySodiumJava {
-
-        private final CollarSodiumJava sodium;
-
-        public CollarLazySodiumJava(CollarSodiumJava sodium) {
-            super(sodium);
-            this.sodium = sodium;
-        }
-
-        public String sodiumVersion() {
-            return sodium.sodium_version_string();
-        }
-    }
-
-    public static class CollarSodiumJava extends SodiumJava {
-        public CollarSodiumJava(String absolutePath) {
-            super(absolutePath);
-            new LibraryLoader(Collections.singletonList(CollarSodiumJava.class)).loadAbsolutePath(absolutePath);
-        }
-
-        public native String sodium_version_string();
-    }
-
-    @SuppressFBWarnings("DMI_HARDCODED_ABSOLUTE_FILENAME")
-    public static void loadLibrary(boolean server) {
-        if (LOADED) {
-            return;
-        }
-        if (server && Platform.is64Bit() && Platform.isLinux()) {
-            File file = new File("/usr/lib/x86_64-linux-gnu/libsodium.so.23");
-            if (!file.exists()) {
-                throw new IllegalStateException("libsodium is not installed");
-            }
-            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(file.getAbsolutePath()));
-        } else {
-            String path = LibraryLoader.getSodiumPathInResources();
-            File lib;
-            try {
-                lib = File.createTempFile("sodium", ".lib");
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            try (InputStream is = SodiumCipher.class.getResourceAsStream("/" + path);
-                 FileOutputStream os = new FileOutputStream(lib)) {
-                if (is == null) {
-                    throw new IllegalStateException("could not find " + path);
-                }
-                ByteStreams.copy(is, os);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            SODIUM = new CollarLazySodiumJava(new CollarSodiumJava(lib.getAbsolutePath()));
-        }
-        LOADED = true;
-        LOGGER.info("Sodium version: " + SODIUM.sodiumVersion());
     }
 }

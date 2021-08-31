@@ -43,6 +43,7 @@ import com.collarmc.protocol.session.StartSessionRequest;
 import com.collarmc.protocol.session.StartSessionResponse;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.CipherException.InvalidCipherSessionException;
+import com.collarmc.security.messages.CollarSodium;
 import com.collarmc.security.mojang.MinecraftSession;
 import com.collarmc.security.mojang.Mojang;
 import com.collarmc.utils.Utils;
@@ -74,6 +75,7 @@ public final class Collar {
     private final IdentityApi identityApi;
     private final MessagingApi messagingApi;
     private final SDHTApi sdhtApi;
+    private final CollarSodium sodium;
     private WebSocket webSocket;
     private volatile State state;
     private final List<AbstractApi> apis;
@@ -92,6 +94,7 @@ public final class Collar {
         this.recordCiphers = new ContentCiphers();
         this.apis = new ArrayList<>();
         this.sdhtApi = new SDHTApi(this, identityStoreSupplier, sender, recordCiphers, this.ticks, this.configuration.homeDirectory.dhtState());
+        this.sodium = new CollarSodium(false);
         this.groupsApi = new GroupsApi(this, identityStoreSupplier, sender, sdhtApi);
         this.recordCiphers.register(new GroupContentCipher(groupsApi, identityStoreSupplier));
         this.locationApi = new LocationApi(this,
@@ -340,7 +343,7 @@ public final class Collar {
             };
             LOGGER.info("Connection established");
             try {
-                identityStore = new ClientIdentityStoreImpl(configuration.homeDirectory);
+                identityStore = new ClientIdentityStoreImpl(configuration.homeDirectory, this.collar.sodium);
             } catch (IOException | CipherException e) {
                 throw new IllegalStateException("could not load identity store");
             }

@@ -2,9 +2,7 @@ package com.collarmc.security;
 
 import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.io.IO;
-import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.messages.IdentityStore;
-import com.collarmc.security.messages.SodiumCipher;
+import com.collarmc.security.messages.*;
 import com.goterl.lazysodium.utils.Key;
 import com.goterl.lazysodium.utils.KeyPair;
 
@@ -83,12 +81,12 @@ public final class CollarIdentity {
         }
     }
 
-    public static CollarIdentity createClientIdentity(UUID profile, ServerIdentity serverIdentity) throws CipherException {
-        return new CollarIdentity(profile, serverIdentity, SodiumCipher.generateKeyPair());
+    public static CollarIdentity createClientIdentity(UUID profile, ServerIdentity serverIdentity, CollarSodium sodium) throws CipherException {
+        return new CollarIdentity(profile, serverIdentity, sodium.generateKeyPair());
     }
 
-    public static CollarIdentity createServerIdentity() throws CipherException {
-        return new CollarIdentity(UUID.randomUUID(), null, SodiumCipher.generateKeyPair());
+    public static CollarIdentity createServerIdentity(CollarSodium sodium) throws CipherException {
+        return new CollarIdentity(UUID.randomUUID(), null, sodium.generateKeyPair());
     }
 
     public static CollarIdentity serverIdentityFrom(UUID profile, byte[] publicKey, byte[] privateKey) {

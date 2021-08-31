@@ -25,12 +25,10 @@ import static java.util.Objects.isNull;
 
 public final class SodiumCipher implements Cipher {
 
-    private static final Logger LOGGER = LogManager.getLogger(SodiumCipher.class);
-    private static boolean LOADED = false;
     private final KeyPair keyPair;
-    private CollarSodium sodium;
+    private final CollarSodium sodium;
 
-    public SodiumCipher(CollarSodium sodium, KeyPair keyPair, boolean server) {
+    public SodiumCipher(CollarSodium sodium, KeyPair keyPair) {
         this.sodium = sodium;
         this.keyPair = keyPair;
     }

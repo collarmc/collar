@@ -2,6 +2,7 @@ package com.collarmc.server.security;
 
 import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.TokenGenerator;
+import com.collarmc.security.messages.CollarSodium;
 import com.collarmc.security.messages.SodiumCipher;
 import com.collarmc.server.junit.MongoDatabaseTestRule;
 import org.junit.Assert;
@@ -16,8 +17,9 @@ public class ServerIdentityStoreImplTest {
 
     @Test
     public void roundTrip() throws Exception {
-        ServerIdentityStoreImpl identityStore = new ServerIdentityStoreImpl(dbRule.db);
-        ServerIdentityStoreImpl identityStore2 = new ServerIdentityStoreImpl(dbRule.db);
+        CollarSodium sodium = new CollarSodium(false);
+        ServerIdentityStoreImpl identityStore = new ServerIdentityStoreImpl(dbRule.db, sodium);
+        ServerIdentityStoreImpl identityStore2 = new ServerIdentityStoreImpl(dbRule.db, sodium);
         Assert.assertEquals(identityStore.identity(), identityStore2.identity());
         Assert.assertEquals(identityStore.identity().id(), identityStore2.identity().id());
         Assert.assertArrayEquals(identityStore.identity().publicKey().key, identityStore2.identity().publicKey().key);
@@ -25,10 +27,11 @@ public class ServerIdentityStoreImplTest {
 
     @Test
     public void cipher() throws Exception {
+        CollarSodium sodium = new CollarSodium(false);
         // Load server once to make sure we create the identity
-        new ServerIdentityStoreImpl(dbRule.db);
+        new ServerIdentityStoreImpl(dbRule.db, sodium);
         // Load server identity from the database again
-        ServerIdentityStoreImpl server = new ServerIdentityStoreImpl(dbRule.db);
+        ServerIdentityStoreImpl server = new ServerIdentityStoreImpl(dbRule.db, sodium);
         // encrypt message
         byte[] token = TokenGenerator.byteToken(256);
         byte[] cipherText = server.cipher().encrypt(token);
@@ -39,21 +42,18 @@ public class ServerIdentityStoreImplTest {
 
     @Test
     public void serverSendsMessageToBob() throws Exception {
+        CollarSodium sodium = new CollarSodium(false);
         // Load server once to make sure we create the identity
-        new ServerIdentityStoreImpl(dbRule.db);
+        new ServerIdentityStoreImpl(dbRule.db, sodium);
         // Load server identity from the database again
-        ServerIdentityStoreImpl server = new ServerIdentityStoreImpl(dbRule.db);
+        ServerIdentityStoreImpl server = new ServerIdentityStoreImpl(dbRule.db, sodium);
         // Create bob
-        CollarIdentity bob = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.identity());
+        CollarIdentity bob = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.identity(), sodium);
         // Encrypt message for bob
         byte[] token = TokenGenerator.byteToken(256);
         byte[] cipherText = server.cipher().encrypt(token, bob.publicKey());
         // Bob gets the message
-        byte[] decrypted = new SodiumCipher(bob.keyPair, false).decrypt(cipherText, server.identity().publicKey());
+        byte[] decrypted = new SodiumCipher(sodium, bob.keyPair).decrypt(cipherText, server.identity().publicKey());
         Assert.assertArrayEquals(token, decrypted);
-    }
-
-    static {
-        SodiumCipher.loadLibrary(false);
     }
 }

@@ -25,8 +25,10 @@ import static java.util.Objects.isNull;
 
 public final class SodiumCipher implements Cipher {
 
+    private static final Logger LOGGER = LogManager.getLogger(SodiumCipher.class);
+    private static boolean LOADED = false;
     private final KeyPair keyPair;
-    private final CollarSodium sodium;
+    private CollarSodium sodium;
 
     public SodiumCipher(CollarSodium sodium, KeyPair keyPair) {
         this.sodium = sodium;
@@ -65,13 +67,13 @@ public final class SodiumCipher implements Cipher {
 
     private byte[] encrypt(byte[] plain, byte[] recipient) throws CipherException {
         byte[] sig = new byte[Sign.BYTES + plain.length];
-        if (!sodium.getSodium().cryptoSign(sig, plain, plain.length, keyPair.getSecretKey().getAsBytes())) {
+        if (!sodium.cryptoSign(sig, plain, plain.length, keyPair.getSecretKey().getAsBytes())) {
             throw new CipherException("Could not sign message.");
         }
         SignedMessage signedMessage = new SignedMessage(sig, plain);
         byte[] signedMessageBytes = signedMessage.serialize();
         byte[] cipherTextBytes = new byte[Box.SEALBYTES + signedMessageBytes.length];
-        if (!sodium.getSodium().cryptoBoxSeal(cipherTextBytes, signedMessageBytes, signedMessageBytes.length, recipient)) {
+        if (!sodium.cryptoBoxSeal(cipherTextBytes, signedMessageBytes, signedMessageBytes.length, recipient)) {
             throw new CipherException("Could not encrypt message.");
         }
         return cipherTextBytes;
@@ -79,11 +81,11 @@ public final class SodiumCipher implements Cipher {
 
     private byte[] decrypt(byte[] message, byte[] sender) throws CipherException {
         byte[] messageBytes = new byte[message.length - Box.SEALBYTES];
-        if (!sodium.getSodium().cryptoBoxSealOpen(messageBytes, message, message.length, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes())) {
+        if (!sodium.cryptoBoxSealOpen(messageBytes, message, message.length, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes())) {
             throw new CipherException("Could not decrypt signed message.");
         }
         SignedMessage signedMessage = new SignedMessage(messageBytes);
-        if (sodium.getSodium().cryptoSignOpen(signedMessage.signature, signedMessage.contents, signedMessage.contents.length, sender)) {
+        if (sodium.cryptoSignOpen(signedMessage.signature, signedMessage.contents, signedMessage.contents.length, sender)) {
             throw new CipherException("Could not verify signed message.");
         }
         return signedMessage.contents;

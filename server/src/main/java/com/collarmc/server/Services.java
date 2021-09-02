@@ -51,7 +51,7 @@ public final class Services {
         this.jsonMapper = Utils.jsonMapper();
         this.packetMapper = Utils.messagePackMapper();
         this.urlProvider = configuration.appUrlProvider;
-        this.collarSodium = new CollarSodium(true);
+        this.collarSodium = new CollarSodium();
         this.identityStore = new ServerIdentityStoreImpl(configuration.database, collarSodium);
         this.sessions = new SessionManager(packetMapper, identityStore);
         this.deviceRegistration = new ClientRegistrationService(sessions, identityStore);

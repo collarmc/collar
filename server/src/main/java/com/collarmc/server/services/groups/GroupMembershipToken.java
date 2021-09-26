@@ -1,5 +1,7 @@
 package com.collarmc.server.services.groups;
 
+import com.collarmc.api.http.HttpException;
+import com.collarmc.api.http.HttpException.UnauthorisedException;
 import com.collarmc.io.IO;
 
 import java.io.*;
@@ -33,6 +35,12 @@ public final class GroupMembershipToken {
             expiresAt = Instant.ofEpochSecond(dis.readLong());
         } catch (IOException e) {
             throw new IllegalStateException(e);
+        }
+    }
+
+    public void assertValid() {
+        if (expiresAt.isAfter(Instant.now())) {
+            throw new UnauthorisedException("token expired");
         }
     }
 

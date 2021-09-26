@@ -38,6 +38,10 @@ public final class Group {
         return new Group(id, name, type, memberList);
     }
 
+    public boolean containsMember(UUID profile) {
+        return members.stream().anyMatch(member -> member.profile.id.equals(profile));
+    }
+
     public boolean containsPlayer(Player player) {
         return members.stream().anyMatch(member -> member.player.equals(player));
     }

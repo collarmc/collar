@@ -1,6 +1,7 @@
 package com.collarmc.http;
 
 import com.collarmc.utils.Utils;
+import com.fasterxml.jackson.core.type.TypeReference;
 
 import java.io.IOException;
 
@@ -37,6 +38,25 @@ public abstract class Response<T> {
             public T map(byte[] bytes) {
                 try {
                     return Utils.jsonMapper().readValue(bytes, tClass);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        };
+    }
+
+    /**
+     * Map a response to a JSON object
+     * @param typeReference to map to
+     * @param <T> type to map to
+     * @return response
+     */
+    public static <T> Response<T> json(TypeReference<T> typeReference) {
+        return new Response<T>() {
+            @Override
+            public T map(byte[] bytes) {
+                try {
+                    return Utils.jsonMapper().readValue(bytes, typeReference);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

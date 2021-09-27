@@ -62,6 +62,10 @@ public interface AuthenticationService {
             this.email = email;
             this.password = password;
         }
+
+        public static LoginRequest emailAndPassword(String email, String password) {
+            return new LoginRequest(email, password);
+        }
     }
 
     class LoginResponse {

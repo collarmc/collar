@@ -20,7 +20,7 @@ import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.http.HandlebarsTemplateEngine;
 import com.collarmc.server.services.authentication.TokenCrypter;
-import com.collarmc.server.services.groups.GroupService.ValidateGroupTokenRequest;
+import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.server.services.textures.TextureService;
 import com.collarmc.server.session.ClientRegistrationService;
 import com.collarmc.server.session.ClientRegistrationService.RegisterClientRequest;
@@ -215,14 +215,14 @@ public class WebServer {
                         return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
                     }, services.jsonMapper::writeValueAsString);
 
-                    post("/token/validate", (request, response) -> {
+                    post("/validate", (request, response) -> {
                         RequestContext context = from(request);
+                        context.assertNotAnonymous();
                         ValidateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ValidateGroupTokenRequest.class);
                         services.groups.validateGroupToken(context, req);
                         return null;
                     }, services.jsonMapper::writeValueAsString);
-
-                    post("/token/create", (request, response) -> {
+                    post(":groupId/token", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
                         String groupId = request.params("groupId");

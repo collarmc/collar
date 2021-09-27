@@ -2,6 +2,8 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
+import com.collarmc.api.groups.http.CreateGroupTokenResponse;
+import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.NotFoundException;
 import com.collarmc.api.http.RequestContext;
@@ -21,7 +23,6 @@ import com.collarmc.server.protocol.BatchProtocolResponse;
 import com.collarmc.server.services.location.NearbyGroups;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.LogManager;
@@ -445,24 +446,6 @@ public final class GroupService {
                 .findFirst()
                 .map(found -> found.containsMember(groupMembershipToken.profile))
                 .orElseThrow(() -> new NotFoundException("not found"));
-    }
-
-    public static final class ValidateGroupTokenRequest {
-        @JsonProperty("token")
-        public final String token;
-
-        public ValidateGroupTokenRequest(String token) {
-            this.token = token;
-        }
-    }
-
-    public static final class CreateGroupTokenResponse {
-        @JsonProperty("token")
-        public final String token;
-
-        public CreateGroupTokenResponse(@JsonProperty("token") String token) {
-            this.token = token;
-        }
     }
 
     public interface MessageCreator {

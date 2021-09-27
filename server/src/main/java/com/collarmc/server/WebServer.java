@@ -140,10 +140,6 @@ public class WebServer {
                         UUID uuid = UUID.fromString(id);
                         return services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(uuid)).profile.toPublic();
                     }, services.jsonMapper::writeValueAsString);
-                    get("/groups", (request, response) -> {
-                        RequestContext context = from(request);
-                        return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
-                    }, services.jsonMapper::writeValueAsString);
                     post("/reset", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
                         RequestContext context = from(request);
@@ -213,12 +209,18 @@ public class WebServer {
                 });
 
                 path("/groups/:groupId", () -> {
+                    get("/groups", (request, response) -> {
+                        RequestContext context = from(request);
+                        context.assertNotAnonymous();
+                        return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
+                    }, services.jsonMapper::writeValueAsString);
+
                     post("/token/validate", (request, response) -> {
                         RequestContext context = from(request);
                         ValidateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ValidateGroupTokenRequest.class);
                         services.groups.validateGroupToken(context, req);
                         return null;
-                    });
+                    }, services.jsonMapper::writeValueAsString);
 
                     post("/token/create", (request, response) -> {
                         RequestContext context = from(request);
@@ -226,7 +228,7 @@ public class WebServer {
                         String groupId = request.params("groupId");
                         UUID id = UUID.fromString(groupId);
                         return services.groups.createGroupToken(context, id);
-                    });
+                    }, services.jsonMapper::writeValueAsString);
                 });
 
                 path("/auth", () -> {

@@ -63,7 +63,7 @@ public final class Services {
         this.auth = new ServerAuthenticationService(profiles, passwordHashing, tokenCrypter, configuration.email, urlProvider);
         this.minecraftSessionVerifier = configuration.minecraftSessionVerifier;
         this.groupStore = new GroupStore(profileCache, sessions, configuration.database);
-        this.groups = new GroupService(groupStore, profileCache, sessions);
+        this.groups = new GroupService(groupStore, profileCache, sessions, identityStore.cipher());
         this.playerLocations = new PlayerLocationService(this);
         this.textures = new TextureService(configuration.database);
         this.friends = new FriendsService(configuration.database, profileCache, sessions);

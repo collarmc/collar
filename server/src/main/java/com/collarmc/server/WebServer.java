@@ -14,13 +14,13 @@ import com.collarmc.api.profiles.ProfileService.UpdateProfileRequest;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.api.profiles.Role;
 import com.collarmc.api.textures.TextureType;
-import com.collarmc.security.messages.SodiumCipher;
 import com.collarmc.server.common.ServerStatus;
 import com.collarmc.server.common.ServerVersion;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.http.HandlebarsTemplateEngine;
 import com.collarmc.server.services.authentication.TokenCrypter;
+import com.collarmc.server.services.groups.GroupService.ValidateGroupTokenRequest;
 import com.collarmc.server.services.textures.TextureService;
 import com.collarmc.server.session.ClientRegistrationService;
 import com.collarmc.server.session.ClientRegistrationService.RegisterClientRequest;
@@ -140,10 +140,6 @@ public class WebServer {
                         UUID uuid = UUID.fromString(id);
                         return services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(uuid)).profile.toPublic();
                     }, services.jsonMapper::writeValueAsString);
-                    get("/groups", (request, response) -> {
-                        RequestContext context = from(request);
-                        return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
-                    }, services.jsonMapper::writeValueAsString);
                     post("/reset", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
                         RequestContext context = from(request);
@@ -209,6 +205,29 @@ public class WebServer {
                         services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(context.owner));
                         response.status(204);
                         return null;
+                    }, services.jsonMapper::writeValueAsString);
+                });
+
+                path("/groups/:groupId", () -> {
+                    get("/groups", (request, response) -> {
+                        RequestContext context = from(request);
+                        context.assertNotAnonymous();
+                        return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
+                    }, services.jsonMapper::writeValueAsString);
+
+                    post("/token/validate", (request, response) -> {
+                        RequestContext context = from(request);
+                        ValidateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ValidateGroupTokenRequest.class);
+                        services.groups.validateGroupToken(context, req);
+                        return null;
+                    }, services.jsonMapper::writeValueAsString);
+
+                    post("/token/create", (request, response) -> {
+                        RequestContext context = from(request);
+                        context.assertNotAnonymous();
+                        String groupId = request.params("groupId");
+                        UUID id = UUID.fromString(groupId);
+                        return services.groups.createGroupToken(context, id);
                     }, services.jsonMapper::writeValueAsString);
                 });
 

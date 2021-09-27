@@ -2,6 +2,9 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
+import com.collarmc.api.http.HttpException;
+import com.collarmc.api.http.HttpException.NotFoundException;
+import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.PublicProfile;
@@ -10,16 +13,22 @@ import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
+import com.collarmc.security.messages.Cipher;
+import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.GroupMessage;
 import com.collarmc.security.messages.GroupMessageEnvelope;
 import com.collarmc.server.protocol.BatchProtocolResponse;
 import com.collarmc.server.services.location.NearbyGroups;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -31,11 +40,13 @@ public final class GroupService {
     private final GroupStore store;
     private final ProfileCache profiles;
     private final SessionManager sessions;
+    private final Cipher cipher;
 
-    public GroupService(GroupStore store, ProfileCache profiles, SessionManager sessions) {
+    public GroupService(GroupStore store, ProfileCache profiles, SessionManager sessions, Cipher cipher) {
         this.store = store;
         this.profiles = profiles;
         this.sessions = sessions;
+        this.cipher = cipher;
     }
 
     /**
@@ -404,6 +415,54 @@ public final class GroupService {
 
     public Optional<Group> findGroup(UUID groupId) {
         return store.findGroup(groupId);
+    }
+
+    public CreateGroupTokenResponse createGroupToken(RequestContext ctx, UUID group) {
+        byte[] token = store.findGroup(group).filter(found -> found.members.stream().anyMatch(member -> ctx.callerIs(member.profile.id)))
+                .map(found -> new GroupMembershipToken(group, ctx.owner, Instant.now().plus(7, ChronoUnit.DAYS)))
+                .map(groupMembershipToken -> {
+                    try {
+                        return cipher.encrypt(groupMembershipToken.serialize());
+                    } catch (CipherException e) {
+                        throw new HttpException.ServerErrorException("token generation failed", e);
+                    }
+                })
+                .orElseThrow(() -> new NotFoundException("group not found"));
+        return new CreateGroupTokenResponse(BaseEncoding.base64Url().encode(token));
+    }
+
+    public void validateGroupToken(RequestContext ctx, ValidateGroupTokenRequest req) {
+        byte[] token = BaseEncoding.base64Url().decode(req.token);
+        GroupMembershipToken groupMembershipToken;
+        try {
+            groupMembershipToken = new GroupMembershipToken(cipher.decrypt(token));
+        } catch (CipherException e) {
+            throw new HttpException.ServerErrorException("bad token", e);
+        }
+        groupMembershipToken.assertValid();
+        ctx.assertCallerIs(groupMembershipToken.profile);
+        store.findGroupsContaining(groupMembershipToken.group)
+                .findFirst()
+                .map(found -> found.containsMember(groupMembershipToken.profile))
+                .orElseThrow(() -> new NotFoundException("not found"));
+    }
+
+    public static final class ValidateGroupTokenRequest {
+        @JsonProperty("token")
+        public final String token;
+
+        public ValidateGroupTokenRequest(String token) {
+            this.token = token;
+        }
+    }
+
+    public static final class CreateGroupTokenResponse {
+        @JsonProperty("token")
+        public final String token;
+
+        public CreateGroupTokenResponse(@JsonProperty("token") String token) {
+            this.token = token;
+        }
     }
 
     public interface MessageCreator {

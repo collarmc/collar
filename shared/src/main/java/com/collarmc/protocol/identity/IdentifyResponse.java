@@ -26,6 +26,9 @@ public final class IdentifyResponse extends ProtocolResponse {
     @JsonProperty("minecraftSharedSecret")
     public final byte[] minecraftSharedSecret;
 
+    @JsonProperty("apiToken")
+    public final String apiToken;
+
     /**
      * Token encrypted
      */
@@ -37,11 +40,13 @@ public final class IdentifyResponse extends ProtocolResponse {
                             @JsonProperty("profile") PublicProfile profile,
                             @JsonProperty("minecraftServerId") String minecraftServerId,
                             @JsonProperty("sharedSecret") byte[] minecraftSharedSecret,
+                            @JsonProperty("apiToken") String apiToken,
                             @JsonProperty("token") byte[] token) {
         this.identity = identity;
         this.profile = profile;
         this.minecraftServerId = minecraftServerId;
         this.minecraftSharedSecret = minecraftSharedSecret;
+        this.apiToken = apiToken;
         this.token = token;
     }
 }

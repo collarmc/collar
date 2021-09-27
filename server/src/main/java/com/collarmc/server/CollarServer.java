@@ -24,6 +24,7 @@ import com.collarmc.protocol.session.StartSessionResponse;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.security.mojang.Mojang;
+import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.protocol.*;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
@@ -124,7 +125,9 @@ public class CollarServer {
                         if (token != null) {
                             services.sessions.identify(session, request.identity, null, sessionStarted);
                             byte[] cipherToken = services.identityStore.cipher().encrypt(token, request.identity);
-                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), Mojang.generateSharedSecret(), cipherToken));
+
+                            String apiToken = services.auth.createToken(profile);
+                            sendPlain(session, new IdentifyResponse(serverIdentity, profile.toPublic(), Mojang.serverPublicKey(), Mojang.generateSharedSecret(), apiToken, cipherToken));
                         } else {
                             sendPlain(session, new PrivateIdentityMismatchResponse(services.urlProvider.resetPrivateIdentity()));
                         }

@@ -38,9 +38,12 @@ public final class GroupMembershipToken {
         }
     }
 
-    public void assertValid() {
+    public void assertValid(UUID group) {
         if (expiresAt.isAfter(Instant.now())) {
             throw new UnauthorisedException("token expired");
+        }
+        if (!this.group.equals(group)) {
+            throw new UnauthorisedException("");
         }
     }
 

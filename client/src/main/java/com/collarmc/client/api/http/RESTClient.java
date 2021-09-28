@@ -71,9 +71,9 @@ public final class RESTClient {
      * @param groupToken to validate
      * @return valid or not
      */
-    public boolean validateGroupMembershipToken(String groupToken) {
+    public boolean validateGroupMembershipToken(String groupToken, UUID group) {
         Request authorization = Request.url(url("groups", "validate"))
-                .postJson(new ValidateGroupTokenRequest(groupToken));
+                .postJson(new ValidateGroupTokenRequest(groupToken, group));
         try {
             http.execute(authorization, Response.json(Void.class));
             return true;

@@ -440,7 +440,7 @@ public final class GroupService {
         } catch (CipherException e) {
             throw new HttpException.ServerErrorException("bad token", e);
         }
-        groupMembershipToken.assertValid();
+        groupMembershipToken.assertValid(req.group);
         ctx.assertCallerIs(groupMembershipToken.profile);
         store.findGroupsContaining(groupMembershipToken.group)
                 .findFirst()

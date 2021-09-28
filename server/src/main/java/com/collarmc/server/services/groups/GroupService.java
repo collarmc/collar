@@ -421,7 +421,7 @@ public final class GroupService {
 
     public CreateGroupTokenResponse createGroupToken(RequestContext ctx, CreateGroupTokenRequest request) {
         byte[] token = store.findGroup(request.group).filter(found -> found.members.stream().anyMatch(member -> ctx.callerIs(member.profile.id)))
-                .map(found -> new GroupMembershipToken(found.id, ctx.owner, Instant.now().plus(7, ChronoUnit.DAYS)))
+                .map(found -> new GroupMembershipToken(found.id, ctx.owner, Instant.now().plus(1, ChronoUnit.DAYS)))
                 .map(groupMembershipToken -> {
                     try {
                         return cipher.encrypt(groupMembershipToken.serialize());

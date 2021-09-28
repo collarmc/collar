@@ -222,7 +222,7 @@ public class WebServer {
                         services.groups.validateGroupToken(context, req);
                         return null;
                     }, services.jsonMapper::writeValueAsString);
-                    post(":groupId/token", (request, response) -> {
+                    post("/token", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
                         String groupId = request.params("groupId");

@@ -37,7 +37,7 @@ public final class RESTClient {
      * @throws HttpException if something went wrong
      */
     public LoginResponse login(String email, String password) {
-        Request request = Request.url(baseUrl("auth").withPath("login"))
+        Request request = Request.url(url("auth", "login"))
                 .postJson(LoginRequest.emailAndPassword(email, password));
         return http.execute(request, Response.json(LoginResponse.class));
     }
@@ -48,7 +48,7 @@ public final class RESTClient {
      * @return all group information
      */
     public List<Group> groups(String apiToken) {
-        Request authorization = Request.url(baseUrl("groups"))
+        Request authorization = Request.url(url("groups", ""))
                 .addHeader("Authorization", "Bearer " + apiToken)
                 .get();
         return http.execute(authorization, Response.json(new TypeReference<List<Group>>(){}));
@@ -60,7 +60,7 @@ public final class RESTClient {
      * @return response
      */
     public CreateGroupTokenResponse createGroupMembershipToken(String apiToken, UUID groupId) {
-        Request authorization = Request.url(baseUrl("groups").withPath(groupId + "/token"))
+        Request authorization = Request.url(url("groups", groupId + "/token"))
                 .addHeader("Authorization", "Bearer " + apiToken)
                 .postJson(new Object());
         return http.execute(authorization, Response.json(CreateGroupTokenResponse.class));
@@ -72,7 +72,7 @@ public final class RESTClient {
      * @return valid or not
      */
     public boolean validateGroupMembershipToken(String groupToken) {
-        Request authorization = Request.url(baseUrl("groups").withPath("validate"))
+        Request authorization = Request.url(url("groups", "validate"))
                 .postJson(new ValidateGroupTokenRequest(groupToken));
         try {
             http.execute(authorization, Response.json(Void.class));
@@ -83,7 +83,7 @@ public final class RESTClient {
     }
 
     @Nonnull
-    private UrlBuilder baseUrl(String api) {
-        return UrlBuilder.fromString(collarServerUrl + "/1/" + api + "/");
+    private UrlBuilder url(String api, String part) {
+        return UrlBuilder.fromString(collarServerUrl + "/api/1/" + api + "/" + part);
     }
 }

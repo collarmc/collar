@@ -84,6 +84,6 @@ public final class RESTClient {
 
     @Nonnull
     private UrlBuilder baseUrl(String api) {
-        return UrlBuilder.fromString(collarServerUrl).withPath("/1/").withPath(api);
+        return UrlBuilder.fromString(collarServerUrl + "/1/" + api + "/");
     }
 }

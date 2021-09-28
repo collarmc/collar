@@ -2,6 +2,7 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
+import com.collarmc.api.groups.http.CreateGroupTokenRequest;
 import com.collarmc.api.groups.http.CreateGroupTokenResponse;
 import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.api.http.HttpException;
@@ -418,9 +419,9 @@ public final class GroupService {
         return store.findGroup(groupId);
     }
 
-    public CreateGroupTokenResponse createGroupToken(RequestContext ctx, UUID group) {
-        byte[] token = store.findGroup(group).filter(found -> found.members.stream().anyMatch(member -> ctx.callerIs(member.profile.id)))
-                .map(found -> new GroupMembershipToken(group, ctx.owner, Instant.now().plus(7, ChronoUnit.DAYS)))
+    public CreateGroupTokenResponse createGroupToken(RequestContext ctx, CreateGroupTokenRequest request) {
+        byte[] token = store.findGroup(request.group).filter(found -> found.members.stream().anyMatch(member -> ctx.callerIs(member.profile.id)))
+                .map(found -> new GroupMembershipToken(found.id, ctx.owner, Instant.now().plus(7, ChronoUnit.DAYS)))
                 .map(groupMembershipToken -> {
                     try {
                         return cipher.encrypt(groupMembershipToken.serialize());

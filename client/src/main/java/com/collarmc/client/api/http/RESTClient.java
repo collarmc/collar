@@ -2,6 +2,7 @@ package com.collarmc.client.api.http;
 
 import com.collarmc.api.authentication.AuthenticationService.LoginRequest;
 import com.collarmc.api.authentication.AuthenticationService.LoginResponse;
+import com.collarmc.api.groups.http.CreateGroupTokenRequest;
 import com.collarmc.api.groups.http.CreateGroupTokenResponse;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
@@ -57,12 +58,13 @@ public final class RESTClient {
     /**
      * Creates a group token used to verify that
      * @param apiToken of the user
+     * @param group id of group
      * @return response
      */
-    public CreateGroupTokenResponse createGroupMembershipToken(String apiToken, UUID groupId) {
-        Request authorization = Request.url(url("groups", groupId + "/token"))
+    public CreateGroupTokenResponse createGroupMembershipToken(String apiToken, UUID group) {
+        Request authorization = Request.url(url("groups", "token"))
                 .addHeader("Authorization", "Bearer " + apiToken)
-                .postJson(new Object());
+                .postJson(new CreateGroupTokenRequest(group));
         return http.execute(authorization, Response.json(CreateGroupTokenResponse.class));
     }
 

@@ -4,6 +4,7 @@ import com.collarmc.api.authentication.AuthenticationService.*;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.groups.MembershipRole;
+import com.collarmc.api.groups.http.CreateGroupTokenRequest;
 import com.collarmc.api.http.*;
 import com.collarmc.api.http.HttpException.BadRequestException;
 import com.collarmc.api.http.HttpException.NotFoundException;
@@ -209,7 +210,7 @@ public class WebServer {
                 });
 
                 path("/groups", () -> {
-                    get("/groups", (request, response) -> {
+                    get("/", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
                         return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
@@ -220,16 +221,17 @@ public class WebServer {
                         context.assertNotAnonymous();
                         ValidateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ValidateGroupTokenRequest.class);
                         services.groups.validateGroupToken(context, req);
-                        return null;
+                        return "OK";
                     }, services.jsonMapper::writeValueAsString);
-                    post("/:groupId/token", (request, response) -> {
+                    post("/token", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
-                        String groupId = request.params("groupId");
-                        UUID id = UUID.fromString(groupId);
-                        return services.groups.createGroupToken(context, id);
+                        CreateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), CreateGroupTokenRequest.class);
+                        return services.groups.createGroupToken(context, req);
                     }, services.jsonMapper::writeValueAsString);
                 });
+
+                // https://api.collarmc.com//api/1/groups/fe2b0ae3-8984-414b-8a5f-e972736bb77c/token
 
                 path("/auth", () -> {
                     before("/*", (request, response) -> {

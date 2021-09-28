@@ -89,24 +89,24 @@ public class WebServer {
         staticFiles.location("/public");
 
 //        // Setup CORS
-//        options("/*", (request, response) -> {
-//            String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
-//            if (accessControlRequestHeaders != null) {
-//                response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
-//            }
-//            String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
-//            if (accessControlRequestMethod != null) {
-//                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
-//            }
-//            response.header("Access-Control-Allow-Credentials", "true");
-//            return "OK";
-//        }, Object::toString);
-//
-//        before((request, response) -> {
-//            response.header("Server", "Collar");
-//            response.header("Access-Control-Allow-Origin", "*");
-//            response.header("Access-Control-Allow-Credentials", "true");
-//        });
+        options("/*", (request, response) -> {
+            String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
+            if (accessControlRequestHeaders != null) {
+                response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
+            }
+            String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
+            if (accessControlRequestMethod != null) {
+                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+            }
+            response.header("Access-Control-Allow-Credentials", "true");
+            return "OK";
+        }, Object::toString);
+
+        before((request, response) -> {
+            response.header("Server", "Collar");
+            response.header("Access-Control-Allow-Origin", "*");
+            response.header("Access-Control-Allow-Credentials", "true");
+        });
 
         // API routes
         path("/api", () -> {
@@ -210,17 +210,11 @@ public class WebServer {
                 });
 
                 path("/groups", () -> {
-                    get("/", (request, response) -> {
-                        RequestContext context = from(request);
-                        context.assertNotAnonymous();
-                        return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
-                    }, services.jsonMapper::writeValueAsString);
-
                     post("/validate", (request, response) -> {
                         RequestContext context = from(request);
-                        context.assertNotAnonymous();
+                        context.assertAnonymous();
                         ValidateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ValidateGroupTokenRequest.class);
-                        services.groups.validateGroupToken(context, req);
+                        services.groups.validateGroupToken(req);
                         return "OK";
                     }, services.jsonMapper::writeValueAsString);
                     post("/token", (request, response) -> {
@@ -230,8 +224,6 @@ public class WebServer {
                         return services.groups.createGroupToken(context, req);
                     }, services.jsonMapper::writeValueAsString);
                 });
-
-                // https://api.collarmc.com//api/1/groups/fe2b0ae3-8984-414b-8a5f-e972736bb77c/token
 
                 path("/auth", () -> {
                     before("/*", (request, response) -> {

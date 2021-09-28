@@ -433,7 +433,7 @@ public final class GroupService {
         return new CreateGroupTokenResponse(BaseEncoding.base64Url().encode(token));
     }
 
-    public void validateGroupToken(RequestContext ctx, ValidateGroupTokenRequest req) {
+    public void validateGroupToken(ValidateGroupTokenRequest req) {
         byte[] token = BaseEncoding.base64Url().decode(req.token);
         GroupMembershipToken groupMembershipToken;
         try {
@@ -442,7 +442,6 @@ public final class GroupService {
             throw new HttpException.ServerErrorException("bad token", e);
         }
         groupMembershipToken.assertValid(req.group);
-        ctx.assertCallerIs(groupMembershipToken.profile);
         store.findGroupsContaining(groupMembershipToken.group)
                 .findFirst()
                 .map(found -> found.containsMember(groupMembershipToken.profile))

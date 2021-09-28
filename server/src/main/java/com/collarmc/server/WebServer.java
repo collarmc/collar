@@ -219,11 +219,6 @@ public class WebServer {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
                         ValidateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ValidateGroupTokenRequest.class);
-                        String groupId = request.params("groupId");
-                        UUID id = UUID.fromString(groupId);
-                        if (!req.group.equals(id)) {
-                            throw new BadRequestException("group did not match");
-                        }
                         services.groups.validateGroupToken(context, req);
                         return null;
                     }, services.jsonMapper::writeValueAsString);

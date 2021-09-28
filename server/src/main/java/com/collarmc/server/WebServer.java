@@ -208,7 +208,7 @@ public class WebServer {
                     }, services.jsonMapper::writeValueAsString);
                 });
 
-                path("/groups/:groupId", () -> {
+                path("/groups", () -> {
                     get("/groups", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
@@ -219,10 +219,15 @@ public class WebServer {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
                         ValidateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ValidateGroupTokenRequest.class);
+                        String groupId = request.params("groupId");
+                        UUID id = UUID.fromString(groupId);
+                        if (!req.group.equals(id)) {
+                            throw new BadRequestException("group did not match");
+                        }
                         services.groups.validateGroupToken(context, req);
                         return null;
                     }, services.jsonMapper::writeValueAsString);
-                    post("/token", (request, response) -> {
+                    post("/:groupId/token", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
                         String groupId = request.params("groupId");

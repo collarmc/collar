@@ -66,7 +66,7 @@ public class ServerAuthenticationService implements AuthenticationService {
         } catch (NotFoundException e) {
             Profile profile = profiles.createProfile(context, new CreateProfileRequest(req.email.toLowerCase(), req.password, req.name)).profile;
             sendVerificationEmail(profile);
-            return new CreateAccountResponse(profile.toPublic(), tokenFrom(profile));
+            return new CreateAccountResponse(profile.toPublic(), createToken(profile));
         }
     }
 
@@ -107,7 +107,7 @@ public class ServerAuthenticationService implements AuthenticationService {
             if (!profile.emailVerified) {
                 sendVerificationEmail(profile);
             }
-            return new LoginResponse(profile, tokenFrom(profile));
+            return new LoginResponse(profile, createToken(profile));
         } else {
             throw new UnauthorisedException("login failed");
         }
@@ -155,7 +155,12 @@ public class ServerAuthenticationService implements AuthenticationService {
         return new ResetPasswordResponse(profile.toPublic());
     }
 
-    private String tokenFrom(Profile profile) {
+    /**
+     * Create an API token
+     * @param profile to authenticate with
+     * @return token
+     */
+    public String createToken(Profile profile) {
         ApiToken apiToken = new ApiToken(profile.id, profile.roles);
         String token;
         try {

@@ -12,6 +12,7 @@ import com.collarmc.security.messages.GroupSession;
 import com.collarmc.security.messages.IdentityStore;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
@@ -89,4 +90,15 @@ public interface ClientIdentityStore extends IdentityStore<ClientIdentity> {
     void reset() throws IOException;
 
     boolean isValid();
+
+    /**
+     * @return rest api token
+     */
+    Optional<String> getApiToken();
+
+    /**
+     * Set the API token
+     * @param apiToken from {@link IdentifyResponse}
+     */
+    void setApiToken(String apiToken);
 }

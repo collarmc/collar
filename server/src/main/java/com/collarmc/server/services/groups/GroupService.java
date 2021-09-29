@@ -2,6 +2,9 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
+import com.collarmc.api.groups.http.CreateGroupTokenRequest;
+import com.collarmc.api.groups.http.CreateGroupTokenResponse;
+import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.NotFoundException;
 import com.collarmc.api.http.RequestContext;
@@ -417,9 +420,9 @@ public final class GroupService {
         return store.findGroup(groupId);
     }
 
-    public CreateGroupTokenResponse createGroupToken(RequestContext ctx, UUID group) {
-        byte[] token = store.findGroup(group).filter(found -> found.members.stream().anyMatch(member -> ctx.callerIs(member.profile.id)))
-                .map(found -> new GroupMembershipToken(group, ctx.owner, Instant.now().plus(7, ChronoUnit.DAYS)))
+    public CreateGroupTokenResponse createGroupToken(RequestContext ctx, CreateGroupTokenRequest request) {
+        byte[] token = store.findGroup(request.group).filter(found -> found.members.stream().anyMatch(member -> ctx.callerIs(member.profile.id)))
+                .map(found -> new GroupMembershipToken(found.id, ctx.owner, Instant.now().plus(1, ChronoUnit.DAYS)))
                 .map(groupMembershipToken -> {
                     try {
                         return cipher.encrypt(groupMembershipToken.serialize());
@@ -431,7 +434,7 @@ public final class GroupService {
         return new CreateGroupTokenResponse(BaseEncoding.base64Url().encode(token));
     }
 
-    public void validateGroupToken(RequestContext ctx, ValidateGroupTokenRequest req) {
+    public void validateGroupToken(ValidateGroupTokenRequest req) {
         byte[] token = BaseEncoding.base64Url().decode(req.token);
         GroupMembershipToken groupMembershipToken;
         try {
@@ -439,30 +442,11 @@ public final class GroupService {
         } catch (CipherException e) {
             throw new HttpException.ServerErrorException("bad token", e);
         }
-        groupMembershipToken.assertValid();
-        ctx.assertCallerIs(groupMembershipToken.profile);
+        groupMembershipToken.assertValid(req.group);
         store.findGroupsContaining(groupMembershipToken.group)
                 .findFirst()
                 .map(found -> found.containsMember(groupMembershipToken.profile))
                 .orElseThrow(() -> new NotFoundException("not found"));
-    }
-
-    public static final class ValidateGroupTokenRequest {
-        @JsonProperty("token")
-        public final String token;
-
-        public ValidateGroupTokenRequest(String token) {
-            this.token = token;
-        }
-    }
-
-    public static final class CreateGroupTokenResponse {
-        @JsonProperty("token")
-        public final String token;
-
-        public CreateGroupTokenResponse(@JsonProperty("token") String token) {
-            this.token = token;
-        }
     }
 
     public interface MessageCreator {

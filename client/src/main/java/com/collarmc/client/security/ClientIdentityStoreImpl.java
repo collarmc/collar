@@ -22,6 +22,7 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     private CollarIdentity collarIdentity;
 
     private byte[] token = TokenGenerator.byteToken(256);
+    private String apiToken;
 
     public ClientIdentityStoreImpl(HomeDirectory homeDirectory, CollarSodium sodium) throws IOException, CipherException {
         this.homeDirectory = homeDirectory;
@@ -152,6 +154,16 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
         } catch (IOException e) {
             return false;
         }
+    }
+
+    @Override
+    public void setApiToken(String apiToken) {
+        this.apiToken = apiToken;
+    }
+
+    @Override
+    public Optional<String> getApiToken() {
+        return Optional.ofNullable(apiToken);
     }
 
     @Nonnull

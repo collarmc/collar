@@ -35,7 +35,7 @@ public final class Services {
     public final ProfileService profiles;
     public final ProfileStorage profileStorage;
     public final TokenCrypter tokenCrypter;
-    public final AuthenticationService auth;
+    public final ServerAuthenticationService auth;
     public final MinecraftSessionVerifier minecraftSessionVerifier;
     public final GroupService groups;
     public final GroupStore groupStore;

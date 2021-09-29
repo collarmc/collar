@@ -382,6 +382,9 @@ public final class Collar {
                 if (resp instanceof IdentifyResponse) {
                     ServerIdentity storedServerIdentity = identityStore.serverIdentity();
                     IdentifyResponse response = (IdentifyResponse) resp;
+                    if (response.apiToken != null) {
+                        identityStore.setApiToken(response.apiToken);
+                    }
                     if (!response.identity.equals(storedServerIdentity)) {
                         configuration.eventBus.dispatch(new ClientUntrustedEvent(collar, identityStore));
                         changeState(State.DISCONNECTED);

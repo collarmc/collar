@@ -2,19 +2,20 @@ package com.collarmc.security;
 
 import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.security.messages.CollarSodium;
-import com.collarmc.security.messages.SodiumCipher;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.UUID;
 
 public class CollarIdentityTest {
+    private final CollarSodium collarSodium = new CollarSodium();
+
     @Test
     public void roundTripClientIdentity() throws Exception {
-        CollarSodium sodium = new CollarSodium(false);
         ServerIdentity serverIdentity = new ServerIdentity(UUID.randomUUID(), new PublicKey(TokenGenerator.byteToken(16)));
         UUID profile = UUID.randomUUID();
-        CollarIdentity identity = CollarIdentity.createClientIdentity(profile, serverIdentity, sodium);
+        CollarSodium collarSodium = new CollarSodium();
+        CollarIdentity identity = CollarIdentity.createClientIdentity(profile, serverIdentity, collarSodium);
         byte[] identityBytes = identity.serialize();
         CollarIdentity newIdentity = CollarIdentity.from(identityBytes);
         Assert.assertEquals(identity.id, newIdentity.id);
@@ -26,8 +27,7 @@ public class CollarIdentityTest {
 
     @Test
     public void roundTripServerIdentity() throws Exception {
-        CollarSodium sodium = new CollarSodium(false);
-        CollarIdentity identity = CollarIdentity.createServerIdentity(sodium);
+        CollarIdentity identity = CollarIdentity.createServerIdentity(collarSodium);
         byte[] identityBytes = identity.serialize();
         CollarIdentity newIdentity = CollarIdentity.from(identityBytes);
         Assert.assertEquals(identity.id, newIdentity.id);

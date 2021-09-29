@@ -210,6 +210,11 @@ public class WebServer {
                 });
 
                 path("/groups", () -> {
+                    get("/groups", (request, response) -> {
+                        RequestContext context = from(request);
+                        context.assertNotAnonymous();
+                        return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
+                    }, services.jsonMapper::writeValueAsString);
                     post("/validate", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertAnonymous();

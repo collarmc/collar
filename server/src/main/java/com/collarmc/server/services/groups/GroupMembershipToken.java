@@ -43,7 +43,7 @@ public final class GroupMembershipToken {
             throw new UnauthorisedException("token expired");
         }
         if (!this.group.equals(group)) {
-            throw new UnauthorisedException("");
+            throw new UnauthorisedException("incorrect group");
         }
     }
 

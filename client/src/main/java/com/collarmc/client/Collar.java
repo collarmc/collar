@@ -94,7 +94,7 @@ public final class Collar {
         this.recordCiphers = new ContentCiphers();
         this.apis = new ArrayList<>();
         this.sdhtApi = new SDHTApi(this, identityStoreSupplier, sender, recordCiphers, this.ticks, this.configuration.homeDirectory.dhtState());
-        this.sodium = new CollarSodium(false);
+        this.sodium = new CollarSodium();
         this.groupsApi = new GroupsApi(this, identityStoreSupplier, sender, sdhtApi);
         this.recordCiphers.register(new GroupContentCipher(groupsApi, identityStoreSupplier));
         this.locationApi = new LocationApi(this,

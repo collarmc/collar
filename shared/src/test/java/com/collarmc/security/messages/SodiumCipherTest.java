@@ -24,14 +24,14 @@ public class SodiumCipherTest {
 
     @Before
     public void setup() throws Exception {
-        CollarSodium sodium = new CollarSodium(false);
-        server = CollarIdentity.createServerIdentity(sodium);
-        bob = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity, sodium);
-        bobCipher = new SodiumCipher(sodium, bob.keyPair);
-        alice = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity, sodium);
-        aliceCipher = new SodiumCipher(sodium, alice.keyPair);
-        eve = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity, sodium);
-        eveCipher = new SodiumCipher(sodium, eve.keyPair);
+        final CollarSodium collarSodium = new CollarSodium();
+        server = CollarIdentity.createServerIdentity(collarSodium);
+        bob = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity, collarSodium);
+        bobCipher = new SodiumCipher(collarSodium, bob.keyPair);
+        alice = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity, collarSodium);
+        aliceCipher = new SodiumCipher(collarSodium, alice.keyPair);
+        eve = CollarIdentity.createClientIdentity(UUID.randomUUID(), server.serverIdentity, collarSodium);
+        eveCipher = new SodiumCipher(collarSodium, eve.keyPair);
     }
 
     @Test

@@ -4,8 +4,8 @@ import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.messages.CollarSodium;
-import com.collarmc.security.messages.SodiumCipher;
+import com.collarmc.security.sodium.Sodium;
+import com.collarmc.security.sodium.SodiumCipher;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -22,9 +22,9 @@ public class ServerIdentityStoreImpl implements ServerIdentityStore {
     private static final Logger LOGGER = LogManager.getLogger(ServerIdentityStoreImpl.class);
 
     private final CollarIdentity collarIdentity;
-    private final CollarSodium sodium;
+    private final Sodium sodium;
 
-    public ServerIdentityStoreImpl(MongoDatabase database, CollarSodium sodium) throws CipherException {
+    public ServerIdentityStoreImpl(MongoDatabase database, Sodium sodium) throws CipherException {
         this.sodium = sodium;
         MongoCollection<Document> serverIdentityCollection = database.getCollection("server_identity");
         MongoCursor<Document> iterator = serverIdentityCollection.find().iterator();

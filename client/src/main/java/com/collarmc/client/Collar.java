@@ -43,7 +43,7 @@ import com.collarmc.protocol.session.StartSessionRequest;
 import com.collarmc.protocol.session.StartSessionResponse;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.CipherException.InvalidCipherSessionException;
-import com.collarmc.security.messages.CollarSodium;
+import com.collarmc.security.sodium.Sodium;
 import com.collarmc.security.mojang.MinecraftSession;
 import com.collarmc.security.mojang.Mojang;
 import com.collarmc.utils.Utils;
@@ -75,7 +75,7 @@ public final class Collar {
     private final IdentityApi identityApi;
     private final MessagingApi messagingApi;
     private final SDHTApi sdhtApi;
-    private final CollarSodium sodium;
+    private final Sodium sodium;
     private WebSocket webSocket;
     private volatile State state;
     private final List<AbstractApi> apis;
@@ -85,7 +85,7 @@ public final class Collar {
     private final Ticks ticks;
     private final ContentCiphers recordCiphers;
 
-    private Collar(CollarConfiguration configuration) throws IOException {
+    private Collar(CollarConfiguration configuration) throws IOException, CipherException {
         this.configuration = configuration;
         changeState(State.DISCONNECTED);
         this.identityStoreSupplier = () -> this.identityStore;
@@ -94,7 +94,7 @@ public final class Collar {
         this.recordCiphers = new ContentCiphers();
         this.apis = new ArrayList<>();
         this.sdhtApi = new SDHTApi(this, identityStoreSupplier, sender, recordCiphers, this.ticks, this.configuration.homeDirectory.dhtState());
-        this.sodium = new CollarSodium();
+        this.sodium = Sodium.create();
         this.groupsApi = new GroupsApi(this, identityStoreSupplier, sender, sdhtApi);
         this.recordCiphers.register(new GroupContentCipher(groupsApi, identityStoreSupplier));
         this.locationApi = new LocationApi(this,
@@ -126,7 +126,7 @@ public final class Collar {
     public static Collar create(CollarConfiguration configuration) {
         try {
             return new Collar(configuration);
-        } catch (IOException e) {
+        } catch (IOException | CipherException e) {
             throw new IllegalStateException(e);
         }
     }

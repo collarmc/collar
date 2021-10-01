@@ -3,8 +3,7 @@ package com.collarmc.security;
 import com.collarmc.api.identity.ServerIdentity;
 import com.collarmc.io.IO;
 import com.collarmc.security.messages.*;
-import com.goterl.lazysodium.utils.Key;
-import com.goterl.lazysodium.utils.KeyPair;
+import com.collarmc.security.sodium.Sodium;
 
 import java.io.*;
 import java.util.UUID;
@@ -43,7 +42,7 @@ public final class CollarIdentity {
         }
     }
 
-    private CollarIdentity(UUID id, ServerIdentity serverIdentity, KeyPair keyPair) throws CipherException {
+    private CollarIdentity(UUID id, ServerIdentity serverIdentity, KeyPair keyPair) {
         this.id = id;
         this.serverIdentity = serverIdentity;
         this.keyPair = keyPair;
@@ -81,11 +80,11 @@ public final class CollarIdentity {
         }
     }
 
-    public static CollarIdentity createClientIdentity(UUID profile, ServerIdentity serverIdentity, CollarSodium sodium) throws CipherException {
+    public static CollarIdentity createClientIdentity(UUID profile, ServerIdentity serverIdentity, Sodium sodium) throws CipherException {
         return new CollarIdentity(profile, serverIdentity, sodium.generateKeyPair());
     }
 
-    public static CollarIdentity createServerIdentity(CollarSodium sodium) throws CipherException {
+    public static CollarIdentity createServerIdentity(Sodium sodium) throws CipherException {
         return new CollarIdentity(UUID.randomUUID(), null, sodium.generateKeyPair());
     }
 

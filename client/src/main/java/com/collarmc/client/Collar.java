@@ -172,7 +172,6 @@ public final class Collar {
      * @return groups api
      */
     public GroupsApi groups() {
-        assertConnected();
         return groupsApi;
     }
 
@@ -180,7 +179,6 @@ public final class Collar {
      * @return location api
      */
     public LocationApi location() {
-        assertConnected();
         return locationApi;
     }
 
@@ -188,7 +186,6 @@ public final class Collar {
      * @return texture api
      */
     public TexturesApi textures() {
-        assertConnected();
         return texturesApi;
     }
 
@@ -196,7 +193,6 @@ public final class Collar {
      * @return identity api
      */
     public IdentityApi identities() {
-        assertConnected();
         return identityApi;
     }
 
@@ -204,7 +200,6 @@ public final class Collar {
      * @return friends api
      */
     public FriendsApi friends() {
-        assertConnected();
         return friendsApi;
     }
 
@@ -212,7 +207,6 @@ public final class Collar {
      * @return messaging api
      */
     public MessagingApi messaging() {
-        assertConnected();
         return messagingApi;
     }
 
@@ -243,11 +237,10 @@ public final class Collar {
                 configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
                 this.state = state;
                 disconnect();
+                return;
             }
             this.state = state;
-            if (previousState == null) {
-                LOGGER.info("client in state " + state);
-            } else {
+            if (previousState != null) {
                 if (identityStore != null) {
                     LOGGER.info(identityStore.identity() + " state changed from " + previousState + " to " + state);
                 } else {
@@ -255,7 +248,6 @@ public final class Collar {
                 }
             }
             if (previousState != null) {
-                configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
                 apis.forEach(abstractApi -> abstractApi.onStateChanged(state));
             }
             configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
@@ -267,18 +259,11 @@ public final class Collar {
      * @return player
      */
     public Player player() {
-        assertConnected();
         ClientIdentity identity = identity();
         if (identity == null) {
             throw new IllegalStateException("connected but not identified");
         }
         return new Player(identity, configuration.sessionSupplier.get().toPlayer());
-    }
-
-    private void assertConnected() {
-        if (state == State.CONNECTING || state == State.DISCONNECTED) {
-            throw new IllegalStateException("Cannot use the API until client is CONNECTED or DISCONNECTING");
-        }
     }
 
     /**
@@ -337,9 +322,10 @@ public final class Collar {
             // Create the sender delegate
             sender = request -> {
                 if (state == State.DISCONNECTED) {
-                    throw new IllegalStateException("Client is not in CONNECTED or CONNECTING state");
+                    LOGGER.error("Client is not in CONNECTED or CONNECTING state");
+                } else {
+                    sendRequest(webSocket, request);
                 }
-                sendRequest(webSocket, request);
             };
             LOGGER.info("Connection established");
             try {

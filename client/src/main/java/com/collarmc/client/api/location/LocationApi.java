@@ -245,6 +245,9 @@ public class LocationApi extends AbstractApi {
     }
 
     void publishNearby(Set<Entity> entities) {
+        if (collar.getState() != Collar.State.CONNECTED) {
+            return;
+        }
         Set<String> nearbyHashes = entities.stream().filter(entity -> entity.isTypeOf(EntityType.PLAYER))
                 .limit(200)
                 .map(entity -> Hashing.sha256().hashString(entity.id.toString(), StandardCharsets.UTF_8).toString())

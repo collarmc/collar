@@ -1,8 +1,7 @@
 package com.collarmc.server;
 
-import com.collarmc.api.authentication.AuthenticationService;
 import com.collarmc.api.profiles.ProfileService;
-import com.collarmc.security.messages.CollarSodium;
+import com.collarmc.security.sodium.Sodium;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.AppUrlProvider;
 import com.collarmc.server.security.ServerIdentityStore;
@@ -45,14 +44,14 @@ public final class Services {
     public final WaypointService waypoints;
     public final ClientRegistrationService deviceRegistration;
     public final ProfileCache profileCache;
-    public final CollarSodium collarSodium;
+    public final Sodium sodium;
 
     public Services(Configuration configuration) throws Exception {
         this.jsonMapper = Utils.jsonMapper();
         this.packetMapper = Utils.messagePackMapper();
         this.urlProvider = configuration.appUrlProvider;
-        this.collarSodium = new CollarSodium();
-        this.identityStore = new ServerIdentityStoreImpl(configuration.database, collarSodium);
+        this.sodium = Sodium.create();
+        this.identityStore = new ServerIdentityStoreImpl(configuration.database, sodium);
         this.sessions = new SessionManager(packetMapper, identityStore);
         this.deviceRegistration = new ClientRegistrationService(sessions, identityStore);
         this.passwordHashing = configuration.passwordHashing;

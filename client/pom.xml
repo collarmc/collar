@@ -63,6 +63,7 @@
                                 <exclude>META-INF/*.MF</exclude>
                                 <exclude>META-INF/LICENSE</exclude>
                                 <exclude>META-INF/NOTICE</exclude>
+                                <exclude>META-INF/maven/*/**</exclude>
                             </excludes>
                         </filter>
                     </filters>
@@ -71,7 +72,8 @@
                         <exclude>com.google.guava:guava</exclude>
                         <exclude>org.apache.logging.log4j:*</exclude>
                         <exclude>com.google.code.findbugs:*</exclude>
-                        <exclude>net.jcip:jcip-annotations:</exclude>
+                        <exclude>net.jcip:jcip-annotations:*</exclude>
+                        <exclude>net.java.dev.jna:*</exclude>
                     </excludes>
                     </artifactSet>
                     <relocations>

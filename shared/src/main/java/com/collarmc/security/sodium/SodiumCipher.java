@@ -1,36 +1,21 @@
-package com.collarmc.security.messages;
+package com.collarmc.security.sodium;
 
 import com.collarmc.api.identity.Identity;
+import com.collarmc.security.KeyPair;
 import com.collarmc.security.PublicKey;
-import com.google.common.io.ByteStreams;
-import com.goterl.lazysodium.LazySodiumJava;
-import com.goterl.lazysodium.SodiumJava;
-import com.goterl.lazysodium.exceptions.SodiumException;
-import com.goterl.lazysodium.interfaces.Box;
-import com.goterl.lazysodium.interfaces.Sign;
-import com.goterl.lazysodium.utils.KeyPair;
-import com.goterl.lazysodium.utils.LibraryLoader;
-import com.sun.jna.Platform;
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import com.collarmc.security.messages.Cipher;
+import com.collarmc.security.messages.CipherException;
+import com.collarmc.security.messages.SignedMessage;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
-
-import static java.util.Objects.isNull;
 
 public final class SodiumCipher implements Cipher {
 
     private static final Logger LOGGER = LogManager.getLogger(SodiumCipher.class);
-    private static boolean LOADED = false;
     private final KeyPair keyPair;
-    private CollarSodium sodium;
+    private final Sodium sodium;
 
-    public SodiumCipher(CollarSodium sodium, KeyPair keyPair) {
+    public SodiumCipher(Sodium sodium, KeyPair keyPair) {
         this.sodium = sodium;
         this.keyPair = keyPair;
     }
@@ -66,13 +51,13 @@ public final class SodiumCipher implements Cipher {
     }
 
     private byte[] encrypt(byte[] plain, byte[] recipient) throws CipherException {
-        byte[] sig = new byte[Sign.BYTES + plain.length];
+        byte[] sig = new byte[Sodium.Sign.BYTES + plain.length];
         if (!sodium.cryptoSign(sig, plain, plain.length, keyPair.getSecretKey().getAsBytes())) {
             throw new CipherException("Could not sign message.");
         }
         SignedMessage signedMessage = new SignedMessage(sig, plain);
         byte[] signedMessageBytes = signedMessage.serialize();
-        byte[] cipherTextBytes = new byte[Box.SEALBYTES + signedMessageBytes.length];
+        byte[] cipherTextBytes = new byte[Sodium.Box.SEALBYTES + signedMessageBytes.length];
         if (!sodium.cryptoBoxSeal(cipherTextBytes, signedMessageBytes, signedMessageBytes.length, recipient)) {
             throw new CipherException("Could not encrypt message.");
         }
@@ -80,7 +65,7 @@ public final class SodiumCipher implements Cipher {
     }
 
     private byte[] decrypt(byte[] message, byte[] sender) throws CipherException {
-        byte[] messageBytes = new byte[message.length - Box.SEALBYTES];
+        byte[] messageBytes = new byte[message.length - Sodium.Box.SEALBYTES];
         if (!sodium.cryptoBoxSealOpen(messageBytes, message, message.length, keyPair.getPublicKey().getAsBytes(), keyPair.getSecretKey().getAsBytes())) {
             throw new CipherException("Could not decrypt signed message.");
         }

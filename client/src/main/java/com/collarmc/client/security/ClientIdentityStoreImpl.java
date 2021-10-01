@@ -14,6 +14,8 @@ import com.collarmc.protocol.identity.IdentifyResponse;
 import com.collarmc.security.CollarIdentity;
 import com.collarmc.security.TokenGenerator;
 import com.collarmc.security.messages.*;
+import com.collarmc.security.sodium.Sodium;
+import com.collarmc.security.sodium.SodiumCipher;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,13 +33,13 @@ public class ClientIdentityStoreImpl implements ClientIdentityStore {
     private static final Logger LOGGER = LogManager.getLogger(ClientIdentityStoreImpl.class);
     private final GroupSessionManager groupSessionManager = new GroupSessionManager(this);
     private final HomeDirectory homeDirectory;
-    private final CollarSodium sodium;
+    private final Sodium sodium;
     private CollarIdentity collarIdentity;
 
     private byte[] token = TokenGenerator.byteToken(256);
     private String apiToken;
 
-    public ClientIdentityStoreImpl(HomeDirectory homeDirectory, CollarSodium sodium) throws IOException, CipherException {
+    public ClientIdentityStoreImpl(HomeDirectory homeDirectory, Sodium sodium) throws IOException, CipherException {
         this.homeDirectory = homeDirectory;
         this.sodium = sodium;
     }

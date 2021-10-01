@@ -43,7 +43,7 @@ import com.collarmc.protocol.session.StartSessionRequest;
 import com.collarmc.protocol.session.StartSessionResponse;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.CipherException.InvalidCipherSessionException;
-import com.collarmc.security.messages.CollarSodium;
+import com.collarmc.security.sodium.Sodium;
 import com.collarmc.security.mojang.MinecraftSession;
 import com.collarmc.security.mojang.Mojang;
 import com.collarmc.utils.Utils;
@@ -75,7 +75,7 @@ public final class Collar {
     private final IdentityApi identityApi;
     private final MessagingApi messagingApi;
     private final SDHTApi sdhtApi;
-    private final CollarSodium sodium;
+    private final Sodium sodium;
     private WebSocket webSocket;
     private volatile State state;
     private final List<AbstractApi> apis;
@@ -85,7 +85,7 @@ public final class Collar {
     private final Ticks ticks;
     private final ContentCiphers recordCiphers;
 
-    private Collar(CollarConfiguration configuration) throws IOException {
+    private Collar(CollarConfiguration configuration) throws IOException, CipherException {
         this.configuration = configuration;
         changeState(State.DISCONNECTED);
         this.identityStoreSupplier = () -> this.identityStore;
@@ -94,7 +94,7 @@ public final class Collar {
         this.recordCiphers = new ContentCiphers();
         this.apis = new ArrayList<>();
         this.sdhtApi = new SDHTApi(this, identityStoreSupplier, sender, recordCiphers, this.ticks, this.configuration.homeDirectory.dhtState());
-        this.sodium = new CollarSodium();
+        this.sodium = Sodium.create();
         this.groupsApi = new GroupsApi(this, identityStoreSupplier, sender, sdhtApi);
         this.recordCiphers.register(new GroupContentCipher(groupsApi, identityStoreSupplier));
         this.locationApi = new LocationApi(this,
@@ -126,7 +126,7 @@ public final class Collar {
     public static Collar create(CollarConfiguration configuration) {
         try {
             return new Collar(configuration);
-        } catch (IOException e) {
+        } catch (IOException | CipherException e) {
             throw new IllegalStateException(e);
         }
     }
@@ -172,7 +172,6 @@ public final class Collar {
      * @return groups api
      */
     public GroupsApi groups() {
-        assertConnected();
         return groupsApi;
     }
 
@@ -180,7 +179,6 @@ public final class Collar {
      * @return location api
      */
     public LocationApi location() {
-        assertConnected();
         return locationApi;
     }
 
@@ -188,7 +186,6 @@ public final class Collar {
      * @return texture api
      */
     public TexturesApi textures() {
-        assertConnected();
         return texturesApi;
     }
 
@@ -196,7 +193,6 @@ public final class Collar {
      * @return identity api
      */
     public IdentityApi identities() {
-        assertConnected();
         return identityApi;
     }
 
@@ -204,7 +200,6 @@ public final class Collar {
      * @return friends api
      */
     public FriendsApi friends() {
-        assertConnected();
         return friendsApi;
     }
 
@@ -212,7 +207,6 @@ public final class Collar {
      * @return messaging api
      */
     public MessagingApi messaging() {
-        assertConnected();
         return messagingApi;
     }
 
@@ -243,11 +237,10 @@ public final class Collar {
                 configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
                 this.state = state;
                 disconnect();
+                return;
             }
             this.state = state;
-            if (previousState == null) {
-                LOGGER.info("client in state " + state);
-            } else {
+            if (previousState != null) {
                 if (identityStore != null) {
                     LOGGER.info(identityStore.identity() + " state changed from " + previousState + " to " + state);
                 } else {
@@ -255,7 +248,6 @@ public final class Collar {
                 }
             }
             if (previousState != null) {
-                configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
                 apis.forEach(abstractApi -> abstractApi.onStateChanged(state));
             }
             configuration.eventBus.dispatch(new CollarStateChangedEvent(this, state));
@@ -267,18 +259,11 @@ public final class Collar {
      * @return player
      */
     public Player player() {
-        assertConnected();
         ClientIdentity identity = identity();
         if (identity == null) {
             throw new IllegalStateException("connected but not identified");
         }
         return new Player(identity, configuration.sessionSupplier.get().toPlayer());
-    }
-
-    private void assertConnected() {
-        if (state == State.CONNECTING || state == State.DISCONNECTED) {
-            throw new IllegalStateException("Cannot use the API until client is CONNECTED or DISCONNECTING");
-        }
     }
 
     /**
@@ -337,9 +322,10 @@ public final class Collar {
             // Create the sender delegate
             sender = request -> {
                 if (state == State.DISCONNECTED) {
-                    throw new IllegalStateException("Client is not in CONNECTED or CONNECTING state");
+                    LOGGER.error("Client is not in CONNECTED or CONNECTING state");
+                } else {
+                    sendRequest(webSocket, request);
                 }
-                sendRequest(webSocket, request);
             };
             LOGGER.info("Connection established");
             try {

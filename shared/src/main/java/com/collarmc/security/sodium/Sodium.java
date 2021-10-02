@@ -83,7 +83,7 @@ public final class Sodium {
         String resourcePath = findResourcePath();
         File nativeLibPath;
         try {
-            nativeLibPath = File.createTempFile("sodium", "native");
+            nativeLibPath = File.createTempFile("sodium", Platform.isWindows() ? "dll" : "native");
         } catch (IOException e) {
             throw new CipherException("could not create temp file", e);
         }

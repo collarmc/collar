@@ -4,6 +4,7 @@ import com.collarmc.security.Key;
 import com.collarmc.security.KeyPair;
 import com.collarmc.security.messages.CipherException;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
 import com.sun.jna.Platform;
@@ -83,7 +84,16 @@ public final class Sodium {
         String resourcePath = findResourcePath();
         File nativeLibPath;
         try {
-            nativeLibPath = File.createTempFile("sodium", Platform.isWindows() ? "dll" : "native");
+            nativeLibPath = new File("collar", new File(resourcePath).getName());
+            if (!nativeLibPath.getParentFile().exists() && !nativeLibPath.getParentFile().mkdirs()) {
+                throw new IllegalStateException("could not create directories " + nativeLibPath.getParentFile());
+            }
+            if (nativeLibPath.exists() && !nativeLibPath.delete()) {
+                throw new IllegalStateException("could not delete file " + nativeLibPath);
+            }
+            if (!nativeLibPath.createNewFile()) {
+                throw new IllegalStateException("could not create file " + nativeLibPath);
+            }
         } catch (IOException e) {
             throw new CipherException("could not create temp file", e);
         }

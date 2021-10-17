@@ -2,17 +2,15 @@ package com.collarmc.client.api.http;
 
 import com.collarmc.api.authentication.AuthenticationService.LoginRequest;
 import com.collarmc.api.authentication.AuthenticationService.LoginResponse;
+import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.http.CreateGroupTokenRequest;
 import com.collarmc.api.groups.http.CreateGroupTokenResponse;
-import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.api.http.HttpException;
-import com.collarmc.client.utils.Http;
-import com.collarmc.http.HttpClient;
-import com.collarmc.http.Request;
-import com.collarmc.http.Response;
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.mikael.urlbuilder.UrlBuilder;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
+import jakarta.ws.rs.client.Entity;
 
 import javax.annotation.Nonnull;
 import java.util.List;
@@ -24,7 +22,7 @@ import java.util.UUID;
 public final class RESTClient {
 
     private final String collarServerUrl;
-    private final HttpClient http = Http.client();
+    private final Client client = ClientBuilder.newClient();
 
     public RESTClient(String collarServerUrl) {
         this.collarServerUrl = collarServerUrl;
@@ -38,9 +36,8 @@ public final class RESTClient {
      * @throws HttpException if something went wrong
      */
     public LoginResponse login(String email, String password) {
-        Request request = Request.url(url("auth", "login"))
-                .postJson(LoginRequest.emailAndPassword(email, password));
-        return http.execute(request, Response.json(LoginResponse.class));
+        return client.target(url("auth", "login").toUri()).request()
+                .post(Entity.json(LoginRequest.emailAndPassword(email, password)), LoginResponse.class);
     }
 
     /**
@@ -49,10 +46,9 @@ public final class RESTClient {
      * @return all group information
      */
     public List<Group> groups(String apiToken) {
-        Request authorization = Request.url(url("groups", ""))
-                .addHeader("Authorization", "Bearer " + apiToken)
-                .get();
-        return http.execute(authorization, Response.json(new TypeReference<List<Group>>(){}));
+        return client.target(url("groups", "").toUri()).request()
+                .header("Authorization", "Bearer " + apiToken)
+                .get(List.class);
     }
 
     /**
@@ -62,10 +58,9 @@ public final class RESTClient {
      * @return response
      */
     public CreateGroupTokenResponse createGroupMembershipToken(String apiToken, UUID group) {
-        Request authorization = Request.url(url("groups", "token"))
-                .addHeader("Authorization", "Bearer " + apiToken)
-                .postJson(new CreateGroupTokenRequest(group));
-        return http.execute(authorization, Response.json(CreateGroupTokenResponse.class));
+        return client.target(url("groups", "token").toUri()).request()
+                .header("Authorization", "Bearer " + apiToken)
+                .post(Entity.json(new CreateGroupTokenRequest(group)), CreateGroupTokenResponse.class);
     }
 
     /**
@@ -74,10 +69,9 @@ public final class RESTClient {
      * @return valid or not
      */
     public boolean validateGroupMembershipToken(String groupToken, String group) {
-        Request authorization = Request.url(url("groups", "validate"))
-                .postJson(new ValidateGroupTokenRequest(groupToken, group));
         try {
-            http.execute(authorization, Response.json(Void.class));
+            client.target(url("groups", "validate").toUri()).request()
+                    .post(Entity.json(new ValidateGroupTokenRequest(groupToken, group)));
             return true;
         } catch (HttpException e) {
             return false;

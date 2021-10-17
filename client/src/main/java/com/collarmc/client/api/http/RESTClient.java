@@ -68,7 +68,7 @@ public final class RESTClient {
      * @param groupToken to validate
      * @return valid or not
      */
-    public boolean validateGroupMembershipToken(String groupToken, String group) {
+    public boolean validateGroupMembershipToken(String groupToken, UUID group) {
         try {
             client.target(url("groups", "validate").toUri()).request()
                     .post(Entity.json(new ValidateGroupTokenRequest(groupToken, group)));

@@ -8,9 +8,9 @@ public class ValidateGroupTokenRequest {
     @JsonProperty("token")
     public final String token;
     @JsonProperty("group")
-    public final UUID group;
+    public final String group;
 
-    public ValidateGroupTokenRequest(String token, UUID group) {
+    public ValidateGroupTokenRequest(@JsonProperty("token") String token, @JsonProperty("group") String group) {
         this.token = token;
         this.group = group;
     }

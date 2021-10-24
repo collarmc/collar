@@ -1,5 +1,6 @@
 package com.collarmc.server.services.authentication;
 
+import com.collarmc.security.TokenCrypter;
 import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -8,11 +8,12 @@ import com.collarmc.server.mail.Email;
 import com.collarmc.server.mail.LocalEmail;
 import com.collarmc.server.mail.MailGunEmail;
 import com.collarmc.server.mongo.Mongo;
+import com.collarmc.server.security.TokenCrypterImpl;
 import com.collarmc.server.security.hashing.PasswordHashing;
 import com.collarmc.server.security.mojang.MinecraftSessionVerifier;
 import com.collarmc.server.security.mojang.MojangMinecraftSessionVerifier;
 import com.collarmc.server.security.mojang.NojangMinecraftSessionVerifier;
-import com.collarmc.server.services.authentication.TokenCrypter;
+import com.collarmc.security.TokenCrypter;
 import com.mongodb.client.MongoDatabase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -87,7 +88,7 @@ public class Configuration {
         return new Configuration(
                 Mongo.database(),
                 appUrlProvider,
-                new TokenCrypter(crypterPassword),
+                new TokenCrypterImpl(crypterPassword),
                 new PasswordHashing(passwordSalt),
                 useMojang ? new MojangMinecraftSessionVerifier(http) : new NojangMinecraftSessionVerifier(),
                 appUrlProvider.homeUrl(),
@@ -104,7 +105,7 @@ public class Configuration {
         return new Configuration(
                 Mongo.database("mongodb://localhost/collar-dev"),
                 appUrlProvider,
-                new TokenCrypter("insecureTokenCrypterPassword"),
+                new TokenCrypterImpl("insecureTokenCrypterPassword"),
                 new PasswordHashing("VSZL*bR8-=r]r5P_"),
                 new NojangMinecraftSessionVerifier(),
                 "*",
@@ -120,7 +121,7 @@ public class Configuration {
         return new Configuration(
                 db,
                 appUrlProvider,
-                new TokenCrypter("insecureTokenCrypterPassword"),
+                new TokenCrypterImpl("insecureTokenCrypterPassword"),
                 new PasswordHashing("VSZL*bR8-=r]r5P_"),
                 sessionVerifier,
                 "*",

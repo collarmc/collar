@@ -24,7 +24,6 @@ import com.collarmc.protocol.session.StartSessionResponse;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.security.mojang.Mojang;
-import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.protocol.*;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;

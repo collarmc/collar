@@ -7,9 +7,11 @@ import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.CreateProfileRequest;
 import com.collarmc.api.session.Player;
+import com.collarmc.security.TokenCrypter;
 import com.collarmc.security.mojang.MinecraftPlayer;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.junit.MongoDatabaseTestRule;
+import com.collarmc.server.security.TokenCrypterImpl;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.services.profiles.ProfileServiceServer;
 import com.collarmc.server.session.SessionManager;
@@ -27,10 +29,11 @@ public class GroupStoreTest {
 
     @Test
     public void crud() {
+        TokenCrypter crypter = new TokenCrypterImpl("insecureTokenCrypterPassword");
         ProfileService profiles = new ProfileServiceServer(dbRule.db, Configuration.defaultConfiguration().passwordHashing);
         ProfileCache profileCache = new ProfileCache(profiles);
         Profile ownerProfile = profiles.createProfile(RequestContext.ANON, new CreateProfileRequest("owner@example.com", "cute", "owner")).profile;
-        GroupStore store = new GroupStore(profileCache, new SessionManager(Utils.messagePackMapper(), null), dbRule.db);
+        GroupStore store = new GroupStore(profileCache, new SessionManager(Utils.messagePackMapper(), null), crypter, dbRule.db);
 
         UUID groupId = UUID.randomUUID();
         Player owner = new Player(new ClientIdentity(ownerProfile.id, null), new MinecraftPlayer(UUID.randomUUID(), "2b2t.org", 1));

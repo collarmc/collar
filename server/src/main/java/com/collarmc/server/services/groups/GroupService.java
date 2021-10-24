@@ -2,9 +2,7 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
-import com.collarmc.api.groups.http.CreateGroupTokenRequest;
-import com.collarmc.api.groups.http.CreateGroupTokenResponse;
-import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
+import com.collarmc.api.groups.http.*;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.NotFoundException;
 import com.collarmc.api.http.RequestContext;
@@ -16,6 +14,7 @@ import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
+import com.collarmc.security.ApiToken;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.GroupMessage;
@@ -24,8 +23,8 @@ import com.collarmc.server.protocol.BatchProtocolResponse;
 import com.collarmc.server.services.location.NearbyGroups;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -310,7 +309,7 @@ public final class GroupService {
     public Optional<BatchProtocolResponse> updateNearbyGroups(NearbyGroups.Result result) {
         BatchProtocolResponse response = new BatchProtocolResponse();
         result.add.forEach((groupId, nearbyGroup) -> {
-            Group group = new Group(groupId, null, GroupType.NEARBY, Set.of());
+            Group group = new Group(groupId, null, GroupType.NEARBY, Set.of(), ImmutableSet.of());
             Map<Group, List<Member>> groupToMembers = new HashMap<>();
             group = group.addMembers(ImmutableList.copyOf(nearbyGroup.players), MembershipRole.MEMBER, MembershipState.PENDING, groupToMembers::put);
             for (Map.Entry<Group, List<Member>> memberEntry : groupToMembers.entrySet()) {
@@ -446,7 +445,33 @@ public final class GroupService {
         store.findGroupsContaining(groupMembershipToken.group)
                 .findFirst()
                 .map(found -> found.containsMember(groupMembershipToken.profile))
-                .orElseThrow(() -> new NotFoundException("not found"));
+                .orElseThrow(NotFoundException::new);
+    }
+
+    public UpdateGroupMembershipResponse updateMembers(RequestContext ctx, UpdateGroupMembershipRequest req) {
+        return store.findGroup(req.group)
+                .filter(group -> group.members.stream().anyMatch(
+                        member -> member.profile.id.equals(ctx.owner))
+                        || isMemberWithAnyRole(group, ctx.owner, ctx.groupRoles)).map(group -> {
+                            if (req.role == null) {
+                                return store.removeMember(group.id, req.profile)
+                                        .map(UpdateGroupMembershipResponse::new)
+                                        .orElseThrow(NotFoundException::new);
+                            } else {
+                                return store.updateMember(group.id, req.profile, req.role, MembershipState.ACCEPTED)
+                                        .map(UpdateGroupMembershipResponse::new)
+                                        .orElseThrow(NotFoundException::new);
+                            }
+                })
+                .orElseThrow(NotFoundException::new);
+    }
+
+    private static boolean isMemberWithAnyRole(Group group, UUID uuid, Set<MembershipRole> roles) {
+        return roles.stream().anyMatch(membershipRole -> isMemberWithRole(group, uuid, membershipRole));
+    }
+
+    private static boolean isMemberWithRole(Group group, UUID uuid, MembershipRole role) {
+        return group.members.stream().anyMatch(member -> member.player.identity.id().equals(uuid) && (role == null || member.membershipRole.equals(role)));
     }
 
     public interface MessageCreator {

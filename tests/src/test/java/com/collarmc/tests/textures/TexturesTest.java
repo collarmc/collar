@@ -27,6 +27,7 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -39,13 +40,13 @@ public class TexturesTest extends CollarTest {
         Profile profile = services.profiles.getProfile(RequestContext.SERVER, ProfileServiceServer.GetProfileRequest.byEmail("alice@example.com")).profile;
         ByteSource source = Resources.asByteSource(Resources.getResource("cat.png"));
         try {
-            services.textures.createTexture(new RequestContext(profile.id, profile.roles), new CreateTextureRequest(profile.id, null, TextureType.AVATAR, source.read()));
+            services.textures.createTexture(new RequestContext(profile.id, profile.roles, Set.of()), new CreateTextureRequest(profile.id, null, TextureType.AVATAR, source.read()));
         } catch (IOException e) {
             throw new IllegalStateException(e);
         }
 
         try {
-            services.textures.createTexture(new RequestContext(profile.id, profile.roles), new CreateTextureRequest(null, groupId, TextureType.AVATAR, source.read()));
+            services.textures.createTexture(new RequestContext(profile.id, profile.roles, Set.of()), new CreateTextureRequest(null, groupId, TextureType.AVATAR, source.read()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

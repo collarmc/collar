@@ -109,6 +109,17 @@ public final class Group {
         return group;
     }
 
+    /**
+     * Add an API token
+     * @param token to add
+     * @return new group
+     */
+    public Group addApiToken(ApiToken token) {
+        Set<ApiToken> newTokens = new HashSet<>(tokens);
+        newTokens.add(token);
+        return new Group(id, name, type, members, newTokens);
+    }
+
     public MembershipRole getRole(Player sendingPlayer) {
         return members.stream().filter(member -> sendingPlayer.identity.id().equals(member.player.identity.id()))
                 .findFirst().map(member -> member.membershipRole).orElse(null);

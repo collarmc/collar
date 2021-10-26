@@ -58,13 +58,15 @@ public final class GroupStore {
     /**
      * Upsert group into the store
      * @param group to store
+     * @return group
      */
-    public void upsert(Group group) {
+    public Optional<Group> upsert(Group group) {
         Document document = mapToDocument(group);
         UpdateResult result = docs.replaceOne(eq(FIELD_ID, group.id), document, new ReplaceOptions().upsert(true));
         if (!result.wasAcknowledged()) {
             throw new IllegalStateException("group " + group.id + " could not be upserted");
         }
+        return findGroup(group.id);
     }
 
     /**

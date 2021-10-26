@@ -2,8 +2,9 @@ package com.collarmc.client.api.http;
 
 import com.collarmc.api.authentication.AuthenticationService.LoginRequest;
 import com.collarmc.api.authentication.AuthenticationService.LoginResponse;
-import com.collarmc.api.groups.http.CreateGroupTokenRequest;
-import com.collarmc.api.groups.http.CreateGroupTokenResponse;
+import com.collarmc.api.groups.http.CreateGroupManagementTokenResponse;
+import com.collarmc.api.groups.http.CreateGroupMembershipTokenRequest;
+import com.collarmc.api.groups.http.CreateGroupMembershipTokenResponse;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.api.http.HttpException;
@@ -56,16 +57,29 @@ public final class RESTClient {
     }
 
     /**
-     * Creates a group token used to verify that
+     * Creates a token used to verify that a collar player is member of a group
      * @param apiToken of the user
      * @param group id of group
      * @return response
      */
-    public CreateGroupTokenResponse createGroupMembershipToken(String apiToken, UUID group) {
-        Request authorization = Request.url(url("groups", "token"))
+    public CreateGroupMembershipTokenResponse createGroupMembershipToken(String apiToken, UUID group) {
+        Request authorization = Request.url(url("groups", "token/membership"))
                 .addHeader("Authorization", "Bearer " + apiToken)
-                .postJson(new CreateGroupTokenRequest(group));
-        return http.execute(authorization, Response.json(CreateGroupTokenResponse.class));
+                .postJson(new CreateGroupMembershipTokenRequest(group));
+        return http.execute(authorization, Response.json(CreateGroupMembershipTokenResponse.class));
+    }
+
+    /**
+     * Creates a token used to manage a collar group
+     * @param apiToken of the user
+     * @param group id of group
+     * @return response
+     */
+    public CreateGroupManagementTokenResponse createGroupManagementToken(String apiToken, UUID group) {
+        Request authorization = Request.url(url("groups", "token/management"))
+                .addHeader("Authorization", "Bearer " + apiToken)
+                .postJson(new CreateGroupMembershipTokenRequest(group));
+        return http.execute(authorization, Response.json(CreateGroupManagementTokenResponse.class));
     }
 
     /**

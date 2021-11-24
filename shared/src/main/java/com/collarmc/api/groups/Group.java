@@ -1,6 +1,7 @@
 package com.collarmc.api.groups;
 
 import com.collarmc.api.session.Player;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 
@@ -50,6 +51,10 @@ public final class Group {
         return members.stream().filter(member -> member.player.equals(player)).findFirst();
     }
 
+    public Optional<Member> findMember(UUID profile) {
+        return members.stream().filter(member -> member.profile.id.equals(profile)).findFirst();
+    }
+
     public Group updatePlayer(MemberSource memberSource) {
         Member memberToUpdate = members.stream().filter(member -> member.player.equals(memberSource.player))
                 .findFirst().orElseThrow(() -> new IllegalStateException(memberSource.player + " is not a member of group " + id));
@@ -97,5 +102,10 @@ public final class Group {
     public MembershipRole getRole(Player sendingPlayer) {
         return members.stream().filter(member -> sendingPlayer.identity.id().equals(member.player.identity.id()))
                 .findFirst().map(member -> member.membershipRole).orElse(null);
+    }
+
+    @JsonIgnore
+    public PublicGroup toPublicGroup() {
+        return new PublicGroup(id, name, type);
     }
 }

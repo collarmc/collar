@@ -12,6 +12,7 @@
         <module>shared</module>
         <module>tests</module>
         <module>tools</module>
+        <module>rest</module>
     </modules>
 
     <scm>
@@ -212,6 +213,11 @@
                 <groupId>io.mikael</groupId>
                 <artifactId>urlbuilder</artifactId>
                 <version>2.0.9</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jersey.core</groupId>
+                <artifactId>jersey-client</artifactId>
+                <version>3.0.3</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>

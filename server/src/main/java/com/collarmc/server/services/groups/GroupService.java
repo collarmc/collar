@@ -5,6 +5,7 @@ import com.collarmc.api.groups.*;
 import com.collarmc.api.groups.http.CreateGroupTokenRequest;
 import com.collarmc.api.groups.http.CreateGroupTokenResponse;
 import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
+import com.collarmc.api.groups.http.ValidateGroupTokenResponse;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.NotFoundException;
 import com.collarmc.api.http.RequestContext;
@@ -445,7 +446,11 @@ public final class GroupService {
         groupMembershipToken.assertValid(req.group);
         store.findGroupsContaining(groupMembershipToken.group)
                 .findFirst()
-                .map(found -> found.containsMember(groupMembershipToken.profile))
+                .map(found -> found.findMember(groupMembershipToken.profile).orElseThrow(NotFoundException::new))
+                .map(member -> profiles.getById(member.profile.id).orElseThrow(NotFoundException::new))
+                .map(profile -> new ValidateGroupTokenResponse(findGroup(req.group)
+                    .map(Group::toPublicGroup).orElseThrow(NotFoundException::new), profile.toPublic())
+                )
                 .orElseThrow(() -> new NotFoundException("not found"));
     }
 

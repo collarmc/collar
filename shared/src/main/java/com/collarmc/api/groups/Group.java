@@ -1,6 +1,9 @@
 package com.collarmc.api.groups;
 
 import com.collarmc.api.session.Player;
+import com.collarmc.security.ApiToken;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableSet;
 
@@ -17,11 +20,22 @@ public final class Group {
     public final GroupType type;
     @JsonProperty("members")
     public final Set<Member> members;
+    @JsonIgnore
+    public final Set<ApiToken> tokens;
 
+    @JsonCreator
     public Group(@JsonProperty("id") UUID id,
                  @JsonProperty("name") String name,
                  @JsonProperty("type") GroupType type,
                  @JsonProperty("members") Set<Member> members) {
+        this(id, name, type, members, ImmutableSet.of());
+    }
+
+    public Group(UUID id,
+                 String name,
+                 GroupType type,
+                 Set<Member> members,
+                 Set<ApiToken> tokens) {
         this.id = id;
         if (name != null && name.length() > 100) {
             throw new IllegalArgumentException("name must be 100 characters or less");
@@ -29,13 +43,14 @@ public final class Group {
         this.name = name;
         this.type = type;
         this.members = ImmutableSet.copyOf(members);
+        this.tokens = ImmutableSet.copyOf(tokens);
     }
 
     public static Group newGroup(UUID id, String name, GroupType type, MemberSource owner, List<MemberSource> members) {
         Set<Member> memberList = new HashSet<>();
         memberList.add(new Member(owner.player, owner.profile, MembershipRole.OWNER, MembershipState.ACCEPTED));
         members.forEach(memberSource -> memberList.add(new Member(memberSource.player, memberSource.profile, MembershipRole.MEMBER, MembershipState.PENDING)));
-        return new Group(id, name, type, memberList);
+        return new Group(id, name, type, memberList, ImmutableSet.of());
     }
 
     public boolean containsMember(UUID profile) {
@@ -50,12 +65,16 @@ public final class Group {
         return members.stream().filter(member -> member.player.equals(player)).findFirst();
     }
 
+    public Optional<Member> findMember(UUID profile) {
+        return members.stream().filter(member -> member.profile.id.equals(profile)).findFirst();
+    }
+
     public Group updatePlayer(MemberSource memberSource) {
         Member memberToUpdate = members.stream().filter(member -> member.player.equals(memberSource.player))
                 .findFirst().orElseThrow(() -> new IllegalStateException(memberSource.player + " is not a member of group " + id));
         Map<Player, Member> playerMemberMap = members.stream().collect(Collectors.toMap(member -> member.player, member -> member));
         playerMemberMap.put(memberSource.player, new Member(memberSource.player, memberSource.profile, memberToUpdate.membershipRole, memberToUpdate.membershipState));
-        return new Group(id, name, type, ImmutableSet.copyOf(playerMemberMap.values()));
+        return new Group(id, name, type, ImmutableSet.copyOf(playerMemberMap.values()), tokens);
     }
 
     public Group updateMembershipRole(Player player, MembershipRole newMembershipRole) {
@@ -63,7 +82,7 @@ public final class Group {
                 .findFirst().orElseThrow(() -> new IllegalStateException(player + " not a member of group " + id));
         Set<Member> members = this.members.stream().filter(entry -> !entry.player.equals(player)).collect(Collectors.toSet());
         members.add(member.updateMembershipRole(newMembershipRole));
-        return new Group(id, name, type, members);
+        return new Group(id, name, type, members, tokens);
     }
 
     public Group updateMembershipState(Player player, MembershipState newMembershipState) {
@@ -71,12 +90,12 @@ public final class Group {
                 .findFirst().orElseThrow(() -> new IllegalStateException(player + " not a member of group " + id));
         Set<Member> members = this.members.stream().filter(entry -> !entry.player.equals(player)).collect(Collectors.toSet());
         members.add(member.updateMembershipState(newMembershipState));
-        return new Group(id, name, type, members);
+        return new Group(id, name, type, members, tokens);
     }
 
     public Group removeMember(Player player) {
         Set<Member> members = this.members.stream().filter(member -> !member.player.equals(player)).collect(Collectors.toSet());
-        return new Group(id, name, type, members);
+        return new Group(id, name, type, members, tokens);
     }
 
     public Group addMembers(List<MemberSource> players, MembershipRole role, MembershipState membershipState, BiConsumer<Group, List<Member>> newMemberConsumer) {
@@ -89,13 +108,29 @@ public final class Group {
                 newMembers.add(newMember);
             }
         });
-        Group group = new Group(id, name, type, ImmutableSet.copyOf(playerMemberMap.values()));
+        Group group = new Group(id, name, type, ImmutableSet.copyOf(playerMemberMap.values()), tokens);
         newMemberConsumer.accept(group, newMembers);
         return group;
+    }
+
+    /**
+     * Add an API token
+     * @param token to add
+     * @return new group
+     */
+    public Group addApiToken(ApiToken token) {
+        Set<ApiToken> newTokens = new HashSet<>(tokens);
+        newTokens.add(token);
+        return new Group(id, name, type, members, newTokens);
     }
 
     public MembershipRole getRole(Player sendingPlayer) {
         return members.stream().filter(member -> sendingPlayer.identity.id().equals(member.player.identity.id()))
                 .findFirst().map(member -> member.membershipRole).orElse(null);
+    }
+
+    @JsonIgnore
+    public PublicGroup toPublicGroup() {
+        return new PublicGroup(id, name, type);
     }
 }

@@ -4,7 +4,7 @@ import com.collarmc.api.authentication.AuthenticationService.*;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.groups.MembershipRole;
-import com.collarmc.api.groups.http.CreateGroupTokenRequest;
+import com.collarmc.api.groups.http.*;
 import com.collarmc.api.http.*;
 import com.collarmc.api.http.HttpException.BadRequestException;
 import com.collarmc.api.http.HttpException.NotFoundException;
@@ -18,10 +18,9 @@ import com.collarmc.api.textures.TextureType;
 import com.collarmc.server.common.ServerStatus;
 import com.collarmc.server.common.ServerVersion;
 import com.collarmc.server.configuration.Configuration;
-import com.collarmc.server.http.ApiToken;
+import com.collarmc.security.ApiToken;
 import com.collarmc.server.http.HandlebarsTemplateEngine;
-import com.collarmc.server.services.authentication.TokenCrypter;
-import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
+import com.collarmc.security.TokenCrypter;
 import com.collarmc.server.services.textures.TextureService;
 import com.collarmc.server.session.ClientRegistrationService;
 import com.collarmc.server.session.ClientRegistrationService.RegisterClientRequest;
@@ -210,7 +209,7 @@ public class WebServer {
                 });
 
                 path("/groups", () -> {
-                    get("/groups", (request, response) -> {
+                    get("/", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
                         return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
@@ -222,11 +221,23 @@ public class WebServer {
                         services.groups.validateGroupToken(req);
                         return "OK";
                     }, services.jsonMapper::writeValueAsString);
-                    post("/token", (request, response) -> {
+                    post("/token/membership", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
-                        CreateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), CreateGroupTokenRequest.class);
-                        return services.groups.createGroupToken(context, req);
+                        CreateGroupMembershipTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), CreateGroupMembershipTokenRequest.class);
+                        return services.groups.createGroupMembershipToken(context, req);
+                    }, services.jsonMapper::writeValueAsString);
+                    post("/token/management", (request, response) -> {
+                        RequestContext context = from(request);
+                        context.assertNotAnonymous();
+                        CreateGroupManagementTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), CreateGroupManagementTokenRequest.class);
+                        return services.groups.createGroupManagementToken(context, req);
+                    }, services.jsonMapper::writeValueAsString);
+                    post("/members/add", (request, response) -> {
+                        RequestContext context = from(request);
+                        context.assertNotAnonymous();
+                        UpdateGroupMembershipRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), UpdateGroupMembershipRequest.class);
+                        return services.groups.updateMembers(context, req);
                     }, services.jsonMapper::writeValueAsString);
                 });
 

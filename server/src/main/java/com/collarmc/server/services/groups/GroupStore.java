@@ -4,6 +4,8 @@ import com.collarmc.api.groups.*;
 import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.api.session.Player;
+import com.collarmc.security.ApiToken;
+import com.collarmc.security.TokenCrypter;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
 import com.mongodb.client.MongoCollection;
@@ -13,9 +15,13 @@ import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.bson.Document;
+import org.bson.types.Binary;
 
 import javax.annotation.Nonnull;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,6 +32,8 @@ import static com.mongodb.client.model.Updates.*;
 
 public final class GroupStore {
 
+    private static final Logger LOGGER = LogManager.getLogger(GroupStore.class.getName());
+
     private static final String FIELD_ID = "id";
     private static final String FIELD_NAME = "name";
     private static final String FIELD_TYPE = "type";
@@ -33,27 +41,32 @@ public final class GroupStore {
     private static final String FIELD_MEMBER_ROLE = "role";
     private static final String FIELD_MEMBER_STATE = "state";
     private static final String FIELD_MEMBER_PROFILE_ID = "profileId";
+    private static final String FIELD_TOKENS = "tokens";
 
     private final ProfileCache profiles;
     private final SessionManager sessions;
     private final MongoCollection<Document> docs;
+    private final TokenCrypter crypter;
 
-    public GroupStore(ProfileCache profiles, SessionManager sessions, MongoDatabase database) {
+    public GroupStore(ProfileCache profiles, SessionManager sessions, TokenCrypter crypter, MongoDatabase database) {
         this.profiles = profiles;
         this.sessions = sessions;
+        this.crypter = crypter;
         this.docs = database.getCollection("groups");
     }
 
     /**
      * Upsert group into the store
      * @param group to store
+     * @return group
      */
-    public void upsert(Group group) {
+    public Optional<Group> upsert(Group group) {
         Document document = mapToDocument(group);
         UpdateResult result = docs.replaceOne(eq(FIELD_ID, group.id), document, new ReplaceOptions().upsert(true));
         if (!result.wasAcknowledged()) {
             throw new IllegalStateException("group " + group.id + " could not be upserted");
         }
+        return findGroup(group.id);
     }
 
     /**
@@ -146,15 +159,39 @@ public final class GroupStore {
         UUID groupId = doc.get(FIELD_ID, UUID.class);
         GroupType groupType = GroupType.valueOf(doc.getString(FIELD_TYPE));
         String name = doc.getString(FIELD_NAME);
-        return new Group(groupId, name, groupType, members);
+        List<Binary> tokens = doc.getList(FIELD_TOKENS, Binary.class, List.of());
+        return new Group(groupId, name, groupType, members, tokens.stream()
+                .map(binary -> {
+                    try {
+                        return ApiToken.deserialize(crypter, binary.getData());
+                    } catch (IOException e) {
+                        LOGGER.error("could not decode group token", e);
+                        return null;
+                    }
+                })
+                .filter(Objects::isNull)
+                .collect(Collectors.toSet())
+        );
     }
 
-    static Document mapToDocument(Group group) {
+    private Document mapToDocument(Group group) {
         Map<String, Object> doc = new HashMap<>();
         doc.put(FIELD_ID, group.id);
         doc.put(FIELD_NAME, group.name);
         doc.put(FIELD_TYPE, group.type.name());
         doc.put(FIELD_MEMBERS, mapToMembersList(group.members));
+        doc.put(FIELD_TOKENS, group.tokens.stream().map(token -> {
+                try {
+                    return token.serializeToBytes(crypter);
+                } catch (IOException e) {
+                    LOGGER.error("could not encode group token", e);
+                    return null;
+                }
+            })
+            .filter(Objects::nonNull)
+            .map(Binary::new)
+            .collect(Collectors.toList())
+        );
         return new Document(doc);
     }
 

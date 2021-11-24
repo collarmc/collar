@@ -9,7 +9,7 @@ import com.collarmc.server.security.ServerIdentityStoreImpl;
 import com.collarmc.server.security.hashing.PasswordHashing;
 import com.collarmc.server.security.mojang.MinecraftSessionVerifier;
 import com.collarmc.server.services.authentication.ServerAuthenticationService;
-import com.collarmc.server.services.authentication.TokenCrypter;
+import com.collarmc.security.TokenCrypter;
 import com.collarmc.server.services.friends.FriendsService;
 import com.collarmc.server.services.groups.GroupService;
 import com.collarmc.server.services.groups.GroupStore;
@@ -61,7 +61,7 @@ public final class Services {
         this.tokenCrypter = configuration.tokenCrypter;
         this.auth = new ServerAuthenticationService(profiles, passwordHashing, tokenCrypter, configuration.email, urlProvider);
         this.minecraftSessionVerifier = configuration.minecraftSessionVerifier;
-        this.groupStore = new GroupStore(profileCache, sessions, configuration.database);
+        this.groupStore = new GroupStore(profileCache, sessions, tokenCrypter, configuration.database);
         this.groups = new GroupService(groupStore, profileCache, sessions, identityStore.cipher());
         this.playerLocations = new PlayerLocationService(this);
         this.textures = new TextureService(configuration.database);

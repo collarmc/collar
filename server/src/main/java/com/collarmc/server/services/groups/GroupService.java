@@ -2,11 +2,9 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
-import com.collarmc.api.groups.http.CreateGroupTokenRequest;
-import com.collarmc.api.groups.http.CreateGroupTokenResponse;
-import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
-import com.collarmc.api.http.HttpException;
+import com.collarmc.api.groups.http.*;
 import com.collarmc.api.http.HttpException.NotFoundException;
+import com.collarmc.api.http.HttpException.ServerErrorException;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Profile;
@@ -16,6 +14,8 @@ import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.messaging.SendMessageRequest;
 import com.collarmc.protocol.messaging.SendMessageResponse;
+import com.collarmc.security.ApiToken;
+import com.collarmc.security.TokenCrypter;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.GroupMessage;
@@ -24,12 +24,13 @@ import com.collarmc.server.protocol.BatchProtocolResponse;
 import com.collarmc.server.services.location.NearbyGroups;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -43,12 +44,14 @@ public final class GroupService {
     private final GroupStore store;
     private final ProfileCache profiles;
     private final SessionManager sessions;
+    private final TokenCrypter crypter;
     private final Cipher cipher;
 
-    public GroupService(GroupStore store, ProfileCache profiles, SessionManager sessions, Cipher cipher) {
+    public GroupService(GroupStore store, ProfileCache profiles, SessionManager sessions, TokenCrypter crypter, Cipher cipher) {
         this.store = store;
         this.profiles = profiles;
         this.sessions = sessions;
+        this.crypter = crypter;
         this.cipher = cipher;
     }
 
@@ -310,7 +313,7 @@ public final class GroupService {
     public Optional<BatchProtocolResponse> updateNearbyGroups(NearbyGroups.Result result) {
         BatchProtocolResponse response = new BatchProtocolResponse();
         result.add.forEach((groupId, nearbyGroup) -> {
-            Group group = new Group(groupId, null, GroupType.NEARBY, Set.of());
+            Group group = new Group(groupId, null, GroupType.NEARBY, Set.of(), ImmutableSet.of());
             Map<Group, List<Member>> groupToMembers = new HashMap<>();
             group = group.addMembers(ImmutableList.copyOf(nearbyGroup.players), MembershipRole.MEMBER, MembershipState.PENDING, groupToMembers::put);
             for (Map.Entry<Group, List<Member>> memberEntry : groupToMembers.entrySet()) {
@@ -420,18 +423,38 @@ public final class GroupService {
         return store.findGroup(groupId);
     }
 
-    public CreateGroupTokenResponse createGroupToken(RequestContext ctx, CreateGroupTokenRequest request) {
+    public CreateGroupMembershipTokenResponse createGroupMembershipToken(RequestContext ctx, CreateGroupMembershipTokenRequest request) {
         byte[] token = store.findGroup(request.group).filter(found -> found.members.stream().anyMatch(member -> ctx.callerIs(member.profile.id)))
                 .map(found -> new GroupMembershipToken(found.id, ctx.owner, Instant.now().plus(1, ChronoUnit.DAYS)))
                 .map(groupMembershipToken -> {
                     try {
                         return cipher.encrypt(groupMembershipToken.serialize());
                     } catch (CipherException e) {
-                        throw new HttpException.ServerErrorException("token generation failed", e);
+                        throw new ServerErrorException("token generation failed", e);
                     }
                 })
                 .orElseThrow(() -> new NotFoundException("group not found"));
-        return new CreateGroupTokenResponse(BaseEncoding.base64Url().encode(token));
+        return new CreateGroupMembershipTokenResponse(BaseEncoding.base64Url().encode(token));
+    }
+
+    /**
+     * Create a group API token that can be used to manage or act on behalf of the group
+     * @param ctx of the request
+     * @param req specifying token parameters
+     * @return response
+     */
+    public CreateGroupManagementTokenResponse createGroupManagementToken(RequestContext ctx, CreateGroupManagementTokenRequest req) {
+        ApiToken token = new ApiToken(req.group, Set.of(), Set.of(req.role));
+        store.findGroup(req.group)
+                .filter(group -> group.members.stream().noneMatch(member -> MembershipRole.OWNER.equals(member.membershipRole) && member.profile.id.equals(ctx.owner)))
+                .map(group -> group.addApiToken(token))
+                .flatMap(store::upsert)
+                .orElseThrow(NotFoundException::new);
+        try {
+            return new CreateGroupManagementTokenResponse(token.serialize(crypter));
+        } catch (IOException e) {
+            throw new ServerErrorException("problem serializing group api token", e);
+        }
     }
 
     public void validateGroupToken(ValidateGroupTokenRequest req) {
@@ -440,13 +463,43 @@ public final class GroupService {
         try {
             groupMembershipToken = new GroupMembershipToken(cipher.decrypt(token));
         } catch (CipherException e) {
-            throw new HttpException.ServerErrorException("bad token", e);
+            throw new ServerErrorException("bad token", e);
         }
         groupMembershipToken.assertValid(req.group);
         store.findGroupsContaining(groupMembershipToken.group)
                 .findFirst()
-                .map(found -> found.containsMember(groupMembershipToken.profile))
-                .orElseThrow(() -> new NotFoundException("not found"));
+                .map(found -> found.findMember(groupMembershipToken.profile).orElseThrow(NotFoundException::new))
+                .map(member -> profiles.getById(member.profile.id).orElseThrow(NotFoundException::new))
+                .map(profile -> new ValidateGroupTokenResponse(findGroup(req.group)
+                    .map(Group::toPublicGroup).orElseThrow(NotFoundException::new), profile.toPublic())
+                )
+                .orElseThrow(NotFoundException::new);
+    }
+
+    public UpdateGroupMembershipResponse updateMembers(RequestContext ctx, UpdateGroupMembershipRequest req) {
+        return store.findGroup(req.group)
+                .filter(group -> group.members.stream().anyMatch(
+                        member -> member.profile.id.equals(ctx.owner))
+                        || isMemberWithAnyRole(group, ctx.owner, ctx.groupRoles)).map(group -> {
+                            if (req.role == null) {
+                                return store.removeMember(group.id, req.profile)
+                                        .map(UpdateGroupMembershipResponse::new)
+                                        .orElseThrow(NotFoundException::new);
+                            } else {
+                                return store.updateMember(group.id, req.profile, req.role, MembershipState.ACCEPTED)
+                                        .map(UpdateGroupMembershipResponse::new)
+                                        .orElseThrow(NotFoundException::new);
+                            }
+                })
+                .orElseThrow(NotFoundException::new);
+    }
+
+    private static boolean isMemberWithAnyRole(Group group, UUID uuid, Set<MembershipRole> roles) {
+        return roles.stream().anyMatch(membershipRole -> isMemberWithRole(group, uuid, membershipRole));
+    }
+
+    private static boolean isMemberWithRole(Group group, UUID uuid, MembershipRole role) {
+        return group.members.stream().anyMatch(member -> member.player.identity.id().equals(uuid) && (role == null || member.membershipRole.equals(role)));
     }
 
     public interface MessageCreator {

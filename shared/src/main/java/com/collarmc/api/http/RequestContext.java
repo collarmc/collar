@@ -1,5 +1,6 @@
 package com.collarmc.api.http;
 
+import com.collarmc.api.groups.MembershipRole;
 import com.collarmc.api.http.HttpException.UnauthorisedException;
 import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Role;
@@ -11,23 +12,25 @@ import java.util.UUID;
 
 public final class RequestContext {
 
-    public static final RequestContext ANON = new RequestContext(UUID.fromString("00000000-0000-0000-0000-000000000000"), ImmutableSet.of());
-    public static final RequestContext SERVER = new RequestContext(UUID.fromString("99999999-9999-9999-9999-999999999999"), ImmutableSet.of());
+    public static final RequestContext ANON = new RequestContext(UUID.fromString("00000000-0000-0000-0000-000000000000"), ImmutableSet.of(), ImmutableSet.of());
+    public static final RequestContext SERVER = new RequestContext(UUID.fromString("99999999-9999-9999-9999-999999999999"), ImmutableSet.of(), ImmutableSet.of());
 
     public final UUID owner;
     public final Set<Role> roles;
+    public final Set<MembershipRole> groupRoles;
 
-    public RequestContext(UUID owner, Set<Role> roles) {
+    public RequestContext(UUID owner, Set<Role> roles, Set<MembershipRole> groupRoles) {
         this.owner = owner;
         this.roles = roles;
+        this.groupRoles = groupRoles;
     }
 
     public static RequestContext from(UUID profileId) {
-        return new RequestContext(profileId, ImmutableSet.of(Role.PLAYER));
+        return new RequestContext(profileId, ImmutableSet.of(Role.PLAYER), ImmutableSet.of());
     }
 
     public static RequestContext from(ClientIdentity identity) {
-        return new RequestContext(identity.id(), ImmutableSet.of(Role.PLAYER));
+        return new RequestContext(identity.id(), ImmutableSet.of(Role.PLAYER), ImmutableSet.of());
     }
 
     public void assertAnonymous() {

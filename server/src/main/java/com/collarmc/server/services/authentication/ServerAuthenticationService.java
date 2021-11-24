@@ -9,9 +9,10 @@ import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.CreateProfileRequest;
 import com.collarmc.api.profiles.ProfileService.GetProfileRequest;
 import com.collarmc.api.profiles.ProfileService.UpdateProfileRequest;
-import com.collarmc.server.http.ApiToken;
+import com.collarmc.security.ApiToken;
 import com.collarmc.server.http.AppUrlProvider;
 import com.collarmc.server.mail.Email;
+import com.collarmc.security.TokenCrypter;
 import com.collarmc.server.security.hashing.PasswordHashing;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
@@ -161,7 +163,7 @@ public class ServerAuthenticationService implements AuthenticationService {
      * @return token
      */
     public String createToken(Profile profile) {
-        ApiToken apiToken = new ApiToken(profile.id, profile.roles);
+        ApiToken apiToken = new ApiToken(profile.id, profile.roles, Set.of());
         String token;
         try {
             token = apiToken.serialize(tokenCrypter);

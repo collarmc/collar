@@ -468,7 +468,11 @@ public final class GroupService {
         groupMembershipToken.assertValid(req.group);
         store.findGroupsContaining(groupMembershipToken.group)
                 .findFirst()
-                .map(found -> found.containsMember(groupMembershipToken.profile))
+                .map(found -> found.findMember(groupMembershipToken.profile).orElseThrow(NotFoundException::new))
+                .map(member -> profiles.getById(member.profile.id).orElseThrow(NotFoundException::new))
+                .map(profile -> new ValidateGroupTokenResponse(findGroup(req.group)
+                    .map(Group::toPublicGroup).orElseThrow(NotFoundException::new), profile.toPublic())
+                )
                 .orElseThrow(NotFoundException::new);
     }
 

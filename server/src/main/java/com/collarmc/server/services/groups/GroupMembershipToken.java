@@ -51,8 +51,8 @@ public final class GroupMembershipToken {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
              DataOutputStream dos = new DataOutputStream(bos)) {
             dos.writeInt(VERSION);
-            IO.writeUUIDToBytes(group);
-            IO.writeUUIDToBytes(profile);
+            IO.writeUUID(dos, group);
+            IO.writeUUID(dos, profile);
             dos.writeLong(expiresAt.toEpochMilli());
             return bos.toByteArray();
         } catch (IOException e) {

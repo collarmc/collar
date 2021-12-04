@@ -6,8 +6,8 @@ import com.collarmc.api.groups.http.CreateGroupTokenRequest;
 import com.collarmc.api.groups.http.CreateGroupTokenResponse;
 import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.api.groups.http.ValidateGroupTokenResponse;
-import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.NotFoundException;
+import com.collarmc.api.http.HttpException.ServerErrorException;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Profile;
@@ -26,7 +26,6 @@ import com.collarmc.server.services.location.NearbyGroups;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -428,20 +427,19 @@ public final class GroupService {
                     try {
                         return cipher.encrypt(groupMembershipToken.serialize());
                     } catch (CipherException e) {
-                        throw new HttpException.ServerErrorException("token generation failed", e);
+                        throw new ServerErrorException("token generation failed", e);
                     }
                 })
-                .orElseThrow(() -> new NotFoundException("group not found"));
-        return new CreateGroupTokenResponse(BaseEncoding.base64Url().encode(token));
+                .orElseThrow(NotFoundException::new);
+        return new CreateGroupTokenResponse(token);
     }
 
     public void validateGroupToken(ValidateGroupTokenRequest req) {
-        byte[] tokenBytes = BaseEncoding.base64Url().decode(req.token);
         GroupMembershipToken token;
         try {
-            token = new GroupMembershipToken(cipher.decrypt(tokenBytes));
+            token = new GroupMembershipToken(cipher.decrypt(req.token));
         } catch (CipherException e) {
-            throw new HttpException.ServerErrorException("bad token", e);
+            throw new ServerErrorException("bad token", e);
         }
         token.assertValid(req.group);
         store.findGroupsContaining(token.group)

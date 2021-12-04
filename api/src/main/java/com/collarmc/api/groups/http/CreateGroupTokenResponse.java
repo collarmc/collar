@@ -2,11 +2,11 @@ package com.collarmc.api.groups.http;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class CreateGroupTokenResponse {
+public final class CreateGroupTokenResponse {
     @JsonProperty("token")
-    public final String token;
+    public final byte[] token;
 
-    public CreateGroupTokenResponse(@JsonProperty("token") String token) {
+    public CreateGroupTokenResponse(@JsonProperty("token") byte[] token) {
         this.token = token;
     }
 }

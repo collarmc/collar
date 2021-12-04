@@ -462,8 +462,8 @@ public final class GroupService {
     }
 
     @Nonnull
-    private ValidateGroupTokenResponse createValidateGroupTokenResponse(Group group, Profile profile) {
-        return new ValidateGroupTokenResponse(group.toPublicGroup(), profile.toPublic());
+    private ValidateGroupTokenResponse createValidateGroupTokenResponse(ValidateGroupTokenRequest req, Profile profile) {
+        return new ValidateGroupTokenResponse(findGroup(req.group).map(Group::toPublicGroup).orElseThrow(NotFoundException::new), profile.toPublic());
     }
 
     public interface MessageCreator {

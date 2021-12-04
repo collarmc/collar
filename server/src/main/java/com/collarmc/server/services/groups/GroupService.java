@@ -444,6 +444,7 @@ public final class GroupService {
         } catch (CipherException e) {
             throw new HttpException.ServerErrorException("bad token", e);
         }
+        LOGGER.log(Level.INFO, "Recieved group token " + token);
         token.assertValid(req.group);
         store.findGroupsContaining(token.group)
                 .peek(group -> {

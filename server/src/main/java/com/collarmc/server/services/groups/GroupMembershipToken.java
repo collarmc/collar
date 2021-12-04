@@ -59,4 +59,14 @@ public final class GroupMembershipToken {
             throw new IllegalStateException(e);
         }
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("GroupMembershipToken{");
+        sb.append("group=").append(group);
+        sb.append(", profile=").append(profile);
+        sb.append(", expiresAt=").append(expiresAt);
+        sb.append('}');
+        return sb.toString();
+    }
 }

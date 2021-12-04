@@ -12,7 +12,7 @@ import java.util.UUID;
  * Used for authenticating a Group membership outside of Collar
  */
 public final class GroupMembershipToken {
-    private static final int VERSION = 1;
+    private static final int VERSION = 2;
     public final UUID group;
     public final UUID profile;
     public final Instant expiresAt;
@@ -39,7 +39,7 @@ public final class GroupMembershipToken {
     }
 
     public void assertValid(UUID group) {
-        if (expiresAt.isAfter(Instant.now())) {
+        if (!expiresAt.isAfter(Instant.now())) {
             throw new UnauthorisedException("token expired");
         }
         if (!this.group.equals(group)) {

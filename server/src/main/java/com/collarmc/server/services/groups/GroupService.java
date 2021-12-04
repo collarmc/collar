@@ -446,8 +446,8 @@ public final class GroupService {
         token.assertValid(req.group);
         store.findGroupsContaining(token.group)
                 .findFirst()
-                .map(found -> found.findMember(token.profile).orElseThrow(NotFoundException::new))
-                .map(member -> profiles.getById(member.profile.id).orElseThrow(NotFoundException::new))
+                .flatMap(group -> group.findMember(token.profile))
+                .flatMap(member -> profiles.getById(member.profile.id))
                 .map(profile -> createValidateGroupTokenResponse(req, profile))
                 .orElseThrow(NotFoundException::new);
     }

@@ -219,8 +219,7 @@ public class WebServer {
                         RequestContext context = from(request);
                         context.assertAnonymous();
                         ValidateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ValidateGroupTokenRequest.class);
-                        services.groups.validateGroupToken(req);
-                        return "OK";
+                        return services.groups.validateGroupToken(req);
                     }, services.jsonMapper::writeValueAsString);
                     post("/token", (request, response) -> {
                         RequestContext context = from(request);

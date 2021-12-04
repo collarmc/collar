@@ -436,7 +436,7 @@ public final class GroupService {
         return new CreateGroupTokenResponse(BaseEncoding.base64Url().encode(token));
     }
 
-    public void validateGroupToken(ValidateGroupTokenRequest req) {
+    public ValidateGroupTokenResponse validateGroupToken(ValidateGroupTokenRequest req) {
         byte[] tokenBytes = BaseEncoding.base64Url().decode(req.token);
         GroupMembershipToken token;
         try {
@@ -446,7 +446,7 @@ public final class GroupService {
         }
         LOGGER.log(Level.INFO, "Recieved group token " + token);
         token.assertValid(req.group);
-        store.findGroup(token.group)
+        return store.findGroup(token.group)
                 .flatMap(group -> {
                     Optional<Member> member = group.findMember(token.profile);
                     member.ifPresent(value -> LOGGER.log(Level.INFO, "Found member " + value.profile.id + " in group " + group.id));
@@ -462,8 +462,8 @@ public final class GroupService {
     }
 
     @Nonnull
-    private ValidateGroupTokenResponse createValidateGroupTokenResponse(ValidateGroupTokenRequest req, Profile profile) {
-        return new ValidateGroupTokenResponse(findGroup(req.group).map(Group::toPublicGroup).orElseThrow(NotFoundException::new), profile.toPublic());
+    private ValidateGroupTokenResponse createValidateGroupTokenResponse(Group group, Profile profile) {
+        return new ValidateGroupTokenResponse(group.toPublicGroup(), profile.toPublic());
     }
 
     public interface MessageCreator {

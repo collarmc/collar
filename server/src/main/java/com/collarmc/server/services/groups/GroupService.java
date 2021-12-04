@@ -27,6 +27,7 @@ import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -445,9 +446,20 @@ public final class GroupService {
         }
         token.assertValid(req.group);
         store.findGroupsContaining(token.group)
+                .peek(group -> {
+                    LOGGER.log(Level.INFO, group == null ? "No group found for " + token.group : "Found group " + group);
+                })
                 .findFirst()
-                .flatMap(group -> group.findMember(token.profile))
-                .flatMap(member -> profiles.getById(member.profile.id))
+                .flatMap(group -> {
+                    Optional<Member> member = group.findMember(token.profile);
+                    member.ifPresent(value -> LOGGER.log(Level.INFO, "Found member " + value.profile.id + " in group " + group.id));
+                    return member;
+                })
+                .flatMap(member -> {
+                    Optional<Profile> profile = profiles.getById(member.profile.id);
+                    profile.ifPresent(value -> LOGGER.log(Level.INFO, "Found profile for member " + value.id + " in group " + req.group));
+                    return profile;
+                })
                 .map(profile -> createValidateGroupTokenResponse(req, profile))
                 .orElseThrow(NotFoundException::new);
     }

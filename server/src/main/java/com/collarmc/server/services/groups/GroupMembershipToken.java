@@ -4,6 +4,7 @@ import com.collarmc.api.http.HttpException.UnauthorisedException;
 import com.collarmc.api.io.IO;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -33,7 +34,7 @@ public final class GroupMembershipToken {
             profile = IO.readUUID(dis);
             expiresAt = Instant.ofEpochSecond(dis.readLong());
         } catch (IOException e) {
-            throw new IllegalStateException(e);
+            throw new IllegalStateException("bad token " + new String(bytes, StandardCharsets.UTF_8), e);
         }
     }
 

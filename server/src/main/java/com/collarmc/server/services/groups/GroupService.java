@@ -25,12 +25,12 @@ import com.collarmc.server.protocol.BatchProtocolResponse;
 import com.collarmc.server.services.location.NearbyGroups;
 import com.collarmc.server.services.profiles.ProfileCache;
 import com.collarmc.server.session.SessionManager;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.BaseEncoding;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -436,22 +436,25 @@ public final class GroupService {
     }
 
     public void validateGroupToken(ValidateGroupTokenRequest req) {
-        byte[] token = BaseEncoding.base64Url().decode(req.token);
-        GroupMembershipToken groupMembershipToken;
+        byte[] tokenBytes = BaseEncoding.base64Url().decode(req.token);
+        GroupMembershipToken token;
         try {
-            groupMembershipToken = new GroupMembershipToken(cipher.decrypt(token));
+            token = new GroupMembershipToken(cipher.decrypt(tokenBytes));
         } catch (CipherException e) {
             throw new HttpException.ServerErrorException("bad token", e);
         }
-        groupMembershipToken.assertValid(req.group);
-        store.findGroupsContaining(groupMembershipToken.group)
+        token.assertValid(req.group);
+        store.findGroupsContaining(token.group)
                 .findFirst()
-                .map(found -> found.findMember(groupMembershipToken.profile).orElseThrow(NotFoundException::new))
+                .map(found -> found.findMember(token.profile).orElseThrow(NotFoundException::new))
                 .map(member -> profiles.getById(member.profile.id).orElseThrow(NotFoundException::new))
-                .map(profile -> new ValidateGroupTokenResponse(findGroup(req.group)
-                    .map(Group::toPublicGroup).orElseThrow(NotFoundException::new), profile.toPublic())
-                )
-                .orElseThrow(() -> new NotFoundException("not found"));
+                .map(profile -> createValidateGroupTokenResponse(req, profile))
+                .orElseThrow(NotFoundException::new);
+    }
+
+    @Nonnull
+    private ValidateGroupTokenResponse createValidateGroupTokenResponse(ValidateGroupTokenRequest req, Profile profile) {
+        return new ValidateGroupTokenResponse(findGroup(req.group).map(Group::toPublicGroup).orElseThrow(NotFoundException::new), profile.toPublic());
     }
 
     public interface MessageCreator {

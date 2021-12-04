@@ -446,11 +446,7 @@ public final class GroupService {
         }
         LOGGER.log(Level.INFO, "Recieved group token " + token);
         token.assertValid(req.group);
-        store.findGroupsContaining(token.group)
-                .peek(group -> {
-                    LOGGER.log(Level.INFO, group == null ? "No group found for " + token.group : "Found group " + group);
-                })
-                .findFirst()
+        store.findGroup(token.group)
                 .flatMap(group -> {
                     Optional<Member> member = group.findMember(token.profile);
                     member.ifPresent(value -> LOGGER.log(Level.INFO, "Found member " + value.profile.id + " in group " + group.id));

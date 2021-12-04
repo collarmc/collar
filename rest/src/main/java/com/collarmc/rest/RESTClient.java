@@ -12,7 +12,6 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.google.common.io.BaseEncoding;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -82,7 +81,7 @@ public final class RESTClient {
      * @param groupToken to validate
      * @return valid or not
      */
-    public Optional<ValidateGroupTokenResponse> validateGroupMembershipToken(byte[] groupToken, UUID group) {
+    public Optional<ValidateGroupTokenResponse> validateGroupMembershipToken(String groupToken, UUID group) {
         try {
             return Optional.of(post(uri("groups", "validate"),
                     new ValidateGroupTokenRequest(groupToken, group),

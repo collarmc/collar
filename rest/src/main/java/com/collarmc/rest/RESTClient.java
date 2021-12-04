@@ -12,6 +12,7 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.google.common.io.BaseEncoding;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -125,5 +126,22 @@ public final class RESTClient {
             throw new RuntimeException("status: " + code + " body: " + response.body());
         }
         return response.body();
+    }
+
+    public static void main(String[] args) {
+        RESTClient client= new RESTClient("https://api.collarmc.com");
+        client.login(args[0], args[1]).ifPresent(loginResponse -> {
+            UUID group = UUID.fromString(args[2]);
+            System.out.println(loginResponse.token);
+            client.createGroupMembershipToken(loginResponse.token, group).ifPresent(createGroupTokenResponse -> {
+                System.out.println(createGroupTokenResponse.token);
+                Optional<ValidateGroupTokenResponse> resp = client.validateGroupMembershipToken(createGroupTokenResponse.token, group);
+                if (resp.isPresent()) {
+                    System.out.println(resp.get().profile.name);
+                } else {
+                    System.err.println("validation failed");
+                }
+            });
+        });
     }
 }

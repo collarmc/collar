@@ -102,13 +102,14 @@ public final class RESTClient {
 
     private <T> T post(URI uri, Object req, Class<T> respType, String... headers) throws IOException {
         String body = JSON_MAPPER.writeValueAsString(req);
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder post = HttpRequest.newBuilder()
                 .uri(uri)
-                .headers(headers)
                 .timeout(Duration.ofSeconds(20))
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
-
+                .POST(HttpRequest.BodyPublishers.ofString(body));
+        if (headers.length > 0) {
+            post = post.headers(headers);
+        }
+        HttpRequest request = post.build();
         return JSON_MAPPER.readValue(execute(request), respType);
     }
 

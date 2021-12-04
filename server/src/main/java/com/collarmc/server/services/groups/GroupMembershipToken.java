@@ -32,7 +32,7 @@ public final class GroupMembershipToken {
             }
             group = IO.readUUID(dis);
             profile = IO.readUUID(dis);
-            expiresAt = Instant.ofEpochSecond(dis.readLong());
+            expiresAt = Instant.ofEpochMilli(dis.readLong());
         } catch (IOException e) {
             throw new IllegalStateException("bad token " + new String(bytes, StandardCharsets.UTF_8), e);
         }

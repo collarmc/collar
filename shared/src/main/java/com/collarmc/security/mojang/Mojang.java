@@ -1,11 +1,11 @@
 package com.collarmc.security.mojang;
 
+import com.collarmc.utils.Utils;
 import com.collarmc.api.http.HttpException;
 import com.collarmc.http.HttpClient;
 import com.collarmc.http.Request;
 import com.collarmc.http.Response;
-import com.collarmc.security.TokenGenerator;
-import com.collarmc.utils.Utils;
+import com.collarmc.api.security.TokenGenerator;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Suppliers;

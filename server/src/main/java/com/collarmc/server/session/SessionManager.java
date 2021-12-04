@@ -8,7 +8,7 @@ import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.SessionStopReason;
 import com.collarmc.protocol.session.SessionFailedResponse.SessionErrorResponse;
 import com.collarmc.security.messages.CipherException;
-import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.collarmc.server.security.ServerIdentityStore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.logging.log4j.LogManager;

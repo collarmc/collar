@@ -1,6 +1,8 @@
 package com.collarmc.security;
 
 import com.collarmc.api.identity.ServerIdentity;
+import com.collarmc.api.security.PublicKey;
+import com.collarmc.api.security.TokenGenerator;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.sodium.Sodium;
 import org.junit.Assert;

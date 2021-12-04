@@ -1,6 +1,6 @@
 package com.collarmc.sdht.impl;
 
-import com.collarmc.io.IO;
+import com.collarmc.api.io.IO;
 import com.collarmc.sdht.Content;
 
 import java.io.*;

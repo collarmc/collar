@@ -3,7 +3,7 @@ package com.collarmc.client.api.messaging.events;
 import com.collarmc.api.messaging.Message;
 import com.collarmc.client.Collar;
 import com.collarmc.client.events.AbstractCollarEvent;
-import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 
 /**
  * Fired when a private message was attempted with another player but there was not sufficent trust to deliver

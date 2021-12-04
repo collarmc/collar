@@ -15,6 +15,10 @@
         </dependency>
         <dependency>
             <groupId>com.collarmc</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.collarmc</groupId>
             <artifactId>pounce</artifactId>
         </dependency>
         <dependency>

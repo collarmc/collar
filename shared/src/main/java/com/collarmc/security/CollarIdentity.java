@@ -1,7 +1,8 @@
 package com.collarmc.security;
 
 import com.collarmc.api.identity.ServerIdentity;
-import com.collarmc.io.IO;
+import com.collarmc.api.io.IO;
+import com.collarmc.api.security.PublicKey;
 import com.collarmc.security.messages.*;
 import com.collarmc.security.sodium.Sodium;
 

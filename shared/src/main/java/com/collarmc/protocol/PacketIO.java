@@ -2,7 +2,7 @@ package com.collarmc.protocol;
 
 import com.collarmc.api.identity.Identity;
 import com.collarmc.io.ByteBufferInputStream;
-import com.collarmc.io.IO;
+import com.collarmc.api.io.IO;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
 import com.fasterxml.jackson.databind.ObjectMapper;

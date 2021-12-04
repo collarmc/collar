@@ -2,19 +2,25 @@ package com.collarmc.rest;
 
 import com.collarmc.api.authentication.AuthenticationService.LoginRequest;
 import com.collarmc.api.authentication.AuthenticationService.LoginResponse;
-import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.http.CreateGroupTokenRequest;
 import com.collarmc.api.groups.http.CreateGroupTokenResponse;
 import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.api.groups.http.ValidateGroupTokenResponse;
 import com.collarmc.api.http.HttpException;
-import io.mikael.urlbuilder.UrlBuilder;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-import jakarta.ws.rs.client.Entity;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 
 import javax.annotation.Nonnull;
-import java.util.List;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,8 +29,15 @@ import java.util.UUID;
  */
 public final class RESTClient {
 
+    private final HttpClient clientDelegate = HttpClient.newBuilder().build();
+
+    private static final ObjectMapper JSON_MAPPER = new ObjectMapper()
+                .enable(DeserializationFeature.READ_UNKNOWN_ENUM_VALUES_USING_DEFAULT_VALUE)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+                .setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+
     private final String collarServerUrl;
-    private final Client client = ClientBuilder.newClient();
 
     public RESTClient(String collarServerUrl) {
         this.collarServerUrl = collarServerUrl;
@@ -39,26 +52,7 @@ public final class RESTClient {
      */
     public Optional<LoginResponse> login(String email, String password) {
         try {
-            LoginResponse post = client.target(url("auth", "login").toUri()).request()
-                    .post(Entity.json(LoginRequest.emailAndPassword(email, password)), LoginResponse.class);
-            return Optional.ofNullable(post);
-        } catch (Throwable e) {
-            return Optional.empty();
-        }
-    }
-
-    /**
-     * Lists all the groups the
-     * @param apiToken of the user
-     * @return all group information
-     */
-    @SuppressWarnings("unchecked")
-    public Optional<List<Group>> groups(String apiToken) {
-        try {
-            List<Group> list = client.target(url("groups", "").toUri()).request()
-                    .header("Authorization", "Bearer " + apiToken)
-                    .get(List.class);
-            return Optional.ofNullable(list);
+            return Optional.ofNullable(post(uri("auth", "login"), LoginRequest.emailAndPassword(email, password), LoginResponse.class));
         } catch (Throwable e) {
             return Optional.empty();
         }
@@ -72,10 +66,11 @@ public final class RESTClient {
      */
     public Optional<CreateGroupTokenResponse> createGroupMembershipToken(String apiToken, UUID group) {
         try {
-            CreateGroupTokenResponse post = client.target(url("groups", "token").toUri()).request()
-                    .header("Authorization", "Bearer " + apiToken)
-                    .post(Entity.json(new CreateGroupTokenRequest(group)), CreateGroupTokenResponse.class);
-            return Optional.of(post);
+            return Optional.of(post(uri("groups", "token"),
+                    new CreateGroupTokenRequest(group),
+                    CreateGroupTokenResponse.class,
+                    "Authorization",
+                    "Bearer " + apiToken));
         } catch (Throwable e) {
             return Optional.empty();
         }
@@ -88,16 +83,46 @@ public final class RESTClient {
      */
     public Optional<ValidateGroupTokenResponse> validateGroupMembershipToken(String groupToken, UUID group) {
         try {
-            ValidateGroupTokenResponse response = client.target(url("groups", "validate").toUri()).request()
-                    .post(Entity.json(new ValidateGroupTokenRequest(groupToken, group)), ValidateGroupTokenResponse.class);
-            return Optional.of(response);
+            return Optional.of(post(uri("groups", "validate"),
+                    new ValidateGroupTokenRequest(groupToken, group),
+                    ValidateGroupTokenResponse.class));
         } catch (Throwable e) {
             return Optional.empty();
         }
     }
 
     @Nonnull
-    private UrlBuilder url(String api, String part) {
-        return UrlBuilder.fromString(collarServerUrl + "/api/1/" + api + "/" + part);
+    private URI uri(String api, String part) {
+        try {
+            return new URI(collarServerUrl + "/api/1/" + api + "/" + part);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private <T> T post(URI uri, Object req, Class<T> respType, String... headers) throws IOException {
+        String body = JSON_MAPPER.writeValueAsString(req);
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri)
+                .headers(headers)
+                .timeout(Duration.ofSeconds(20))
+                .POST(HttpRequest.BodyPublishers.ofString(body))
+                .build();
+
+        return JSON_MAPPER.readValue(execute(request), respType);
+    }
+
+    private String execute(HttpRequest request) {
+        HttpResponse<String> response;
+        try {
+            response = clientDelegate.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException | InterruptedException e) {
+            throw new IllegalStateException(e);
+        }
+        int code = response.statusCode();
+        if (code != 200) {
+            throw new RuntimeException("status: " + code + " body: " + response.body());
+        }
+        return response.body();
     }
 }

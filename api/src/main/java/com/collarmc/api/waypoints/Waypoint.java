@@ -1,7 +1,7 @@
 package com.collarmc.api.waypoints;
 
 import com.collarmc.api.location.Location;
-import com.collarmc.io.IO;
+import com.collarmc.api.io.IO;
 
 import java.io.*;
 import java.util.Objects;

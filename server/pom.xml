@@ -17,6 +17,10 @@
     <dependencies>
         <dependency>
             <groupId>com.collarmc</groupId>
+            <artifactId>api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.collarmc</groupId>
             <artifactId>shared</artifactId>
         </dependency>
         <dependency>

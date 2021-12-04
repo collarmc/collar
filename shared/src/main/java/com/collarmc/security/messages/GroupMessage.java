@@ -1,6 +1,6 @@
 package com.collarmc.security.messages;
 
-import com.collarmc.io.IO;
+import com.collarmc.api.io.IO;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;

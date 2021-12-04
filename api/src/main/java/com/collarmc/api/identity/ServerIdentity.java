@@ -1,6 +1,6 @@
 package com.collarmc.api.identity;
 
-import com.collarmc.security.PublicKey;
+import com.collarmc.api.security.PublicKey;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;

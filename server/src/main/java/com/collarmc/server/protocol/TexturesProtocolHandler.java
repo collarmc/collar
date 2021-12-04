@@ -10,7 +10,7 @@ import com.collarmc.protocol.ProtocolRequest;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.textures.GetTextureRequest;
 import com.collarmc.protocol.textures.GetTextureResponse;
-import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.collarmc.server.CollarServer;
 import com.collarmc.server.Services;
 import com.collarmc.server.services.textures.TextureService;

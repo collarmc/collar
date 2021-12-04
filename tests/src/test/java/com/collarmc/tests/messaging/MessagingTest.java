@@ -9,7 +9,7 @@ import com.collarmc.client.api.messaging.events.PrivateMessageSentEvent;
 import com.collarmc.client.api.messaging.events.UntrustedPrivateMessageReceivedEvent;
 import com.collarmc.pounce.EventBus;
 import com.collarmc.pounce.Subscribe;
-import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.collarmc.tests.junit.CollarTest;
 import org.junit.Assert;
 import org.junit.Test;

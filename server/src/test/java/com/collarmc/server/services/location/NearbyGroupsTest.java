@@ -3,7 +3,7 @@ package com.collarmc.server.services.location;
 import com.collarmc.api.groups.MemberSource;
 import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.session.Player;
-import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import org.junit.Assert;
 import org.junit.Test;
 

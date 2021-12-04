@@ -10,7 +10,7 @@ package com.collarmc.security;
 
 import com.collarmc.security.sodium.Sodium;
 import com.collarmc.utils.Hex;
-import edu.umd.cs.findbugs.annotations.SuppressWarnings;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -24,7 +24,7 @@ public final class Key {
         this.key = key;
     }
 
-    @SuppressWarnings("EI_EXPOSE_REP")
+    @SuppressFBWarnings("EI_EXPOSE_REP")
     public byte[] getAsBytes() {
         return key;
     }

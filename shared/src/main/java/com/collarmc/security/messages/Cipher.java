@@ -1,7 +1,7 @@
 package com.collarmc.security.messages;
 
 import com.collarmc.api.identity.Identity;
-import com.collarmc.security.PublicKey;
+import com.collarmc.api.security.PublicKey;
 
 public interface Cipher {
     /**

@@ -1,4 +1,4 @@
-package com.collarmc.security.mojang;
+package com.collarmc.api.minecraft;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

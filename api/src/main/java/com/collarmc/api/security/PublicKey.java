@@ -1,8 +1,8 @@
-package com.collarmc.security;
+package com.collarmc.api.security;
 
 import com.collarmc.api.identity.Identity;
-import com.collarmc.utils.Hex;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.io.BaseEncoding;
 
 import java.util.Arrays;
 
@@ -32,6 +32,6 @@ public final class PublicKey {
 
     @Override
     public String toString() {
-        return Hex.hexString(key);
+        return BaseEncoding.base16().lowerCase().encode(key);
     }
 }

@@ -7,7 +7,7 @@ import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.CreateProfileRequest;
 import com.collarmc.api.session.Player;
-import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.junit.MongoDatabaseTestRule;
 import com.collarmc.server.services.profiles.ProfileCache;

@@ -1,6 +1,6 @@
 package com.collarmc.api.profiles;
 
-import com.collarmc.security.PublicKey;
+import com.collarmc.api.security.PublicKey;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

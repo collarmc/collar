@@ -1,12 +1,12 @@
 package com.collarmc.sdht;
 
 import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.security.TokenGenerator;
 import com.collarmc.sdht.cipher.ContentCipher;
 import com.collarmc.sdht.events.AbstractSDHTEvent;
 import com.collarmc.sdht.events.Publisher;
 import com.collarmc.sdht.impl.DHTNamespaceState;
 import com.collarmc.sdht.impl.DefaultDistributedHashTable;
-import com.collarmc.security.TokenGenerator;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.hash.HashCode;
 import com.google.common.hash.Hashing;

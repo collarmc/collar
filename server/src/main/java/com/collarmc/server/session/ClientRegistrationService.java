@@ -4,7 +4,7 @@ import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.ServerErrorException;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.protocol.devices.ClientRegisteredResponse;
-import com.collarmc.security.TokenGenerator;
+import com.collarmc.api.security.TokenGenerator;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.server.security.ServerIdentityStore;
 import com.fasterxml.jackson.annotation.JsonProperty;

@@ -1,7 +1,7 @@
 package com.collarmc.api.profiles;
 
 import com.collarmc.api.http.RequestContext;
-import com.collarmc.security.PublicKey;
+import com.collarmc.api.security.PublicKey;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.UUID;

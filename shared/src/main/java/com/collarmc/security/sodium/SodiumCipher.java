@@ -2,7 +2,7 @@ package com.collarmc.security.sodium;
 
 import com.collarmc.api.identity.Identity;
 import com.collarmc.security.KeyPair;
-import com.collarmc.security.PublicKey;
+import com.collarmc.api.security.PublicKey;
 import com.collarmc.security.messages.Cipher;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.messages.SignedMessage;

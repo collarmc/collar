@@ -1,8 +1,7 @@
 package com.collarmc.server.services.groups;
 
-import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.UnauthorisedException;
-import com.collarmc.io.IO;
+import com.collarmc.api.io.IO;
 
 import java.io.*;
 import java.time.Instant;

@@ -2,7 +2,7 @@ package com.collarmc.api.session;
 
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.identity.ClientIdentity;
-import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 

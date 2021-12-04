@@ -12,7 +12,7 @@ import com.collarmc.client.api.textures.Texture;
 import com.collarmc.client.api.textures.events.TextureReceivedEvent;
 import com.collarmc.pounce.EventBus;
 import com.collarmc.pounce.Subscribe;
-import com.collarmc.security.mojang.MinecraftPlayer;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.collarmc.server.Services;
 import com.collarmc.server.services.profiles.ProfileServiceServer;
 import com.collarmc.server.services.textures.TextureService.CreateTextureRequest;

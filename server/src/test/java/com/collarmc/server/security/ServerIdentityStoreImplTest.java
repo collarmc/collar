@@ -1,7 +1,7 @@
 package com.collarmc.server.security;
 
 import com.collarmc.security.CollarIdentity;
-import com.collarmc.security.TokenGenerator;
+import com.collarmc.api.security.TokenGenerator;
 import com.collarmc.security.messages.CipherException;
 import com.collarmc.security.sodium.Sodium;
 import com.collarmc.security.sodium.SodiumCipher;

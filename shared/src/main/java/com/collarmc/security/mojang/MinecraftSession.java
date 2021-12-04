@@ -1,5 +1,6 @@
 package com.collarmc.security.mojang;
 
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

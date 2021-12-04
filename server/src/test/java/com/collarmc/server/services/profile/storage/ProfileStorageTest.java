@@ -1,6 +1,6 @@
 package com.collarmc.server.services.profile.storage;
 
-import com.collarmc.security.TokenGenerator;
+import com.collarmc.api.security.TokenGenerator;
 import com.collarmc.server.junit.MongoDatabaseTestRule;
 import com.collarmc.server.services.profiles.storage.ProfileStorage;
 import org.junit.Assert;

@@ -1,6 +1,6 @@
 package com.collarmc.sdht;
 
-import com.collarmc.io.IO;
+import com.collarmc.api.io.IO;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.hash.Hashing;
 

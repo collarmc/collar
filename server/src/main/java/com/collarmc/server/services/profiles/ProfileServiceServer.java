@@ -9,7 +9,7 @@ import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.Role;
 import com.collarmc.api.profiles.TexturePreference;
-import com.collarmc.security.PublicKey;
+import com.collarmc.api.security.PublicKey;
 import com.collarmc.server.security.hashing.PasswordHashing;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;

@@ -450,7 +450,7 @@ public final class GroupService {
 
     public RemoveGroupMemberResponse removeGroupMember(RequestContext ctx, RemoveGroupMemberRequest req) {
         if (req.byPlayerName != null) {
-            validateCallerIsMemberOfGroup(ctx, req.group);
+            validateCallerIsAdministratorOrOwnerOfGroup(ctx, req.group);
             PlayerProfileInfo mcProfile = mojang.api().getByName(req.byPlayerName).orElseThrow(() -> new NotFoundException("could not find player name at mojang"));
             List<Profile> profiles = profileService.getProfiles(ctx, ProfileService.GetProfilesRequest.byMinecraftId(mcProfile.toId())).profiles;
             profiles.forEach(collarProfile -> {
@@ -458,7 +458,7 @@ public final class GroupService {
             });
         } else if (req.byEmail != null) {
             PublicProfile profile = findProfileAndValidateGroupMembership(ctx, req.group, GetProfileRequest.byEmail(req.byEmail));
-            Group group = store.removeMember(req.group, profile.id).orElseThrow(() -> new IllegalStateException("could not update group " + req.group));
+            store.removeMember(req.group, profile.id).orElseThrow(() -> new IllegalStateException("could not update group " + req.group));
         } else {
             throw new BadRequestException("neither byPlayerName or byEmail specified");
         }
@@ -467,11 +467,11 @@ public final class GroupService {
 
     private PublicProfile findProfileAndValidateGroupMembership(RequestContext ctx, UUID groupId, GetProfileRequest req) {
         PublicProfile profile = profileService.getProfile(RequestContext.SERVER, req).profile.toPublic();
-        validateCallerIsMemberOfGroup(ctx, groupId);
+        validateCallerIsAdministratorOrOwnerOfGroup(ctx, groupId);
         return profile;
     }
 
-    private void validateCallerIsMemberOfGroup(RequestContext ctx, UUID groupId) {
+    private void validateCallerIsAdministratorOrOwnerOfGroup(RequestContext ctx, UUID groupId) {
         Group group = store.findGroup(groupId).orElseThrow(() -> new NotFoundException("group not found"));
         if (!ctx.roles.contains(Role.ADMINISTRATOR)) {
             Member caller = group.findMember(ctx.owner).orElseThrow(() -> {

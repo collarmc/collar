@@ -57,6 +57,23 @@ public final class RESTClient {
     }
 
     /**
+     * Get groups for the token
+     * @param apiToken for groups
+     * @return groups response
+     */
+    public Optional<GetGroupsResponse> getGroups(String apiToken) {
+        try {
+            return Optional.of(post(uri("groups"),
+                    new Object(),
+                    GetGroupsResponse.class,
+                    "Authorization",
+                    "Bearer " + apiToken));
+        } catch (Throwable e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
      * Creates a group token used to verify that
      * @param apiToken of the user
      * @param group id of group
@@ -129,6 +146,15 @@ public final class RESTClient {
     private URI uri(String api, String part) {
         try {
             return new URI(collarServerUrl + "/api/1/" + api + "/" + part);
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    @Nonnull
+    private URI uri(String api) {
+        try {
+            return new URI(collarServerUrl + "/api/1/" + api);
         } catch (URISyntaxException e) {
             throw new IllegalStateException(e);
         }

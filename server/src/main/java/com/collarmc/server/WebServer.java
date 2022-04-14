@@ -4,9 +4,7 @@ import com.collarmc.api.authentication.AuthenticationService.*;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.groups.MembershipRole;
-import com.collarmc.api.groups.http.AddGroupMemberRequest;
-import com.collarmc.api.groups.http.CreateGroupTokenRequest;
-import com.collarmc.api.groups.http.RemoveGroupMemberRequest;
+import com.collarmc.api.groups.http.*;
 import com.collarmc.api.http.*;
 import com.collarmc.api.http.HttpException.BadRequestException;
 import com.collarmc.api.http.HttpException.NotFoundException;
@@ -24,7 +22,6 @@ import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.ApiToken;
 import com.collarmc.server.http.HandlebarsTemplateEngine;
 import com.collarmc.server.services.authentication.TokenCrypter;
-import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
 import com.collarmc.server.services.textures.TextureService;
 import com.collarmc.server.session.ClientRegistrationService;
 import com.collarmc.server.session.ClientRegistrationService.RegisterClientRequest;
@@ -216,7 +213,7 @@ public class WebServer {
                     get("/groups", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
-                        return services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
+                        return new GetGroupsResponse(services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList()));
                     }, services.jsonMapper::writeValueAsString);
                     post("/validate", (request, response) -> {
                         RequestContext context = from(request);

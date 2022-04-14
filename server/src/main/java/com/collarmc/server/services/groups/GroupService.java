@@ -2,17 +2,22 @@ package com.collarmc.server.services.groups;
 
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
-import com.collarmc.api.groups.http.CreateGroupTokenRequest;
-import com.collarmc.api.groups.http.CreateGroupTokenResponse;
-import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
-import com.collarmc.api.groups.http.ValidateGroupTokenResponse;
+import com.collarmc.api.groups.http.*;
 import com.collarmc.api.http.HttpException;
+import com.collarmc.api.http.HttpException.BadRequestException;
+import com.collarmc.api.http.HttpException.ForbiddenException;
 import com.collarmc.api.http.HttpException.NotFoundException;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Profile;
+import com.collarmc.api.profiles.ProfileService;
+import com.collarmc.api.profiles.ProfileService.GetProfileRequest;
+import com.collarmc.api.profiles.ProfileService.UpdateProfileRequest;
 import com.collarmc.api.profiles.PublicProfile;
+import com.collarmc.api.profiles.Role;
 import com.collarmc.api.session.Player;
+import com.collarmc.molib.Mojang;
+import com.collarmc.molib.profile.PlayerProfileInfo;
 import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.protocol.messaging.SendMessageRequest;
@@ -43,14 +48,22 @@ public final class GroupService {
     private static final Logger LOGGER = LogManager.getLogger(GroupService.class.getName());
 
     private final GroupStore store;
+    private final ProfileService profileService;
     private final ProfileCache profiles;
     private final SessionManager sessions;
+    private final Mojang mojang;
     private final Cipher cipher;
 
-    public GroupService(GroupStore store, ProfileCache profiles, SessionManager sessions, Cipher cipher) {
+    public GroupService(GroupStore store,
+                        ProfileService profileService,
+                        ProfileCache profiles,
+                        SessionManager sessions,
+                        Mojang mojang, Cipher cipher) {
         this.store = store;
+        this.profileService = profileService;
         this.profiles = profiles;
         this.sessions = sessions;
+        this.mojang = mojang;
         this.cipher = cipher;
     }
 
@@ -420,6 +433,54 @@ public final class GroupService {
 
     public Optional<Group> findGroup(UUID groupId) {
         return store.findGroup(groupId);
+    }
+
+    public AddGroupMemberResponse addGroupMember(RequestContext ctx, AddGroupMemberRequest req) {
+        PublicProfile profile = findProfileAndValidateGroupMembership(ctx, req.group, GetProfileRequest.byEmail(req.byEmail));
+        // Find the mc profile before we add the new group member - should 404
+        Optional<PlayerProfileInfo> minecraftProfile = req.playerName == null ? Optional.empty() : mojang.api().getByName(req.playerName);
+        Group group = store.addMembers(req.group, List.of(new MemberSource(null, profile)), req.membershipRole, MembershipState.ACCEPTED)
+                .orElseThrow(() -> new IllegalStateException("could not update group " + req.group));
+        // If we are able to find the mc profile, add it to their name
+        minecraftProfile.ifPresent(mcProfile -> {
+            profileService.updateProfile(RequestContext.SERVER, UpdateProfileRequest.addMinecraftAccount(profile.id, mcProfile.toId()));
+        });
+        return new AddGroupMemberResponse(group);
+    }
+
+    public RemoveGroupMemberResponse removeGroupMember(RequestContext ctx, RemoveGroupMemberRequest req) {
+        if (req.byPlayerName != null) {
+            validateCallerIsAdministratorOrOwnerOfGroup(ctx, req.group);
+            PlayerProfileInfo mcProfile = mojang.api().getByName(req.byPlayerName).orElseThrow(() -> new NotFoundException("could not find player name at mojang"));
+            List<Profile> profiles = profileService.getProfiles(ctx, ProfileService.GetProfilesRequest.byMinecraftId(mcProfile.toId())).profiles;
+            profiles.forEach(collarProfile -> {
+                store.removeMember(req.group, collarProfile.id).orElseThrow(() -> new IllegalStateException("could not update group " + req.group));
+            });
+        } else if (req.byEmail != null) {
+            PublicProfile profile = findProfileAndValidateGroupMembership(ctx, req.group, GetProfileRequest.byEmail(req.byEmail));
+            store.removeMember(req.group, profile.id).orElseThrow(() -> new IllegalStateException("could not update group " + req.group));
+        } else {
+            throw new BadRequestException("neither byPlayerName or byEmail specified");
+        }
+        return new RemoveGroupMemberResponse();
+    }
+
+    private PublicProfile findProfileAndValidateGroupMembership(RequestContext ctx, UUID groupId, GetProfileRequest req) {
+        PublicProfile profile = profileService.getProfile(RequestContext.SERVER, req).profile.toPublic();
+        validateCallerIsAdministratorOrOwnerOfGroup(ctx, groupId);
+        return profile;
+    }
+
+    private void validateCallerIsAdministratorOrOwnerOfGroup(RequestContext ctx, UUID groupId) {
+        Group group = store.findGroup(groupId).orElseThrow(() -> new NotFoundException("group not found"));
+        if (!ctx.roles.contains(Role.ADMINISTRATOR)) {
+            Member caller = group.findMember(ctx.owner).orElseThrow(() -> {
+                throw new ForbiddenException("caller is not a member of group " + groupId);
+            });
+            if (!MembershipRole.OWNER.equals(caller.membershipRole)) {
+                throw new ForbiddenException("caller is not a owner member of group " + groupId);
+            }
+        }
     }
 
     public CreateGroupTokenResponse createGroupToken(RequestContext ctx, CreateGroupTokenRequest request) {

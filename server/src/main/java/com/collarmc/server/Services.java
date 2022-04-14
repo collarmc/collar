@@ -1,6 +1,7 @@
 package com.collarmc.server;
 
 import com.collarmc.api.profiles.ProfileService;
+import com.collarmc.molib.Mojang;
 import com.collarmc.security.sodium.Sodium;
 import com.collarmc.server.configuration.Configuration;
 import com.collarmc.server.http.AppUrlProvider;
@@ -45,6 +46,7 @@ public final class Services {
     public final ClientRegistrationService deviceRegistration;
     public final ProfileCache profileCache;
     public final Sodium sodium;
+    public final Mojang mojang = new Mojang();
 
     public Services(Configuration configuration) throws Exception {
         this.jsonMapper = Utils.jsonMapper();
@@ -62,7 +64,7 @@ public final class Services {
         this.auth = new ServerAuthenticationService(profiles, passwordHashing, tokenCrypter, configuration.email, urlProvider);
         this.minecraftSessionVerifier = configuration.minecraftSessionVerifier;
         this.groupStore = new GroupStore(profileCache, sessions, configuration.database);
-        this.groups = new GroupService(groupStore, profileCache, sessions, identityStore.cipher());
+        this.groups = new GroupService(groupStore, profiles, profileCache, sessions, mojang, identityStore.cipher());
         this.playerLocations = new PlayerLocationService(this);
         this.textures = new TextureService(configuration.database);
         this.friends = new FriendsService(configuration.database, profileCache, sessions);

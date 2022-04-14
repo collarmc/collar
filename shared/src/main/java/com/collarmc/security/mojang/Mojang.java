@@ -29,6 +29,10 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+/**
+ * Use {@link com.collarmc.molib.Mojang} instead
+ */
+@Deprecated
 public final class Mojang {
 
     private static final Logger LOGGER = LogManager.getLogger(Mojang.class.getName());

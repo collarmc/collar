@@ -1,0 +1,3 @@
+[submodule "molib"]
+	path = molib
+	url = git@github.com:collarmc/molib.git

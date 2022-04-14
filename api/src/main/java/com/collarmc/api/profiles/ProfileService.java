@@ -4,6 +4,7 @@ import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.security.PublicKey;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface ProfileService {
@@ -14,6 +15,8 @@ public interface ProfileService {
     UpdateProfileResponse updateProfile(RequestContext context, UpdateProfileRequest req);
 
     PlayerCountResponse playerCount(RequestContext context, PlayerCountRequest req);
+
+    GetProfilesResponse getProfiles(RequestContext context, GetProfilesRequest req);
 
     class PlayerCountRequest {}
 
@@ -130,6 +133,26 @@ public interface ProfileService {
 
         public UpdateProfileResponse(@JsonProperty("profile") Profile profile) {
             this.profile = profile;
+        }
+    }
+
+    class GetProfilesResponse {
+        public final List<Profile> profiles;
+
+        public GetProfilesResponse(List<Profile> profiles) {
+            this.profiles = profiles;
+        }
+    }
+
+    class GetProfilesRequest {
+        public final UUID byMinecraftId;
+
+        public GetProfilesRequest(UUID byMinecraftId) {
+            this.byMinecraftId = byMinecraftId;
+        }
+
+        public static GetProfilesRequest byMinecraftId(UUID id) {
+            return new GetProfilesRequest(id);
         }
     }
 }

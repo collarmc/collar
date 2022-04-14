@@ -14,6 +14,7 @@
         <module>tests</module>
         <module>tools</module>
         <module>rest</module>
+        <module>molib</module>
     </modules>
 
     <scm>
@@ -24,13 +25,13 @@
     <properties>
         <!-- skip for now as it blows up when releasing -->
         <maven.javadoc.skip>true</maven.javadoc.skip>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-        <jackson-databind.version>2.12.6.1</jackson-databind.version>
+        <maven.compiler.source>16</maven.compiler.source>
+        <maven.compiler.target>16</maven.compiler.target>
+        <jackson-databind.version>2.12.3</jackson-databind.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <minecraft.java.runtime>1.8</minecraft.java.runtime>
-        <log4j.version>2.17.1</log4j.version>
+        <minecraft.java.runtime>16</minecraft.java.runtime>
+        <log4j.version>2.15.0</log4j.version>
     </properties>
 
     <build>
@@ -38,7 +39,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.0.0-M3</version>
+                <version>3.0.0</version>
                 <executions>
                     <execution>
                         <id>enforce-banned-dependencies</id>
@@ -118,6 +119,11 @@
                         <autoVersionSubmodules>true</autoVersionSubmodules>
                     </configuration>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-shade-plugin</artifactId>
+                    <version>3.3.1-SNAPSHOT</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -148,6 +154,11 @@
                 <artifactId>client</artifactId>
                 <version>${project.version}</version>
                 <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.collarmc</groupId>
+                <artifactId>molib</artifactId>
+                <version>1.1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.collarmc</groupId>

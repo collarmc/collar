@@ -1,5 +1,6 @@
 package com.collarmc.server.services.profiles;
 
+import com.collarmc.api.groups.Group;
 import com.collarmc.api.http.HttpException.BadRequestException;
 import com.collarmc.api.http.HttpException.ConflictException;
 import com.collarmc.api.http.HttpException.NotFoundException;
@@ -24,8 +25,9 @@ import org.bson.types.Binary;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Updates.push;
 
 public class ProfileServiceServer implements ProfileService {
@@ -89,7 +91,7 @@ public class ProfileServiceServer implements ProfileService {
             BsonObjectId id = insertedId.asObjectId();
             MongoCursor<Document> cursor = docs.find(eq(FIELD_ID, id.getValue())).iterator();
             if (cursor.hasNext()) {
-                return new CreateProfileResponse(map(cursor.next()));
+                return new CreateProfileResponse(mapToProfile(cursor.next()));
             } else {
                 throw new ServerErrorException("could not find created profile");
             }
@@ -113,7 +115,7 @@ public class ProfileServiceServer implements ProfileService {
             throw new NotFoundException("profile not found");
         }
         Document doc = cursor.next();
-        return new GetProfileResponse(map(doc));
+        return new GetProfileResponse(mapToProfile(doc));
     }
 
     @Override
@@ -138,7 +140,7 @@ public class ProfileServiceServer implements ProfileService {
             if (first == null) {
                 throw new NotFoundException("could not find profile");
             }
-            return new UpdateProfileResponse(map(first));
+            return new UpdateProfileResponse(mapToProfile(first));
         } else {
             throw new ServerErrorException("could not update profile");
         }
@@ -149,7 +151,18 @@ public class ProfileServiceServer implements ProfileService {
         return new PlayerCountResponse(docs.countDocuments());
     }
 
-    private static Profile map(Document doc) {
+    @Override
+    public GetProfilesResponse getProfiles(RequestContext context, GetProfilesRequest req) {
+        context.assertNotAnonymous();
+        if (req.byMinecraftId != null) {
+            MongoCursor<Profile> profiles = docs.find(elemMatch(FIELD_KNOWN_ACCOUNTS, eq(req.byMinecraftId))).map(ProfileServiceServer::mapToProfile).cursor();
+            return new GetProfilesResponse(StreamSupport.stream(Spliterators.spliteratorUnknownSize(profiles, Spliterator.ORDERED), false).collect(Collectors.toList()));
+        } else {
+            throw new BadRequestException("did not specify byMinecraftId");
+        }
+    }
+
+    private static Profile mapToProfile(Document doc) {
         UUID profileId = doc.get(FIELD_PROFILE_ID, UUID.class);
         String email = doc.getString(FIELD_EMAIL);
         String name = doc.getString(FIELD_NAME);

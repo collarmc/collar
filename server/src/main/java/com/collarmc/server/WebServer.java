@@ -4,7 +4,9 @@ import com.collarmc.api.authentication.AuthenticationService.*;
 import com.collarmc.api.groups.Group;
 import com.collarmc.api.groups.GroupType;
 import com.collarmc.api.groups.MembershipRole;
+import com.collarmc.api.groups.http.AddGroupMemberRequest;
 import com.collarmc.api.groups.http.CreateGroupTokenRequest;
+import com.collarmc.api.groups.http.RemoveGroupMemberRequest;
 import com.collarmc.api.http.*;
 import com.collarmc.api.http.HttpException.BadRequestException;
 import com.collarmc.api.http.HttpException.NotFoundException;
@@ -15,6 +17,7 @@ import com.collarmc.api.profiles.ProfileService.UpdateProfileRequest;
 import com.collarmc.api.profiles.PublicProfile;
 import com.collarmc.api.profiles.Role;
 import com.collarmc.api.textures.TextureType;
+import com.collarmc.protocol.groups.CreateGroupRequest;
 import com.collarmc.server.common.ServerStatus;
 import com.collarmc.server.common.ServerVersion;
 import com.collarmc.server.configuration.Configuration;
@@ -227,6 +230,18 @@ public class WebServer {
                         CreateGroupTokenRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), CreateGroupTokenRequest.class);
                         return services.groups.createGroupToken(context, req);
                     }, services.jsonMapper::writeValueAsString);
+                    post("/members/add", (request, response) -> {
+                        RequestContext context = from(request);
+                        AddGroupMemberRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), AddGroupMemberRequest.class);
+                        context.assertNotAnonymous();
+                        return services.groups.addGroupMember(context, req);
+                    });
+                    post("/members/remove", (request, response) -> {
+                        RequestContext context = from(request);
+                        RemoveGroupMemberRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), RemoveGroupMemberRequest.class);
+                        context.assertNotAnonymous();
+                        return services.groups.removeGroupMember(context, req);
+                    });
                 });
 
                 path("/auth", () -> {

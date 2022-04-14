@@ -2,10 +2,7 @@ package com.collarmc.rest;
 
 import com.collarmc.api.authentication.AuthenticationService.LoginRequest;
 import com.collarmc.api.authentication.AuthenticationService.LoginResponse;
-import com.collarmc.api.groups.http.CreateGroupTokenRequest;
-import com.collarmc.api.groups.http.CreateGroupTokenResponse;
-import com.collarmc.api.groups.http.ValidateGroupTokenRequest;
-import com.collarmc.api.groups.http.ValidateGroupTokenResponse;
+import com.collarmc.api.groups.http.*;
 import com.collarmc.api.http.HttpException;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -70,6 +67,42 @@ public final class RESTClient {
             return Optional.of(post(uri("groups", "token"),
                     new CreateGroupTokenRequest(group),
                     CreateGroupTokenResponse.class,
+                    "Authorization",
+                    "Bearer " + apiToken));
+        } catch (Throwable e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Add a group member
+     * @param apiToken of the group
+     * @param req of membership
+     * @return response
+     */
+    public Optional<AddGroupMemberResponse> addGroupMember(String apiToken, AddGroupMemberRequest req) {
+        try {
+            return Optional.of(post(uri("groups/members", "add"),
+                    req,
+                    AddGroupMemberResponse.class,
+                    "Authorization",
+                    "Bearer " + apiToken));
+        } catch (Throwable e) {
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Remove a group member
+     * @param apiToken of the group
+     * @param req of membership
+     * @return response
+     */
+    public Optional<RemoveGroupMemberResponse> removeGroupMember(String apiToken, RemoveGroupMemberRequest req) {
+        try {
+            return Optional.of(post(uri("groups/members", "remove"),
+                    req,
+                    RemoveGroupMemberResponse.class,
                     "Authorization",
                     "Bearer " + apiToken));
         } catch (Throwable e) {

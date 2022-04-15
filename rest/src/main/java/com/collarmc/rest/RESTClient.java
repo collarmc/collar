@@ -62,7 +62,7 @@ public final class RESTClient {
      */
     public Optional<GetGroupsResponse> getGroups(String apiToken) {
         try {
-            return Optional.of(get(uri("groups"),
+            return Optional.of(get(uri("groups", "groups"),
                     GetGroupsResponse.class,
                     "Authorization",
                     "Bearer " + apiToken));

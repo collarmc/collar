@@ -267,7 +267,7 @@ public final class GroupService {
             if (playerMemberRecord.isEmpty()) {
                 return null;
             }
-            Optional<Member> memberToRemove = group.members.stream().filter(member -> member.player.minecraftPlayer.id.equals(req.player)).findFirst();
+            Optional<Member> memberToRemove = group.members.stream().filter(member -> member.player != null && member.player.minecraftPlayer != null && member.player.minecraftPlayer.id.equals(req.player)).findFirst();
             if (memberToRemove.isEmpty()) {
                 return null;
             }

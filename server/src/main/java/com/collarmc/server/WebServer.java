@@ -213,7 +213,8 @@ public class WebServer {
                     get("/groups", (request, response) -> {
                         RequestContext context = from(request);
                         context.assertNotAnonymous();
-                        return new GetGroupsResponse(services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList()));
+                        List<Group> groups = services.groupStore.findGroupsContaining(context.owner).collect(Collectors.toList());
+                        return new GetGroupsResponse(groups);
                     }, services.jsonMapper::writeValueAsString);
                     post("/validate", (request, response) -> {
                         RequestContext context = from(request);

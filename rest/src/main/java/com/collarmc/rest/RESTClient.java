@@ -192,6 +192,11 @@ public final class RESTClient {
         RESTClient client= new RESTClient("https://api.collarmc.com");
         client.login(LoginRequest.emailAndPassword(args[0], args[1])).ifPresent(loginResponse -> {
             System.out.println(loginResponse.token);
+            client.getGroups(loginResponse.token).ifPresent(getGroupsResponse -> {
+                getGroupsResponse.groups.forEach(group -> {
+                    System.out.println(group.name);
+                });
+            });
         });
     }
 }

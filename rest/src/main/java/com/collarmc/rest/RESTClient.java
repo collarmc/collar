@@ -43,14 +43,13 @@ public final class RESTClient {
 
     /**
      * Login to collar
-     * @param email to login with
-     * @param password to login with
+     * @param req to login with
      * @return login response
      * @throws HttpException if something went wrong
      */
-    public Optional<LoginResponse> login(String email, String password) {
+    public Optional<LoginResponse> login(LoginRequest req) {
         try {
-            return Optional.ofNullable(post(uri("auth", "login"), LoginRequest.emailAndPassword(email, password), LoginResponse.class));
+            return Optional.ofNullable(post(uri("auth", "login"), req, LoginResponse.class));
         } catch (Throwable e) {
             return Optional.empty();
         }
@@ -63,8 +62,7 @@ public final class RESTClient {
      */
     public Optional<GetGroupsResponse> getGroups(String apiToken) {
         try {
-            return Optional.of(post(uri("groups"),
-                    new Object(),
+            return Optional.of(get(uri("groups"),
                     GetGroupsResponse.class,
                     "Authorization",
                     "Bearer " + apiToken));
@@ -173,6 +171,18 @@ public final class RESTClient {
         return JSON_MAPPER.readValue(execute(request), respType);
     }
 
+    private <T> T get(URI uri, Class<T> respType, String... headers) throws IOException {
+        HttpRequest.Builder post = HttpRequest.newBuilder()
+                .uri(uri)
+                .timeout(Duration.ofSeconds(20))
+                .GET();
+        if (headers.length > 0) {
+            post = post.headers(headers);
+        }
+        HttpRequest request = post.build();
+        return JSON_MAPPER.readValue(execute(request), respType);
+    }
+
     private String execute(HttpRequest request) {
         HttpResponse<String> response;
         try {
@@ -189,18 +199,8 @@ public final class RESTClient {
 
     public static void main(String[] args) {
         RESTClient client= new RESTClient("https://api.collarmc.com");
-        client.login(args[0], args[1]).ifPresent(loginResponse -> {
-            UUID group = UUID.fromString(args[2]);
+        client.login(LoginRequest.emailAndPassword(args[0], args[1])).ifPresent(loginResponse -> {
             System.out.println(loginResponse.token);
-            client.createGroupMembershipToken(loginResponse.token, group).ifPresent(createGroupTokenResponse -> {
-                System.out.println(createGroupTokenResponse.token);
-                Optional<ValidateGroupTokenResponse> resp = client.validateGroupMembershipToken(createGroupTokenResponse.token, group);
-                if (resp.isPresent()) {
-                    System.out.println(resp.get().profile.name);
-                } else {
-                    System.err.println("validation failed");
-                }
-            });
         });
     }
 }

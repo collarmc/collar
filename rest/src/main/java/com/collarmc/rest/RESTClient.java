@@ -149,15 +149,6 @@ public final class RESTClient {
         }
     }
 
-    @Nonnull
-    private URI uri(String api) {
-        try {
-            return new URI(collarServerUrl + "/api/1/" + api);
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
     private <T> T post(URI uri, Object req, Class<T> respType, String... headers) throws IOException {
         String body = JSON_MAPPER.writeValueAsString(req);
         HttpRequest.Builder post = HttpRequest.newBuilder()

@@ -8,11 +8,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - name: Set up JDK
         uses: actions/setup-java@v1
         with:
           java-version: 16
-          submodules: 'true'
       - name: Set up MongoDB
         uses: supercharge/mongodb-github-action@1.3.0
         with:

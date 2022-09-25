@@ -29,4 +29,4 @@ Run in the command line:
 
 Checkout [collarmc/collar-mod](https://github.com/collarmc/collar-mod) for more information.
 
-[![Build](https://github.com/CaptainRexPL/collar/actions/workflows/build.yaml/badge.svg)](https://github.com/CaptainRexPL/collar/actions/workflows/build.yaml)
+//[![Build](https://github.com/CaptainRexPL/collar/actions/workflows/build.yaml/badge.svg)](https://github.com/CaptainRexPL/collar/actions/workflows/build.yaml)

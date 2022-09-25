@@ -28,3 +28,5 @@ Run in the command line:
 ## Building a mod?
 
 Checkout [collarmc/collar-mod](https://github.com/collarmc/collar-mod) for more information.
+
+[![Build](https://github.com/CaptainRexPL/collar/actions/workflows/build.yaml/badge.svg)](https://github.com/CaptainRexPL/collar/actions/workflows/build.yaml)

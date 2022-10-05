@@ -31,7 +31,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <minecraft.java.runtime>16</minecraft.java.runtime>
-        <log4j.version>2.15.0</log4j.version>
+        <log4j.version>2.17.1</log4j.version>
     </properties>
 
     <build>

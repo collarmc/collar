@@ -28,6 +28,7 @@ Run in the command line:
 ## Building a mod?
 
 Checkout [collarmc/collar-mod](https://github.com/collarmc/collar-mod) for more information.
+##
 
 
 

@@ -137,6 +137,7 @@ public final class Collar {
     public void connect() {
         try {
             checkServerCompatibility(configuration);
+            LOGGER.info("Trying to build url from configuration " + configuration.collarServerURL);
             String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
             LOGGER.info("Connecting to server " + url);
             webSocket = Http.client().webSocket(Request.url(url).ws(), new CollarWebSocket(this));

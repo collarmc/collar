@@ -11,20 +11,16 @@ public final class RemoveGroupMemberRequest {
     public final String byEmail;
     @JsonProperty("byUsername")
     public final String byUsername;
-    @JsonProperty("byCollarProfileId")
-    public final UUID byCollarProfileId;
     @JsonProperty("byPlayerName")
     public final String byPlayerName;
 
     public RemoveGroupMemberRequest(@JsonProperty("group") UUID group,
                                     @JsonProperty("byEmail") String byEmail,
                                     @JsonProperty("byUsername") String byUsername,
-                                    @JsonProperty("byPlayerName") String byPlayerName,
-                                    @JsonProperty("byCollarProfileId") UUID byCollarProfileId) {
+                                    @JsonProperty("byPlayerName") String byPlayerName) {
         this.group = group;
         this.byEmail = byEmail;
         this.byUsername = byUsername;
         this.byPlayerName = byPlayerName;
-        this.byCollarProfileId = byCollarProfileId;
     }
 }

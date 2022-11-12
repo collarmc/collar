@@ -136,16 +136,20 @@ public final class Collar {
      */
     public void connect() {
         try {
+            LOGGER.info("Before checkServerCompatibility");
             checkServerCompatibility(configuration);
-            LOGGER.info("Trying to build url from configuration " + configuration.collarServerURL);
+            LOGGER.info("After checkServerCompatibility");
+            LOGGER.info("Before UrlBuilding" + configuration.collarServerURL);
             String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
             LOGGER.info("Connecting to server " + url);
             webSocket = Http.client().webSocket(Request.url(url).ws(), new CollarWebSocket(this));
             changeState(State.CONNECTING);
         } catch (CollarException e) {
+            LOGGER.error("Connection collar exception: " + e.getMessage(),e);
             changeState(State.DISCONNECTED);
             throw e;
         } catch (Throwable e) {
+            LOGGER.error("Connection collar exception: " + e.getMessage(),e);
             changeState(State.DISCONNECTED);
             throw new ConnectionException("Failed to connect", e);
         }
@@ -272,19 +276,23 @@ public final class Collar {
      * @param configuration of the client
      */
     private static void checkServerCompatibility(CollarConfiguration configuration) {
+        LOGGER.info("Before api discover: " + configuration.collarServerURL);
         DiscoverResponse response;
         try {
             response = Http.client().execute(url(UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/discover")).get(), Response.json(DiscoverResponse.class));
         } catch (HttpException e) {
             throw new ConnectionException("Problem connecting to collar", e);
         }
+
         StringJoiner versions = new StringJoiner(",");
         response.versions.stream()
                 .peek(collarVersion -> versions.add(collarVersion.major + "." + collarVersion.minor))
                 .filter(collarVersion -> collarVersion.equals(VERSION))
                 .findFirst()
                 .orElseThrow(() -> new CollarException.UnsupportedServerVersionException(VERSION + " is not supported by server. Server supports versions " + versions.toString()));
+        LOGGER.info("checkServerCompatibility 1");
         Optional<CollarFeature> verificationScheme = findFeature(response, "auth:verification_scheme");
+
         if (!verificationScheme.isPresent()) {
             throw new IllegalStateException("Does not have feature auth:verification_scheme");
         }

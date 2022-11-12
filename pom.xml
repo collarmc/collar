@@ -18,7 +18,7 @@
     </modules>
 
     <scm>
-        <connection>scm:git:git@github.com:team-catgirl/collar.git</connection>
+        <connection>scm:git:git@github.com:CaptainRexPL/collar.git</connection>
       <tag>HEAD</tag>
   </scm>
 
@@ -201,7 +201,7 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
                 <version>4.1.84.Final</version>
-                <scope>provided</scope>
+                <scope>scope</scope>
             </dependency>
             <!-- a database -->
             <dependency>

@@ -201,7 +201,7 @@
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
                 <version>4.1.84.Final</version>
-                <scope>scope</scope>
+                <scope>compile</scope>
             </dependency>
             <!-- a database -->
             <dependency>

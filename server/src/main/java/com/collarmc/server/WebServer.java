@@ -129,7 +129,7 @@ public class WebServer {
                         String email = request.queryParams("email");
                         RequestContext context = from(request);
                         return services.profiles.getProfile(context, GetProfileRequest.byEmail(email));
-                    }, services.jsonMapper::writeValueAsString);
+                    });
                     // Get your own profile
                     get("/me", (request, response) -> {
                         RequestContext context = from(request);
@@ -233,13 +233,13 @@ public class WebServer {
                         AddGroupMemberRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), AddGroupMemberRequest.class);
                         context.assertNotAnonymous();
                         return services.groups.addGroupMember(context, req);
-                    }, services.jsonMapper::writeValueAsString);
+                    });
                     post("/members/remove", (request, response) -> {
                         RequestContext context = from(request);
                         RemoveGroupMemberRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), RemoveGroupMemberRequest.class);
                         context.assertNotAnonymous();
                         return services.groups.removeGroupMember(context, req);
-                    }, services.jsonMapper::writeValueAsString);
+                    });
                 });
 
                 path("/auth", () -> {
@@ -267,7 +267,7 @@ public class WebServer {
                     post("/reset/perform", (request, response) -> {
                         ResetPasswordRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), ResetPasswordRequest.class);
                         return services.auth.resetPassword(from(request), req);
-                    }, services.jsonMapper::writeValueAsString);
+                    });
                 });
 
                 get("/textures/:id/png", (request, response) -> {

@@ -18,7 +18,7 @@
     </modules>
 
     <scm>
-        <connection>scm:git:git@github.com:team-catgirl/collar.git</connection>
+        <connection>scm:git:git@github.com:CaptainRexPL/collar.git</connection>
       <tag>HEAD</tag>
   </scm>
 
@@ -27,11 +27,11 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
-        <jackson-databind.version>2.12.3</jackson-databind.version>
+        <jackson-databind.version>2.13.4</jackson-databind.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <minecraft.java.runtime>16</minecraft.java.runtime>
-        <log4j.version>2.15.0</log4j.version>
+        <log4j.version>2.19.0</log4j.version>
     </properties>
 
     <build>
@@ -67,7 +67,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.7</version>
+                <version>0.8.8</version>
                 <executions>
                     <execution>
                         <goals>
@@ -195,19 +195,19 @@
             <dependency>
                 <groupId>org.msgpack</groupId>
                 <artifactId>jackson-dataformat-msgpack</artifactId>
-                <version>0.9.0</version>
+                <version>0.9.3</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
-                <version>4.1.63.Final</version>
-                <scope>provided</scope>
+                <version>4.1.84.Final</version>
+                <scope>compile</scope>
             </dependency>
             <!-- a database -->
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver-sync</artifactId>
-                <version>4.3.1</version>
+                <version>4.7.2</version>
             </dependency>
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
@@ -239,7 +239,7 @@
             <dependency>
                 <groupId>org.glassfish.jersey.core</groupId>
                 <artifactId>jersey-client</artifactId>
-                <version>3.0.3</version>
+                <version>3.0.8</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>

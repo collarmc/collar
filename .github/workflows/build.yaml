@@ -35,4 +35,5 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: server.jar
-          path: client/target/client.jar
+          path: client/target/client-0.1.0-SNAPSHOT.jar
+          

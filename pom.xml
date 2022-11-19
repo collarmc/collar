@@ -27,7 +27,7 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
-        <jackson-databind.version>2.13.4</jackson-databind.version>
+        <jackson-databind.version>2.14.0</jackson-databind.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <minecraft.java.runtime>16</minecraft.java.runtime>
@@ -103,7 +103,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.10.1</version>
                     <configuration>
                         <source>16</source>
                         <target>16</target>
@@ -212,7 +212,7 @@
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>4.4.0</version>
+                <version>5.12.1</version>
             </dependency>
             <!-- password hashing -->
             <dependency>

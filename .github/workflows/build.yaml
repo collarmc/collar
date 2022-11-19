@@ -34,6 +34,11 @@ jobs:
       - name: Upload client.jar
         uses: actions/upload-artifact@v2
         with:
-          name: server.jar
+          name: client-snapshot.jar
           path: client/target/client-0.1.0-SNAPSHOT.jar
+      - name: Upload client-full.jar
+        uses: actions/upload-artifact@v2
+        with:
+          name: client-snapshot-full.jar
+          path: client/target/client-0.1.0-SNAPSHOT-full.jar
           

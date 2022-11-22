@@ -1,10 +1,6 @@
 name: Build
 
-on:
-  push:
-    branches: [ fixing ]
-  pull_request:
-    branches: [ fixing ]
+on: [push]
 
 
 jobs:

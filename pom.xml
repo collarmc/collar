@@ -27,7 +27,7 @@
         <maven.javadoc.skip>true</maven.javadoc.skip>
         <maven.compiler.source>16</maven.compiler.source>
         <maven.compiler.target>16</maven.compiler.target>
-        <jackson-databind.version>2.14.0</jackson-databind.version>
+        <jackson-databind.version>2.14.1</jackson-databind.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <minecraft.java.runtime>16</minecraft.java.runtime>
@@ -179,7 +179,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>21.0</version>
+                <version>23.0</version>
             </dependency>
             <!-- if someone wants to rewrite and use org.json like a chump be my guest -->
             <dependency>
@@ -207,7 +207,7 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver-sync</artifactId>
-                <version>4.7.2</version>
+                <version>4.8.0</version>
             </dependency>
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
@@ -229,7 +229,7 @@
             <dependency>
                 <groupId>com.github.jknack</groupId>
                 <artifactId>handlebars</artifactId>
-                <version>4.2.0</version>
+                <version>4.3.1</version>
             </dependency>
             <dependency>
                 <groupId>io.mikael</groupId>
@@ -279,7 +279,7 @@
             <dependency>
                 <groupId>com.github.vladimir-bukhtoyarov</groupId>
                 <artifactId>bucket4j-core</artifactId>
-                <version>7.0.0-beta-2020-04-18</version>
+                <version>7.6.0</version>
             </dependency>
             <dependency>
                 <groupId>com.mojang</groupId>

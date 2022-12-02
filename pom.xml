@@ -126,7 +126,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-shade-plugin</artifactId>
-                    <version>3.3.0</version>
+                    <version>3.4.1</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -200,7 +200,7 @@
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-all</artifactId>
-                <version>4.1.84.Final</version>
+                <version>4.1.85.Final</version>
                 <scope>compile</scope>
             </dependency>
             <!-- a database -->
@@ -239,7 +239,7 @@
             <dependency>
                 <groupId>org.glassfish.jersey.core</groupId>
                 <artifactId>jersey-client</artifactId>
-                <version>3.0.8</version>
+                <version>3.1.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>

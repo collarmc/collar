@@ -10,7 +10,7 @@
     <artifactId>client</artifactId>
     
     <properties>
-        <maven.compiler.source>1/8</maven.compiler.source>
+        <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
     
@@ -177,10 +177,10 @@
                         <configuration>
                             <rules>
                                 <enforceBytecodeVersion>
-                                    <maxJdkVersion>${minecraft.java.runtime}</maxJdkVersion>
+                                    <maxJdkVersion>1.8</maxJdkVersion>
                                 </enforceBytecodeVersion>
                             </rules>
-                            <fail>true</fail>
+                            <fail>false</fail>
                         </configuration>
                     </execution>
                 </executions>

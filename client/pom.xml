@@ -8,12 +8,6 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>client</artifactId>
-    
-    <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-    
     <dependencies>
         <dependency>
             <groupId>com.collarmc</groupId>
@@ -177,10 +171,10 @@
                         <configuration>
                             <rules>
                                 <enforceBytecodeVersion>
-                                    <maxJdkVersion>1.8</maxJdkVersion>
+                                    <maxJdkVersion>${minecraft.java.runtime}</maxJdkVersion>
                                 </enforceBytecodeVersion>
                             </rules>
-                            <fail>false</fail>
+                            <fail>true</fail>
                         </configuration>
                     </execution>
                 </executions>

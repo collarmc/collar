@@ -30,7 +30,7 @@
         <jackson-databind.version>2.14.1</jackson-databind.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <minecraft.java.runtime>16</minecraft.java.runtime>
+        <minecraft.java.runtime>1.8</minecraft.java.runtime>
         <log4j.version>2.19.0</log4j.version>
     </properties>
 

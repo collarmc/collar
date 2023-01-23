@@ -195,7 +195,7 @@ public class WebServer {
                         RequestContext context = from(request);
                         UpdateProfileRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), UpdateProfileRequest.class);
                         context.assertCallerIs(req.profile);
-                        if (req.cape != null) {
+                        if (req.cape == null) {
                             throw new HttpException.BadRequestException("missing capeTexture");
                         }
                         return services.profiles.updateProfile(context, req);

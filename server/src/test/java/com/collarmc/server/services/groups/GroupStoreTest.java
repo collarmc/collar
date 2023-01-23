@@ -6,6 +6,8 @@ import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.profiles.Profile;
 import com.collarmc.api.profiles.ProfileService;
 import com.collarmc.api.profiles.ProfileService.CreateProfileRequest;
+import com.collarmc.api.profiles.PublicProfile;
+import com.collarmc.api.profiles.TexturePreference;
 import com.collarmc.api.session.Player;
 import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.collarmc.server.configuration.Configuration;
@@ -35,7 +37,10 @@ public class GroupStoreTest {
         UUID groupId = UUID.randomUUID();
         Player owner = new Player(new ClientIdentity(ownerProfile.id, null), new MinecraftPlayer(UUID.randomUUID(), "2b2t.org", 1));
 
-        store.upsert(Group.newGroup(groupId, "The Spawnmasons", GroupType.GROUP, new MemberSource(owner, null), List.of()));
+        //MemberSource memberSource = new MemberSource(owner, null);
+        MemberSource memberSource = new MemberSource(owner, new PublicProfile(ownerProfile.id, ownerProfile.name, null)); //new TexturePreference(ownerProfile.id)));
+        Group  newGroup = Group.newGroup(groupId, "The Spawnmasons", GroupType.GROUP, memberSource, List.of());
+        store.upsert(newGroup);
 
         Group group = store.findGroup(groupId).orElseThrow(() -> new IllegalStateException("cant find group"));
         Assert.assertEquals(groupId, group.id);
@@ -46,10 +51,12 @@ public class GroupStoreTest {
 
         Profile player1Profile = profiles.createProfile(RequestContext.ANON, new CreateProfileRequest("player1@example.com", "cute", "player1")).profile;
         Player player1 = new Player(new ClientIdentity(player1Profile.id, null), null);
+        MemberSource member1Source = new MemberSource(player1, new PublicProfile(player1Profile.id, player1Profile.name, null));
         Profile player2Profile = profiles.createProfile(RequestContext.ANON, new CreateProfileRequest("player2@example.com", "cute", "player2")).profile;
         Player player2 = new Player(new ClientIdentity(player2Profile.id, null), null);
+        MemberSource member2Source = new MemberSource(player2, new PublicProfile(player2Profile.id, player2Profile.name, null));
 
-        group = store.addMembers(groupId, List.of(new MemberSource(player1, null), new MemberSource(player2, null)), MembershipRole.MEMBER, MembershipState.ACCEPTED).orElse(null);
+        group = store.addMembers(groupId, List.of(member1Source, member2Source), MembershipRole.MEMBER, MembershipState.ACCEPTED).orElse(null);
         Assert.assertNotNull(group);
 
         Member member1 = group.members.stream().filter(member -> member.player.equals(player1)).findFirst().orElseThrow();

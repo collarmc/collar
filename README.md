@@ -14,7 +14,7 @@ Online services for minecraft mods.
 * Profile data, such as your private waypoints, is encrypted before sending to the collar server.
 
 ## Coming soon
-* emotes using the [Emotecraft](https://github.com/KosmX/emotes) format.
+* emotes using the [Emotecraft](https://github.com/KosmX/emotes) format. (abandoned)
 
 ## Discord
 [Join the Discord](https://discord.gg/EG2e9dkPBf)
@@ -25,6 +25,10 @@ To build run you will need to have Maven 3 installed and JDK 16.
 Run in the command line:
 `mvn clean install`
 
-## Building a mod?
 
-Checkout [collarmc/collar-mod](https://github.com/collarmc/collar-mod) for more information.
+
+
+
+
+
+

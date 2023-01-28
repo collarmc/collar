@@ -81,65 +81,7 @@ public final class Sodium {
     }
 
     public static Sodium create() throws CipherException {
-        String resourcePath = findResourcePath();
-        File nativeLibPath;
-        try {
-            nativeLibPath = new File("collar", new File(resourcePath).getName());
-            if (!nativeLibPath.getParentFile().exists() && !nativeLibPath.getParentFile().mkdirs()) {
-                throw new IllegalStateException("could not create directories " + nativeLibPath.getParentFile());
-            }
-            if (nativeLibPath.exists() && !nativeLibPath.delete()) {
-                throw new IllegalStateException("could not delete file " + nativeLibPath);
-            }
-            if (!nativeLibPath.createNewFile()) {
-                throw new IllegalStateException("could not create file " + nativeLibPath);
-            }
-        } catch (IOException e) {
-            throw new CipherException("could not create temp file", e);
-        }
-        try (InputStream from = Sodium.class.getClassLoader().getResourceAsStream(resourcePath);
-             FileOutputStream to = new FileOutputStream(nativeLibPath)) {
-            ByteStreams.copy(from, to);
-        } catch (IOException e) {
-            throw new CipherException("Problem loading sodium native from " + resourcePath);
-        }
-        SodiumNative sodiumNative = Native.loadLibrary(nativeLibPath.getAbsolutePath(), SodiumNative.class);
-        return new Sodium(sodiumNative);
-    }
-
-    private static String findResourcePath() throws CipherException {
-        boolean is64Bit = Native.POINTER_SIZE == 8;
-        if (Platform.isWindows()) {
-            if (is64Bit) {
-                return getPath("windows64", "libsodium.dll");
-            } else {
-                return getPath("windows", "libsodium.dll");
-            }
-        }
-        if (Platform.isMac()) {
-            // check for Apple Silicon
-            if(Platform.isARM()) {
-                return getPath("mac/aarch64", "libsodium.dylib");
-            } else {
-                return getPath("mac/intel", "libsodium.dylib");
-            }
-        }
-        if (Platform.isARM()) {
-            return getPath("armv6", "libsodium.so");
-        }
-        if (Platform.isLinux()) {
-            if (is64Bit) {
-                return getPath("linux64", "libsodium.so");
-            } else {
-                return getPath("linux", "libsodium.so");
-            }
-        }
-        throw new CipherException("could not load sodium for this platform");
-    }
-
-    private static String getPath(String folder, String name) {
-        String separator = "/";
-        return folder + separator + name;
+        return SingletonHolder.getInstance();
     }
 
     public interface Sign {
@@ -196,4 +138,78 @@ public final class Sodium {
     }
 
     public interface SodiumNative extends Box,Sign,Library {}
+
+    private static class SingletonHolder {
+        private static Sodium instance;
+
+        public static Sodium getInstance() throws CipherException {
+            if (null == instance) {
+                instance = create();
+            }
+            return instance;
+        }
+
+        private static Sodium create() throws CipherException {
+            String resourcePath = findResourcePath();
+            File nativeLibPath;
+            try {
+                nativeLibPath = new File("collar", new File(resourcePath).getName());
+                if (!nativeLibPath.getParentFile().exists() && !nativeLibPath.getParentFile().mkdirs()) {
+                    throw new IllegalStateException("could not create directories " + nativeLibPath.getParentFile());
+                }
+
+                if (nativeLibPath.exists() && !nativeLibPath.delete()) {
+                    throw new IllegalStateException("could not delete file " + nativeLibPath);
+                }
+                if (!nativeLibPath.createNewFile()) {
+                    throw new IllegalStateException("could not create file " + nativeLibPath);
+                }
+            } catch (IOException e) {
+                throw new CipherException("could not create temp file", e);
+            }
+            try (InputStream from = Sodium.class.getClassLoader().getResourceAsStream(resourcePath);
+                 FileOutputStream to = new FileOutputStream(nativeLibPath)) {
+                ByteStreams.copy(from, to);
+            } catch (IOException e) {
+                throw new CipherException("Problem loading sodium native from " + resourcePath);
+            }
+            SodiumNative sodiumNative = Native.loadLibrary(nativeLibPath.getAbsolutePath(), SodiumNative.class);
+            return new Sodium(sodiumNative);
+        }
+
+        private static String findResourcePath() throws CipherException {
+            boolean is64Bit = Native.POINTER_SIZE == 8;
+            if (Platform.isWindows()) {
+                if (is64Bit) {
+                    return getPath("windows64", "libsodium.dll");
+                } else {
+                    return getPath("windows", "libsodium.dll");
+                }
+            }
+            if (Platform.isMac()) {
+                // check for Apple Silicon
+                if(Platform.isARM()) {
+                    return getPath("mac/aarch64", "libsodium.dylib");
+                } else {
+                    return getPath("mac/intel", "libsodium.dylib");
+                }
+            }
+            if (Platform.isARM()) {
+                return getPath("armv6", "libsodium.so");
+            }
+            if (Platform.isLinux()) {
+                if (is64Bit) {
+                    return getPath("linux64", "libsodium.so");
+                } else {
+                    return getPath("linux", "libsodium.so");
+                }
+            }
+            throw new CipherException("could not load sodium for this platform");
+        }
+
+        private static String getPath(String folder, String name) {
+            String separator = "/";
+            return folder + separator + name;
+        }
+    }
 }

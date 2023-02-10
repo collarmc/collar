@@ -460,8 +460,11 @@ public final class GroupService {
         } else if (req.byEmail != null) {
             PublicProfile profile = findProfileAndValidateGroupMembership(ctx, req.group, GetProfileRequest.byEmail(req.byEmail));
             store.removeMember(req.group, profile.id).orElseThrow(() -> new ServerErrorException("could not update group " + req.group));
+        } else if (req.byCollarProfileId != null) {
+            PublicProfile profile = findProfileAndValidateGroupMembership(ctx, req.group, GetProfileRequest.byId(req.byCollarProfileId));
+            store.removeMember(req.group, profile.id).orElseThrow(() -> new ServerErrorException("Could not remove profile: " + req.byCollarProfileId + " from group: " + req.group));
         } else {
-            throw new BadRequestException("neither byPlayerName or byEmail specified");
+            throw new BadRequestException("neither byPlayerName or byEmail or byCollarProfileId specified");
         }
         return new RemoveGroupMemberResponse();
     }

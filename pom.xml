@@ -179,7 +179,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>23.0</version>
+                <version>31.1-jre</version>
             </dependency>
             <!-- if someone wants to rewrite and use org.json like a chump be my guest -->
             <dependency>

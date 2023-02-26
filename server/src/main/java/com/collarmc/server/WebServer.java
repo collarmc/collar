@@ -135,18 +135,6 @@ public class WebServer {
                         RequestContext context = from(request);
                         return services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile;
                     }, services.jsonMapper::writeValueAsString);
-                    post("/reset", (request, response) -> {
-                        LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
-                        RequestContext context = from(request);
-                        LoginResponse loginResp = services.auth.login(context, req);
-                        if (!context.hasRole(Role.ADMINISTRATOR) && !context.callerIs(loginResp.profile.id)) {
-                            throw new BadRequestException("user mismatch");
-                        }
-                        services.profileStorage.delete(context.owner);
-                        services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(loginResp.profile.id));
-                        response.status(204);
-                        return new Object();
-                    }, services.jsonMapper::writeValueAsString);
                     // Get someone elses profile
                     get("/:id", (request, response) -> {
                         String id = request.params("id");
@@ -201,6 +189,13 @@ public class WebServer {
                         }
                         return services.profiles.updateProfile(context, req);
                     }, services.jsonMapper::writeValueAsString);
+                    post("/reset", (request, response) -> {
+                        RequestContext context = from(request);
+                        services.profileStorage.delete(context.owner);
+                        services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(context.owner));
+                        response.status(204);
+                        return "Profile data reset";
+                    });
                 });
 
                 path("/groups", () -> {

@@ -18,6 +18,8 @@ import com.stoyanr.evictor.map.ConcurrentHashMapWithTimedEviction;
 import com.stoyanr.evictor.map.EvictibleEntry;
 import com.stoyanr.evictor.scheduler.RegularTaskEvictionScheduler;
 import io.mikael.urlbuilder.UrlBuilder;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.net.URL;
 import java.util.Objects;
@@ -29,7 +31,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class TexturesApi extends AbstractApi {
-
+    private static final Logger LOGGER = LogManager.getLogger(TexturesApi.class);
     private final RegularTaskEvictionScheduler<TextureKey, CompletableFuture<Optional<Texture>>> texturesFutureScheduler = new RegularTaskEvictionScheduler<TextureKey, CompletableFuture<Optional<Texture>>>(1, TimeUnit.SECONDS) {
         @Override
         protected void onScheduleEviction(EvictibleEntry<TextureKey, CompletableFuture<Optional<Texture>>> entry) {
@@ -55,8 +57,10 @@ public class TexturesApi extends AbstractApi {
                 TextureKey textureKey;
             if (response.player != null) {
                 textureKey = new TextureKey(response.player.minecraftPlayer.id, response.type);
+                LOGGER.info("Texture of player " + response.player + " is: " + response.textureId);
             } else if (response.group != null) {
                 textureKey = new TextureKey(response.group, response.type);
+                LOGGER.info("Texture of group " + response.group + " is: " + response.textureId);
             } else {
                 throw new IllegalStateException("neither group or player texture was returned");
             }

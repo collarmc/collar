@@ -135,12 +135,6 @@ public class WebServer {
                         RequestContext context = from(request);
                         return services.profiles.getProfile(context, GetProfileRequest.byId(context.owner)).profile;
                     }, services.jsonMapper::writeValueAsString);
-                    // Get someone elses profile
-                    get("/:id", (request, response) -> {
-                        String id = request.params("id");
-                        UUID uuid = UUID.fromString(id);
-                        return services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(uuid)).profile.toPublic();
-                    }, services.jsonMapper::writeValueAsString);
                     post("/reset", (request, response) -> {
                         LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
                         RequestContext context = from(request);
@@ -150,7 +144,14 @@ public class WebServer {
                         }
                         services.profileStorage.delete(context.owner);
                         services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(loginResp.profile.id));
+                        response.status(204);
                         return new Object();
+                    }, services.jsonMapper::writeValueAsString);
+                    // Get someone elses profile
+                    get("/:id", (request, response) -> {
+                        String id = request.params("id");
+                        UUID uuid = UUID.fromString(id);
+                        return services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(uuid)).profile.toPublic();
                     }, services.jsonMapper::writeValueAsString);
                     post("/devices/trust", (request, response) -> {
                         // TODO: update web app and remove

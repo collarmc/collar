@@ -141,17 +141,6 @@ public class WebServer {
                         UUID uuid = UUID.fromString(id);
                         return services.profiles.getProfile(RequestContext.SERVER, GetProfileRequest.byId(uuid)).profile.toPublic();
                     }, services.jsonMapper::writeValueAsString);
-                    post("/reset", (request, response) -> {
-                        LoginRequest req = services.jsonMapper.readValue(request.bodyAsBytes(), LoginRequest.class);
-                        RequestContext context = from(request);
-                        LoginResponse loginResp = services.auth.login(context, req);
-                        if (!context.hasRole(Role.ADMINISTRATOR) && !context.callerIs(loginResp.profile.id)) {
-                            throw new BadRequestException("user mismatch");
-                        }
-                        services.profileStorage.delete(context.owner);
-                        services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(loginResp.profile.id));
-                        return new Object();
-                    }, services.jsonMapper::writeValueAsString);
                     post("/devices/trust", (request, response) -> {
                         // TODO: update web app and remove
                         RequestContext context = from(request);
@@ -205,8 +194,8 @@ public class WebServer {
                         services.profileStorage.delete(context.owner);
                         services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(context.owner));
                         response.status(204);
-                        return null;
-                    }, services.jsonMapper::writeValueAsString);
+                        return "Profile data reset";
+                    });
                 });
 
                 path("/groups", () -> {

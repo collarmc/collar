@@ -201,13 +201,6 @@ public class WebServer {
                         }
                         return services.profiles.updateProfile(context, req);
                     }, services.jsonMapper::writeValueAsString);
-                    post("/reset", (request, response) -> {
-                        RequestContext context = from(request);
-                        services.profileStorage.delete(context.owner);
-                        services.profiles.updateProfile(context, UpdateProfileRequest.resetKeys(context.owner));
-                        response.status(204);
-                        return null;
-                    }, services.jsonMapper::writeValueAsString);
                 });
 
                 path("/groups", () -> {

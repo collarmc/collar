@@ -55,6 +55,13 @@ public class TexturesApi extends AbstractApi {
         if (resp instanceof GetTextureResponse) {
             GetTextureResponse response = (GetTextureResponse) resp;
                 TextureKey textureKey;
+            LOGGER.info("TextureApi response: { player: " + response.player == null ? "null" : response.player.minecraftPlayer
+                    + ", group: " + response.group == null ? "null" : response.group
+                    + ", textureId: " + response.textureId == null ? "null" : response.textureId
+                    + ", texturePath: " + response.texturePath
+                    + ", type: " + response.type == null ? "null" : response.type
+                    + " }"
+            );
             if (response.player != null) {
                 textureKey = new TextureKey(response.player.minecraftPlayer.id, response.type);
                 LOGGER.info("Texture of player " + response.player + " is: " + response.textureId);
@@ -65,6 +72,7 @@ public class TexturesApi extends AbstractApi {
                 throw new IllegalStateException("neither group or player texture was returned");
             }
             URL textureUrl = UrlBuilder.fromUrl(collar.configuration.collarServerURL).withPath(response.texturePath).toUrl();
+            LOGGER.info("TextureApi textureUrl: " + textureUrl);
             Texture texture = response.texturePath == null ? null : new Texture(response.player, response.group, response.type, textureUrl);
             CompletableFuture<Optional<Texture>> removed = textureFutures.remove(textureKey);
             if (removed != null) {
@@ -77,6 +85,8 @@ public class TexturesApi extends AbstractApi {
             }
             return true;
         }
+
+        LOGGER.info("TextureApi response is not instance of  GetTextureResponse");
         return false;
     }
 

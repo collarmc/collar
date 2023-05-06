@@ -477,6 +477,10 @@ public final class GroupService {
 
     private void validateCallerIsAdministratorOrOwnerOfGroup(RequestContext ctx, UUID groupId) {
         Group group = store.findGroup(groupId).orElseThrow(() -> new NotFoundException("group not found"));
+
+        //if group type is NEARBY then nobody in the group has the OWNER rank
+        if (group.type == GroupType.NEARBY)
+            return;
         if (!ctx.roles.contains(Role.ADMINISTRATOR)) {
             Member caller = group.findMember(ctx.owner).orElseThrow(() -> {
                 throw new ForbiddenException("caller is not a member of group " + groupId);

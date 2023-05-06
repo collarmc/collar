@@ -13,6 +13,8 @@ import com.collarmc.protocol.ProtocolResponse;
 import com.collarmc.protocol.groups.*;
 import com.collarmc.security.messages.GroupSession;
 import com.google.common.collect.ImmutableList;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -25,6 +27,8 @@ public final class GroupsApi extends AbstractApi {
     private final ConcurrentMap<UUID, Group> groups = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, GroupSession> sessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, GroupInvitation> invitations = new ConcurrentHashMap<>();
+
+    private static final Logger LOGGER = LogManager.getLogger(GroupsApi.class.getName());
     private final SDHTApi sdhtApi;
 
     public GroupsApi(Collar collar,
@@ -215,6 +219,7 @@ public final class GroupsApi extends AbstractApi {
             }
             sessions.compute(response.group.id, (uuid, groupSession) -> identityStore().createSession(response.group));
             collar.configuration.eventBus.dispatch(new GroupJoinedEvent(collar, response.group, response.player));
+            LOGGER.info("AcknowledgedGroupJoinedResponse triggered by group:" + response.group.id);
         } else if (resp instanceof LeaveGroupResponse) {
             synchronized (this) {
                 LeaveGroupResponse response = (LeaveGroupResponse)resp;
@@ -271,6 +276,7 @@ public final class GroupsApi extends AbstractApi {
         } else if (resp instanceof RejoinGroupResponse) {
             // Rejoin the group
             sender.accept(identityStore().createJoinGroupRequest(((RejoinGroupResponse) resp).group));
+            LOGGER.info("Received RejoinGroupResponse for group: " + ((RejoinGroupResponse) resp).group);
         } else if (resp instanceof UpdateGroupMemberResponse) {
             synchronized (this) {
                 UpdateGroupMemberResponse response = (UpdateGroupMemberResponse) resp;

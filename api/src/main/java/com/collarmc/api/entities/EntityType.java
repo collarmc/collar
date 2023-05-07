@@ -14,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
  * 
  */
 public enum EntityType {
+	ALLAY("allay"),
 	/**
 	 * spawned from lingering potions
 	 */
@@ -57,9 +58,11 @@ public enum EntityType {
 	FIREWORK_ROCKET("firework_rocket"),
 	FISHING_BOBBER("fishing_bobber"),
 	FOX("fox"),
+	FROG("frog"),
 	FURNACE_MINECART("furnace_minecart"),
 	GHAST("ghast"),
 	GIANT("giant"),
+	GLOW_ITEM_FRAME("glow_item_frame"),
 	GLOW_SQUID("glow_squid"),
 	GOAT("goat"),
 	GUARDIAN("guardian"),
@@ -82,6 +85,7 @@ public enum EntityType {
 	LLAMA("llama"),
 	LLAMA_SPIT("llama_spit"),
 	MAGMA_CUBE("magma_cube"),
+	MARKER("marker"),
 	MINECART("minecart"),
 	MOOSHROOM("mooshroom"),
 	MULE("mule"),
@@ -120,6 +124,7 @@ public enum EntityType {
 	SQUID("squid"),
 	STRAY("stray"),
 	STRIDER("strider"),
+	TADPOLE("tadpole"),
 	TNT("tnt"),
 	TNT_MINECART("tnt_minecart"),
 	TRADER_LLAMA("trader_llama"),
@@ -130,6 +135,7 @@ public enum EntityType {
 	VILLAGER("villager"),
 	VINDICATOR("vindicator"),
 	WANDERING_TRADER("wandering_trader"),
+	WARDEN("warden"),
 	WITCH("witch"),
 	/**
 	 * pink wither in JE 2.0 hoax edition are just silverfish internally

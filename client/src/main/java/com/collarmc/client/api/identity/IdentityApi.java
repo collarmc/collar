@@ -1,7 +1,9 @@
 package com.collarmc.client.api.identity;
 
 import com.collarmc.api.identity.ClientIdentity;
+import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.collarmc.api.profiles.PublicProfile;
+import com.collarmc.api.security.TokenGenerator;
 import com.collarmc.api.session.Player;
 import com.collarmc.client.Collar;
 import com.collarmc.client.api.AbstractApi;
@@ -12,8 +14,6 @@ import com.collarmc.protocol.identity.GetIdentityRequest;
 import com.collarmc.protocol.identity.GetIdentityResponse;
 import com.collarmc.protocol.identity.GetProfileRequest;
 import com.collarmc.protocol.identity.GetProfileResponse;
-import com.collarmc.api.security.TokenGenerator;
-import com.collarmc.api.minecraft.MinecraftPlayer;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.stoyanr.evictor.ConcurrentMapWithTimedEviction;
@@ -59,11 +59,11 @@ public class IdentityApi extends AbstractApi {
     private final Cache<UUID, CompletableFuture<Optional<PublicProfile>>> profileFutures = CacheBuilder.newBuilder()
             .expireAfterWrite(1, TimeUnit.SECONDS)
             .removalListener(removalNotification -> {
-        if (removalNotification.wasEvicted()) {
-            CompletableFuture<Optional<PublicProfile>> future = (CompletableFuture<Optional<PublicProfile>>)removalNotification.getValue();
-            future.complete(Optional.empty());
-        }
-    }).build();
+                if (removalNotification.wasEvicted()) {
+                    CompletableFuture<Optional<PublicProfile>> future = (CompletableFuture<Optional<PublicProfile>>)removalNotification.getValue();
+                    future.complete(Optional.empty());
+                }
+            }).build();
 
     private final Cache<UUID, Optional<PublicProfile>> profileCache = CacheBuilder.newBuilder()
             .expireAfterAccess(1, TimeUnit.MINUTES)
@@ -91,14 +91,13 @@ public class IdentityApi extends AbstractApi {
                 identityOptional = Optional.empty();
             }
             return identityOptional.map(identity -> new Player(identity, new MinecraftPlayer(
-                    playerId,
-                    collar.player().minecraftPlayer.server,
-                    collar.player().minecraftPlayer.networkId)
-                )
+                            playerId,
+                            collar.player().minecraftPlayer.server,
+                            collar.player().minecraftPlayer.networkId)
+                    )
             );
         });
     }
-
     /**
      * Resolve a players profile using the player object
      * @param player to find the profile of
@@ -107,11 +106,13 @@ public class IdentityApi extends AbstractApi {
     public CompletableFuture<Optional<PublicProfile>> resolveProfile(Player player) {
         Optional<PublicProfile> profile = profileCache.asMap().getOrDefault(player.identity.id(), Optional.empty());
         if (profile.isPresent()) {
+            LOGGER.debug("Profile resolved from cache, player identity id: " + player.identity.id());
             return CompletableFuture.completedFuture(profile);
         } else {
             CompletableFuture<Optional<PublicProfile>> future = new CompletableFuture<>();
             profileFutures.put(player.identity.id(), future);
             sender.accept(new GetProfileRequest(player.identity.id()));
+            LOGGER.debug("Profile resolved from request, player identity id: " + player.identity.id());
             return future;
         }
     }

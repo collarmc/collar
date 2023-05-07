@@ -3,7 +3,6 @@ package com.collarmc.server.services.groups;
 import com.collarmc.api.friends.Status;
 import com.collarmc.api.groups.*;
 import com.collarmc.api.groups.http.*;
-import com.collarmc.api.http.HttpException;
 import com.collarmc.api.http.HttpException.BadRequestException;
 import com.collarmc.api.http.HttpException.ForbiddenException;
 import com.collarmc.api.http.HttpException.NotFoundException;
@@ -477,6 +476,10 @@ public final class GroupService {
 
     private void validateCallerIsAdministratorOrOwnerOfGroup(RequestContext ctx, UUID groupId) {
         Group group = store.findGroup(groupId).orElseThrow(() -> new NotFoundException("group not found"));
+
+        //if group type is NEARBY then nobody in the group has the OWNER rank
+        if (group.type == GroupType.NEARBY)
+            return;
         if (!ctx.roles.contains(Role.ADMINISTRATOR)) {
             Member caller = group.findMember(ctx.owner).orElseThrow(() -> {
                 throw new ForbiddenException("caller is not a member of group " + groupId);

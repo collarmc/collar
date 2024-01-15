@@ -78,7 +78,7 @@ public class PlayerLocationService {
     }
 
     private Optional<BatchProtocolResponse> stopSharing(UUID groupId, Player player) {
-        LOGGER.info("Player " + player + " started sharing location with group " + groupId);
+        LOGGER.info("Player " + player + " stopped sharing location with group " + groupId);
         LocationUpdatedResponse locationUpdatedResponse = new LocationUpdatedResponse(groupId, player, null);
         Optional<BatchProtocolResponse> responses = createLocationResponses(player, locationUpdatedResponse);
         playersSharing.compute(groupId, (uuid, players) -> {

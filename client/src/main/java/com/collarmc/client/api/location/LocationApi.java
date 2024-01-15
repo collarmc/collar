@@ -278,7 +278,7 @@ public class LocationApi extends AbstractApi {
                         // Update the location
                         playerLocations.put(response.sender, location.get());
                     } else {
-                        // Remove if stooped sharing
+                        // Remove if stopped sharing
                         playerLocations.remove(response.sender);
                     }
                     collar.configuration.eventBus.dispatch(new LocationUpdatedEvent(collar, response.sender, location.orElse(Location.UNKNOWN)));

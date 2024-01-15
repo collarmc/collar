@@ -9,11 +9,16 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * State machine for managing dynamically created {@link Group}'s based on hashing
  * every players player entity list and comparing them.
  */
 public final class NearbyGroups {
+
+    private static final Logger LOGGER = LogManager.getLogger(NearbyGroups.class.getName());
 
     private final ConcurrentMap<MemberSource, Set<String>> playerHashes = new ConcurrentHashMap<>();
     private final ConcurrentMap<NearbyGroup, UUID> nearbyGroups = new ConcurrentHashMap<>();
@@ -33,37 +38,39 @@ public final class NearbyGroups {
         playerHashes.keySet().stream()
                 .filter(anotherSource ->
                         anotherSource.player.minecraftPlayer != null &&
-                        source.player.minecraftPlayer != null &&
-                        anotherSource.player.minecraftPlayer.inServerWith(source.player.minecraftPlayer)
-                        && !anotherSource.equals(source)
+                                source.player.minecraftPlayer != null &&
+                                anotherSource.player.minecraftPlayer.inServerWith(source.player.minecraftPlayer)
+                                && !anotherSource.equals(source)
                 ).forEach(anotherPlayer -> {
-            Set<String> otherPlayersHashes = playerHashes.get(anotherPlayer);
-            NearbyGroup group = new NearbyGroup(Set.of(source, anotherPlayer));
-            if (Sets.difference(hashes, otherPlayersHashes).isEmpty()) {
-                nearbyGroups.compute(group, (nearbyGroup, uuid) -> {
-                    if (uuid == null) {
-                        uuid = UUID.randomUUID();
-                        add.put(uuid, group);
+                    Set<String> otherPlayersHashes = playerHashes.get(anotherPlayer);
+                    NearbyGroup group = new NearbyGroup(Set.of(source, anotherPlayer));
+                    if (Sets.difference(hashes, otherPlayersHashes).isEmpty()) {
+                        nearbyGroups.compute(group, (nearbyGroup, uuid) -> {
+                            if (uuid == null) {
+                                uuid = UUID.randomUUID();
+                                add.put(uuid, group);
+                            }
+                            return uuid;
+                        });
+                        playerToGroups.compute(source, (thePlayer, playersGroups) -> {
+                            playersGroups = playersGroups == null ? new HashSet<>() : playersGroups;
+                            playersGroups.add(group);
+                            return playersGroups;
+                        });
+                    } else {
+                        UUID groupId = nearbyGroups.get(group);
+                        nearbyGroups.remove(group);
+                        if (groupId != null) {
+                            remove.put(groupId, group);
+                            playerToGroups.compute(source, (thePlayer, playersGroups) -> {
+                                playersGroups = playersGroups == null ? new HashSet<>() : playersGroups;
+                                playersGroups.remove(group);
+                                return nearbyGroups.isEmpty() ? null : playersGroups;
+                            });
+                        }
                     }
-                    return uuid;
                 });
-                playerToGroups.compute(source, (thePlayer, playersGroups) -> {
-                    playersGroups = playersGroups == null ? new HashSet<>() : playersGroups;
-                    playersGroups.add(group);
-                    return playersGroups;
-                });
-            } else {
-                UUID groupId = nearbyGroups.get(group);
-                if (groupId != null) {
-                    remove.put(groupId, group);
-                    playerToGroups.compute(source, (thePlayer, playersGroups) -> {
-                        playersGroups = playersGroups == null ? new HashSet<>() : playersGroups;
-                        playersGroups.remove(group);
-                        return nearbyGroups.isEmpty() ? null : playersGroups;
-                    });
-                }
-            }
-        });
+        nearbyGroups.entrySet().removeIf(entry -> entry.getKey().players.size() < 2);
         return new Result(add, remove);
     }
 

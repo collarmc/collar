@@ -28,7 +28,7 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.1.92.Final</version>
+            <version>4.1.104.Final</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
@@ -73,13 +73,13 @@
                         </filter>
                     </filters>
                     <artifactSet>
-                    <excludes>
-                        <exclude>com.google.guava:guava</exclude>
-                        <exclude>org.apache.logging.log4j:*</exclude>
-                        <exclude>com.google.code.findbugs:*</exclude>
-                        <exclude>net.jcip:jcip-annotations:*</exclude>
-                        <exclude>net.java.dev.jna:*</exclude>
-                    </excludes>
+                        <excludes>
+                            <exclude>com.google.guava:guava</exclude>
+                            <exclude>org.apache.logging.log4j:*</exclude>
+                            <exclude>com.google.code.findbugs:*</exclude>
+                            <exclude>net.jcip:jcip-annotations:*</exclude>
+                            <exclude>net.java.dev.jna:*</exclude>
+                        </excludes>
                     </artifactSet>
                     <relocations>
                         <relocation>
@@ -160,7 +160,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.4.1</version>
                 <executions>
                     <execution>
                         <id>enforce-bytecode-version</id>
@@ -182,7 +182,7 @@
                     <dependency>
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>extra-enforcer-rules</artifactId>
-                        <version>1.6.2</version>
+                        <version>1.7.0</version>
                     </dependency>
                 </dependencies>
             </plugin>

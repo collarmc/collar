@@ -1,6 +1,7 @@
 package com.collarmc.client.api.messaging;
 
 import com.collarmc.api.groups.Group;
+import com.collarmc.api.identity.ClientIdentity;
 import com.collarmc.api.messaging.Message;
 import com.collarmc.api.session.Player;
 import com.collarmc.client.Collar;
@@ -95,14 +96,14 @@ public class MessagingApi extends AbstractApi {
                         try {
                             byte[] contents = groupSession.decrypt(response.message, response.sender);
                             message = Utils.messagePackMapper().readValue(contents, Message.class);
-                    } catch (IOException | CipherException e) {
-                        // We don't throw an exception here in case someone is doing something naughty to disrupt the group and cause the client to exit
-                        LOGGER.error(collar.identity() + "could not read group message from group " + group.id, e);
-                        message = null;
-                    }
-                    if (message != null) {
-                        collar.configuration.eventBus.dispatch(new GroupMessageReceivedEvent(collar, group, response.player, message));
-                    }});
+                        } catch (IOException | CipherException e) {
+                            // We don't throw an exception here in case someone is doing something naughty to disrupt the group and cause the client to exit
+                            LOGGER.error(collar.identity() + "could not read group message from group " + group.id, e);
+                            message = null;
+                        }
+                        if (message != null) {
+                            collar.configuration.eventBus.dispatch(new GroupMessageReceivedEvent(collar, group, new Player((ClientIdentity)response.sender, null), message));
+                        }});
                 });
             } else if (response.sender != null) {
                 Message message;

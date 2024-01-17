@@ -1,5 +1,6 @@
 package com.collarmc.server.protocol;
 
+import com.collarmc.api.groups.Group;
 import com.collarmc.api.http.HttpException.NotFoundException;
 import com.collarmc.api.http.RequestContext;
 import com.collarmc.api.identity.ClientIdentity;
@@ -20,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.websocket.api.Session;
 
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 public class TexturesProtocolHandler extends ProtocolHandler {
 
@@ -42,11 +44,11 @@ public class TexturesProtocolHandler extends ProtocolHandler {
                         if (request.type == TextureType.CAPE) {
                             texture = findDefaultCape(request, sessionState);
                         }
-                        // otherwise fall back to fetching any cape cape the player owns
+                        // otherwise fall back to fetching any cape the player owns
                         if (texture == null) {
-                            texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null, sessionState.identity.id(), request.group, request.type)).texture;
+                            texture = findTexture(request, sessionState);
                         }
-                        response = new GetTextureResponse(texture.id, null, sessionState.toPlayer(), texture.url, texture.type);
+                        response = new GetTextureResponse(texture == null ? null : texture.id, null, sessionState.toPlayer(), texture == null ? null : texture.url, texture == null ? request.type : texture.type);
                     } catch (NotFoundException ignored) {
                         LOGGER.info("Could not find texture " + request.type + " for player " + request.player);
                         response = new GetTextureResponse(null, null, sessionState.toPlayer(), null, request.type);
@@ -81,13 +83,57 @@ public class TexturesProtocolHandler extends ProtocolHandler {
         PublicProfile playerProfile = services.profileCache.getById(sessionState.identity.id()).orElseThrow(() -> new IllegalStateException("could not find profile " + sessionState.identity.id())).toPublic();
         if (playerProfile.cape != null) {
             try {
-                texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(playerProfile.cape.texture, null, null, null)).texture;
+                texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(playerProfile.cape.texture, sessionState.identity.id(), null, null)).texture;
             } catch (NotFoundException ignored) {
                 LOGGER.info("Could not find texture " + playerProfile.cape.texture + " for player " + request.player);
                 texture = null;
             }
+            if(texture == null) {
+                try {
+                    for (Group group : services.groupStore.findGroupsContaining(sessionState.toPlayer()).collect(Collectors.toSet())) {
+                        try {
+                            texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(playerProfile.cape.texture, null, group.id, null)).texture;
+                            if (texture != null) {
+                                break;  // Exit the loop once texture is found in the first group
+                            }
+                        } catch (NotFoundException ignored) {
+                            LOGGER.info("Could not find texture " + playerProfile.cape.texture + " for player " + request.player + " in group " + group.id);
+                        }
+                    }
+                } catch (NotFoundException ignored) {
+                    LOGGER.info("Could not find groups for player");
+                }
+            }
         } else {
             texture = null;
+        }
+        return texture;
+    }
+
+    private TextureService.Texture findTexture(GetTextureRequest request, SessionManager.SessionState sessionState) {
+        TextureService.Texture texture;
+        try {
+            texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null, sessionState.identity.id(), null, request.type)).texture;
+        } catch (NotFoundException ignored) {
+            LOGGER.info("Could not find profile texture for player " + request.player);
+            texture = null;
+        }
+        if(texture == null) {
+            try {
+                for (Group group : services.groupStore.findGroupsContaining(sessionState.toPlayer()).collect(Collectors.toSet())) {
+                    try {
+                        texture = services.textures.getTexture(RequestContext.ANON, new TextureService.GetTextureRequest(null, null, group.id, request.type)).texture;
+                        if (texture != null) {
+                            break;  // Exit the loop once texture is found in the first group
+                        }
+
+                    } catch (NotFoundException ignored) {
+                        LOGGER.info("Could not find texture " + request.type + " for group " + group.id);
+                    }
+                }
+            } catch (NotFoundException ignored) {
+                LOGGER.info("Could not find texture " + request.type + " for any group");
+            }
         }
         return texture;
     }

@@ -111,7 +111,11 @@ public class TextureService {
         context.assertAnonymous();
         Texture texture;
         if (req.texture != null) {
-            texture = docs.find(and(eq(FIELD_OWNER, req.profile), eq(FIELD_TEXTURE_ID, req.texture))).map(this::map).first();
+            if (req.group != null) {
+                texture = docs.find(and(eq(FIELD_TEXTURE_GROUP, req.group), eq(FIELD_TEXTURE_ID, req.texture))).map(this::map).first();
+            } else {
+                texture = docs.find(eq(FIELD_TEXTURE_ID, req.texture)).map(this::map).first();
+            }
         } else if (req.profile != null) {
             texture = docs.find(and(eq(FIELD_OWNER, req.profile), eq(FIELD_TYPE, req.type.name()))).map(this::map).first();
         } else if (req.group != null) {

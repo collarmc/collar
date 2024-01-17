@@ -136,10 +136,7 @@ public final class Collar {
      */
     public void connect() {
         try {
-            LOGGER.info("Before checkServerCompatibility");
             checkServerCompatibility(configuration);
-            LOGGER.info("After checkServerCompatibility");
-            LOGGER.info("Before UrlBuilding" + configuration.collarServerURL);
             String url = UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/1/listen").toString();
             LOGGER.info("Connecting to server " + url);
             webSocket = Http.client().webSocket(Request.url(url).ws(), new CollarWebSocket(this));
@@ -276,7 +273,6 @@ public final class Collar {
      * @param configuration of the client
      */
     private static void checkServerCompatibility(CollarConfiguration configuration) {
-        LOGGER.info("Before api discover: " + configuration.collarServerURL);
         DiscoverResponse response;
         try {
             response = Http.client().execute(url(UrlBuilder.fromUrl(configuration.collarServerURL).withPath("/api/discover")).get(), Response.json(DiscoverResponse.class));

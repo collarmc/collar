@@ -39,8 +39,8 @@ public final class DebugConfiguration {
         String mode = properties.getProperty("session.mode", null);
         MinecraftSession.Mode sessionMode = mode == null ? null : MinecraftSession.Mode.valueOf(mode.toUpperCase());
         return new DebugConfiguration(
-                (boolean) properties.getOrDefault("tracers", false),
-                (boolean) properties.getOrDefault("waypoints", false),
+                Boolean.parseBoolean(properties.getProperty("tracers", "false")),
+                Boolean.parseBoolean(properties.getProperty("waypoints", "false")),
                 sessionMode,
                 url == null ? null : new URL(url)
         );
